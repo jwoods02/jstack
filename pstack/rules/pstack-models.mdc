@@ -1,0 +1,25 @@
+---
+description: pstack per-role model choices (overrides skill defaults)
+alwaysApply: true
+---
+# pstack model configuration. One line per role. Delete a line to fall back to the skill default.
+# `inherit-parent` or `auto` as a value: the role runs on the parent chat model (omit Task `model`). Alias entries in a panel list still count toward its fan-out.
+# budget: large (xhigh)
+# JStack: James Woods's choices, picked by CursorBench score. Anthropic models only. Never raise an Anthropic model above extra high; do not use max.
+feature, refactoring: claude-sonnet-5-5-xhigh
+bug-fix: claude-sonnet-5-5-xhigh
+perf-issue: claude-sonnet-5-5-xhigh
+hillclimb: claude-sonnet-5-5-xhigh
+judgment and prose: claude-opus-5-5-xhigh
+hardest tasks: claude-opus-5-5-xhigh
+how explorer: claude-sonnet-5-5-xhigh
+how explainer: claude-opus-5-5-xhigh
+why investigators: claude-sonnet-5-5-xhigh
+why synthesizer: claude-opus-5-5-xhigh
+reflect tooling: claude-sonnet-5-5-xhigh
+reflect judgment, divergent, synthesizer: claude-opus-5-5-xhigh
+arena runners: claude-opus-5-5-xhigh, claude-opus-5-5-xhigh
+arena cross-judge pool: claude-opus-5-5-xhigh
+swarm workers: claude-sonnet-5-5-high
+architect runners: claude-opus-5-5-xhigh, claude-opus-5-5-xhigh
+interrogate reviewers: claude-opus-5-5-xhigh, claude-opus-5-5-xhigh
