@@ -1,0 +1,16 @@
+{
+	"name": "jstack",
+	"owner": {
+		"name": "James Woods"
+	},
+	"metadata": {
+		"description": "James Woods's personal, Cursor-only version of pstack."
+	},
+	"plugins": [
+		{
+			"name": "jstack",
+			"source": "pstack",
+			"description": "pstack with James Woods's model choices baked in."
+		}
+	]
+}
