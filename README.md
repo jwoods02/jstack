@@ -1,15 +1,15 @@
 # JStack
 
-JStack is James Woods's personal, Cursor-only version of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan. It starts as pstack with every setup step already done, and it will be cut down and adapted to how James works, one step at a time.
+JStack is James Woods's personal, Cursor-only version of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan. It starts with every setup step already done, and it will be cut down and adapted to how James works, one step at a time.
 
 ## v1 scope
 
-- pstack 0.15.25, in [`pstack/`](pstack/), works the same as upstream apart from setup.
-- James's model choices ship as [`pstack/rules/pstack-models.mdc`](pstack/rules/pstack-models.mdc), an always-applied plugin rule.
-- Setup is removed: the `setup-pstack` skill, its first-run offers, and references to the user-level rule file. [UPSTREAM.md](UPSTREAM.md) lists every change.
+- The plugin lives in [`jstack/`](jstack/). It is upstream release 0.15.25, renamed to JStack and with setup removed; otherwise it works the same.
+- James's model choices ship as [`jstack/rules/jstack-models.mdc`](jstack/rules/jstack-models.mdc), an always-applied plugin rule.
+- Setup is removed: the setup skill, its first-run offers, and references to the user-level rule file. [UPSTREAM.md](UPSTREAM.md) lists every change.
 - A root [marketplace manifest](.cursor-plugin/marketplace.json) lets Cursor install the plugin from this repo. The plugin is named `jstack`.
 
-To install it, open Cursor's Customize, choose From GitHub Repository, and add this repo. Don't install upstream pstack alongside it, because both ship the same skill names. To change a model, edit the rule file.
+To install it, open Cursor's Customize, choose From GitHub Repository, and add this repo. Don't install the upstream plugin alongside it, because both ship the same skill names. To change a model, edit the rule file.
 
 ## Models
 
@@ -19,7 +19,7 @@ The models were chosen with two sources, [CursorBench 4.0](https://cursor.com/cu
 - Gemini only takes a second seat on panels that an Anthropic agent leads.
 - Opus runs at High by default and at Extra High only where deeper reasoning changes the outcome.
 - Agents never start on Max but may escalate to it for the hardest work.
-- Each level is used as written, without pstack's usual per-job lowering.
+- Each level is used as written, without the usual per-job lowering in `poteto-mode`.
 
 | Role | Model | Why |
 |---|---|---|
@@ -42,7 +42,7 @@ These models are not used:
 - Muse Wonder, which trails Gemini on both sources.
 - Grok, Composer and Fable, which score lower or cost more.
 
-Gemini has no UX or visual role yet, because no pstack role is UX-specific.
+Gemini has no UX or visual role yet, because no role is UX-specific.
 
 ## Upstream merges
 
@@ -50,8 +50,8 @@ Gemini has no UX or visual role yet, because no pstack role is UX-specific.
 
 ## Direction
 
-Later versions will cut and change pstack, one PR at a time, from a backlog agreed with James. The backlog covers draft-only PRs, no agent merges, and similar changes. Each step adds to UPSTREAM.md, so upstream merges stay mechanical.
+Later versions will cut and change JStack, one PR at a time, from a backlog agreed with James. The backlog covers draft-only PRs, no agent merges, and similar changes. Each step adds to UPSTREAM.md, so upstream merges stay mechanical.
 
 ## License
 
-pstack is MIT-licensed, copyright (c) 2026 Lauren Tan. See [`pstack/LICENSE`](pstack/LICENSE).
+The upstream code (pstack) is MIT-licensed, copyright (c) 2026 Lauren Tan. See [`jstack/LICENSE`](jstack/LICENSE).
