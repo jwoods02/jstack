@@ -5,8 +5,10 @@
   scripts/rename-upstream.py --patch < in > out    rewrite an upstream diff
 
 Paths, code spans and link targets get `jstack`; Markdown prose gets
-`JStack`. Whole words only, so "upstack" is untouched. Lines that link to
-github.com/cursor/plugins name upstream and are left as written.
+`JStack`. Whole words only, so "upstack" is untouched. The persona names
+poteto-mode, poteto-agent and poteto-help become j-mode, j-agent and j-help.
+Lines that link to github.com/cursor/plugins name upstream and are left as
+written.
 """
 import os
 import re
@@ -15,11 +17,21 @@ import sys
 MARKDOWN = (".md", ".mdc")
 WORD = re.compile(r"\bpstack\b")
 CODE_OR_LINK = re.compile(r"`[^`]*`|\]\([^)]*\)")
+PERSONA = [
+    (r"\bpoteto-(mode|agent|help)\b", r"j-\1"),
+    (r"\bPoteto (Mode|mode|subagent|help)\b", r"J \1"),
+    (r"\bpoteto's agent style", "James's agent style"),
+    (r"\bUse for poteto, ", "Use for "),
+    (r"\bis my style\b", "is James's style"),
+    (r"\bpoteto/", "j/"),
+]
 
 
 def rename(line, markdown):
     if "github.com/cursor/plugins" in line:
         return line
+    for pattern, replacement in PERSONA:
+        line = re.sub(pattern, replacement, line)
     line = re.sub(r"\bpstack(?=/|-models)", "jstack", line)
     if not markdown:
         return WORD.sub("jstack", line)
