@@ -1,16 +1,8 @@
-# pstack
+# JStack
 
-i'm [poteto](https://x.com/poteto). i'm not a president or ceo, but i've worked with millions of lines of code at Meta, Netflix, and Cursor. i'm also on the react core team where i help build and maintain react compiler.
+JStack is James Woods's personal, Cursor-only version of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by [poteto](https://x.com/poteto) (Lauren Tan). the skills, playbooks, and principles below are poteto's. the "i" in this file is poteto.
 
-there's a growing sense that ai writes too much slop code. i agree. i don't want to ship like a team of twenty slop artists. throughput without quality is not a goal i aspire to. if you want to go fast, go deep first. 
-
-**pstack is my answer.** these are the same skills i use everyday to ship high quality code at Cursor. this turns cursor into a real engineering team. the goal is not to maximize loc, in fact it's the opposite. pstack helps you write less, but higher quality code.
-
-**pstack gives you fearless parallelism.** when you can go deep on one agent and trust it to write good, verifiable code, you can truly parallelize with confidence. start multiple agents up with `poteto-mode` and trust that they'll apply rigorous engineering principles to their work.
-
-**cursor gives you the best of all worlds.** every frontier model has its strengths and weaknesses. use any model with pstack. in fact, many of my skills use multi-model workflows to take advantage of each model's unique strengths.
-
-fork it. improve it. make it yours. PRs are welcome! 
+the idea: if you want to go fast, go deep first. JStack helps you write less, but higher quality code. when you can go deep on one agent and trust it to write good, verifiable code, you can truly parallelize with confidence. start multiple agents up with `poteto-mode` and trust that they'll apply rigorous engineering principles to their work.
 
 ## install
 
@@ -18,11 +10,11 @@ in cursor, open customize, choose from github repository, and add `jwoods02/jsta
 
 ## get started
 
-one step: use [`/poteto-mode`](./skills/poteto-mode/SKILL.md) whenever you're doing anything that requires rigor. models are already chosen in [`rules/pstack-models.mdc`](./rules/pstack-models.mdc), so there is nothing to set up.
+one step: use [`/poteto-mode`](./skills/poteto-mode/SKILL.md) whenever you're doing anything that requires rigor. models are already chosen in [`rules/jstack-models.mdc`](./rules/jstack-models.mdc), so there is nothing to set up.
 
-new here? the [pstack guide](./docs/guide/README.md) walks you through a first real task, from setup and prompting through verification and overnight runs. stuck, or unsure which skill fits? ask [`/poteto-help`](./skills/poteto-help/SKILL.md).
+new here? the [JStack guide](./docs/guide/README.md) walks you through a first real task, from setup and prompting through verification and overnight runs. stuck, or unsure which skill fits? ask [`/poteto-help`](./skills/poteto-help/SKILL.md).
 
-that's it. the other skills are situational; the mode skill uses them for you as needed. out of the box the mode splits work by model strength: code delegates (feature, refactoring, bug fix, perf, hillclimb) go to sonnet 5.5, while the hardest changes, prose, judgment, and review go to opus 5.5. review and design panels pair opus 5.5 with gemini 4 argon. edit [`rules/pstack-models.mdc`](./rules/pstack-models.mdc) to change any of it.
+that's it. the other skills are situational; the mode skill uses them for you as needed. out of the box the mode splits work by model strength: code delegates (feature, refactoring, bug fix, perf, hillclimb) go to sonnet 5.5, while the hardest changes, prose, judgment, and review go to opus 5.5. review and design panels pair opus 5.5 with gemini 4 argon. edit [`rules/jstack-models.mdc`](./rules/jstack-models.mdc) to change any of it.
 
 ## usage
 
@@ -107,7 +99,7 @@ to keep [`/poteto-mode`](./skills/poteto-mode/SKILL.md) on across turns, pick it
 | skill | use it when |
 |---|---|
 | [`/poteto-mode`](./skills/poteto-mode/SKILL.md) | default entry point for any non-trivial task. |
-| [`/poteto-help`](./skills/poteto-help/SKILL.md) | you're new to pstack, or unsure which skill, playbook, or principle fits. finds out what you're trying to do, answers that part, and hands you a prompt to type. runs only when you type `/poteto-help`. |
+| [`/poteto-help`](./skills/poteto-help/SKILL.md) | you're new to JStack, or unsure which skill, playbook, or principle fits. finds out what you're trying to do, answers that part, and hands you a prompt to type. runs only when you type `/poteto-help`. |
 | [`/in-your-own-words`](./skills/in-your-own-words/SKILL.md) | you want the agent to play back your goal and the problem before it starts. runs only when you type `/in-your-own-words`. |
 | [`/sharpen`](./skills/sharpen/SKILL.md) | you want a task approached the way a top expert would, aimed at what you're really after, without overspecifying it or deciding your choices for you. |
 | [`/how`](./skills/how/SKILL.md) | you want a walkthrough of how a subsystem works. |
@@ -191,11 +183,11 @@ help:              /poteto-help which skill should i use to review this branch?
 
 [`/poteto-mode`](./skills/poteto-mode/SKILL.md) runs in the chat that receives it. that chat owns the playbook, the todo list, and every subagent spawn.
 
-pstack also ships [`subagent_type: "poteto-agent"`](./agents/poteto-agent.md) as the wrapper for delegates spawned during a run. it reads `poteto-mode` in full, including its inline principles index, before doing any work. substituting `generalPurpose` skips that read and drifts. do not spawn `poteto-agent` to run the playbook itself.
+JStack also ships [`subagent_type: "poteto-agent"`](./agents/poteto-agent.md) as the wrapper for delegates spawned during a run. it reads `poteto-mode` in full, including its inline principles index, before doing any work. substituting `generalPurpose` skips that read and drifts. do not spawn `poteto-agent` to run the playbook itself.
 
 [`/poteto-mode`](./skills/poteto-mode/SKILL.md) and [`subagent_type: "poteto-agent"`](./agents/poteto-agent.md) route through the same wrapper.
 
-pstack also ships [Comment Sicko](./agents/comment-sicko.md), a read-only comment reviewer available as `subagent_type: "comment-sicko"`. usually invoke it through [`/no-comments`](./skills/no-comments/SKILL.md), not directly.
+JStack also ships [Comment Sicko](./agents/comment-sicko.md), a read-only comment reviewer available as `subagent_type: "comment-sicko"`. usually invoke it through [`/no-comments`](./skills/no-comments/SKILL.md), not directly.
 
 ## principles
 
@@ -241,25 +233,25 @@ a few things `poteto-mode` references but doesn't bundle:
 - `control-cli` (for CLIs and TUIs) and `control-ui` (for browser, Electron, web) ship in `cursor-team-kit` too.
 - `/create-skill` is a cursor built-in. cursor also ships a built-in `/babysit`; inside `poteto-mode`, the [babysit playbook](./skills/poteto-mode/playbooks/babysit.md) supersedes it for pr-status requests.
 
-install `cursor-team-kit` alongside pstack if you want the full set.
+install `cursor-team-kit` alongside JStack if you want the full set.
 
 ## why are there no planning skills?
 
-cursor already has a great plan mode which works great with pstack. but personally, i don't believe in planning. the best spec is code. if you do want to make a plan, [`/poteto-mode`](./skills/poteto-mode/SKILL.md) covers it, but it's not a default. 
+cursor already has a great plan mode which works great with JStack. but personally, i don't believe in planning. the best spec is code. if you do want to make a plan, [`/poteto-mode`](./skills/poteto-mode/SKILL.md) covers it, but it's not a default. 
 
 ## make it yours
 
 `poteto-mode` is my style. you may not want exactly that.
 
-type [`/automate-me`](./skills/automate-me/SKILL.md). it mines your recent transcripts, drafts a `<your-name>-mode` skill from how you've actually worked, and routes through pstack underneath. you keep pstack as the base and end up with your own routing skill alongside `poteto-mode`.
+type [`/automate-me`](./skills/automate-me/SKILL.md). it mines your recent transcripts, drafts a `<your-name>-mode` skill from how you've actually worked, and routes through JStack underneath. you keep JStack as the base and end up with your own routing skill alongside `poteto-mode`.
 
-models are configurable too. edit [`rules/pstack-models.mdc`](./rules/pstack-models.mdc), a small always-applied rule mapping each role (code, judgment, the review panels) to a model. every skill reads it and falls back to its own default for a role the rule leaves out.
+models are configurable too. edit [`rules/jstack-models.mdc`](./rules/jstack-models.mdc), a small always-applied rule mapping each role (code, judgment, the review panels) to a model. every skill reads it and falls back to its own default for a role the rule leaves out.
 
 ## automations
 
-pstack also ships a dormant [benny automation pack](./automations/benny/). benny triages slack issue reports, then reproduces and fixes confirmed bugs with real ui evidence. its files are not registered as slash skills.
+JStack also ships a dormant [benny automation pack](./automations/benny/). benny triages slack issue reports, then reproduces and fixes confirmed bugs with real ui evidence. its files are not registered as slash skills.
 
-to set it up, point cursor at [`FOR_AGENTS.md`](./automations/benny/FOR_AGENTS.md). setup copies the pack into the target repository at `.cursor/automations/benny/`, enables pstack there for shared skills, and keeps user configuration outside the copied pack.
+to set it up, point cursor at [`FOR_AGENTS.md`](./automations/benny/FOR_AGENTS.md). setup copies the pack into the target repository at `.cursor/automations/benny/`, enables JStack there for shared skills, and keeps user configuration outside the copied pack.
 
 ## license
 

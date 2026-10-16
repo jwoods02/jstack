@@ -44,7 +44,7 @@ flowchart LR
     H --> I[Verify]
 ```
 
-The panel comes from the [`pstack-models.mdc`](../../rules/pstack-models.mdc) rule the plugin ships, and you can adjust it per task. Ask for more candidates when the decision matters, fewer when it doesn't:
+The panel comes from the [`jstack-models.mdc`](../../rules/jstack-models.mdc) rule the plugin ships, and you can adjust it per task. Ask for more candidates when the decision matters, fewer when it doesn't:
 
 ```text
 /arena this, 5 candidates. the cache key format is expensive to change later.
@@ -100,7 +100,7 @@ Writing the tutorial first forces the caller's view. You describe the API to a h
 
 ## Plan after the design settles
 
-pstack has no planning skill, on purpose. When you do want a written plan, ask for it once the design is settled:
+JStack has no planning skill, on purpose. When you do want a written plan, ask for it once the design is settled:
 
 ```text
 /poteto-mode turn this design into a plan. small verifiable PRs, each with its own verification steps.

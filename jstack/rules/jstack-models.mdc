@@ -1,8 +1,8 @@
 ---
-description: pstack per-role model choices (overrides skill defaults)
+description: JStack per-role model choices (overrides skill defaults)
 alwaysApply: true
 ---
-# pstack model configuration. One line per role. Delete a line to fall back to the skill default.
+# JStack model configuration. One line per role. Delete a line to fall back to the skill default.
 # `inherit-parent` or `auto` as a value: the role runs on the parent chat model (omit Task `model`). Alias entries in a panel list still count toward its fan-out.
 # budget: per role (Opus at high by default, extra high only where deeper reasoning changes the outcome)
 # JStack: James Woods's choices, picked by CursorBench and Artificial Analysis scores. Anthropic leads every role; no OpenAI models.

@@ -4,13 +4,13 @@
 		"name": "James Woods"
 	},
 	"metadata": {
-		"description": "James Woods's personal, Cursor-only version of pstack."
+		"description": "James Woods's JStack plugin."
 	},
 	"plugins": [
 		{
 			"name": "jstack",
-			"source": "pstack",
-			"description": "pstack with James Woods's model choices baked in."
+			"source": "jstack",
+			"description": "James Woods's personal, Cursor-only agent workflows, with his model choices baked in."
 		}
 	]
 }

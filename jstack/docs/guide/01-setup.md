@@ -8,9 +8,9 @@ In Cursor, open Customize, choose From GitHub Repository, and add `jwoods02/jsta
 
 ## The models are already chosen
 
-The plugin ships [`rules/pstack-models.mdc`](../../rules/pstack-models.mdc), an always-applied rule that every pstack skill reads. It maps each role (code delegates, judgment, the review panels) to a model. To change a role, edit its line. A role with no line in the rule keeps the skill's default. Changes apply to new chats.
+The plugin ships [`rules/jstack-models.mdc`](../../rules/jstack-models.mdc), an always-applied rule that every JStack skill reads. It maps each role (code delegates, judgment, the review panels) to a model. To change a role, edit its line. A role with no line in the rule keeps the skill's default. Changes apply to new chats.
 
-You might be wondering what happens if you use Auto. Set a role to `inherit-parent` or `auto` and pstack omits the subagent `model` field, so the subagent inherits your parent chat model. Both values mean the same thing, and neither is a model slug. For a panel role the value is a list, and one subagent runs per entry, so the list length sets the panel size. The rule also sets `swarm workers`, the default model for every `/swarm` worker unless a race names a model for each arm.
+You might be wondering what happens if you use Auto. Set a role to `inherit-parent` or `auto` and JStack omits the subagent `model` field, so the subagent inherits your parent chat model. Both values mean the same thing, and neither is a model slug. For a panel role the value is a list, and one subagent runs per entry, so the list length sets the panel size. The rule also sets `swarm workers`, the default model for every `/swarm` worker unless a race names a model for each arm.
 
 ## Create a verification skill
 
@@ -20,9 +20,9 @@ An agent that can check its own work keeps going until the check passes. An agen
 
 ## Keep the cost in check
 
-pstack spends extra tokens on subagents and review panels. That's the price of the rigor. To spend fewer:
+JStack spends extra tokens on subagents and review panels. That's the price of the rigor. To spend fewer:
 
-- Edit the role lines in `rules/pstack-models.mdc` to pick lower effort or cheaper models. A strong model in the main chat with cheaper, faster models in the code roles is a good split.
+- Edit the role lines in `rules/jstack-models.mdc` to pick lower effort or cheaper models. A strong model in the main chat with cheaper, faster models in the code roles is a good split.
 - Set a role to `auto` or `inherit-parent` so it runs on the chat's own model.
 - Shorten a panel list. Each entry runs one subagent.
 - Save `/poteto-mode` for work that needs rigor. A small, obvious edit doesn't.
