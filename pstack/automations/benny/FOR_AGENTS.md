@@ -69,7 +69,7 @@ i want you to merge this entry into the target repository's `.cursor/settings.js
 ```json
 {
 	"plugins": {
-		"pstack": { "enabled": true }
+		"jstack": { "enabled": true }
 	}
 }
 ```

@@ -38,12 +38,12 @@ Merge this entry into the existing JSON or JSONC:
 ```json
 {
 	"plugins": {
-		"pstack": { "enabled": true }
+		"jstack": { "enabled": true }
 	}
 }
 ```
 
-Preserve every unrelated top-level setting and every other plugin entry. If `plugins.pstack` already exists, change only its `enabled` value. Preserve comments and valid JSONC syntax when the file uses JSONC. Validate the file after editing it.
+Preserve every unrelated top-level setting and every other plugin entry. If `plugins.jstack` already exists, change only its `enabled` value. Preserve comments and valid JSONC syntax when the file uses JSONC. Validate the file after editing it.
 
 Reload the target project or start a fresh agent rooted there. Verify that these shared pstack skills resolve from project scope:
 

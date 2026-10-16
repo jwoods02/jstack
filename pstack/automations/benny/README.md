@@ -13,7 +13,7 @@ the files in this directory are dormant setup and automation sources. they do no
 ```json
 {
 	"plugins": {
-		"pstack": { "enabled": true }
+		"jstack": { "enabled": true }
 	}
 }
 ```
