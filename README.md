@@ -19,7 +19,7 @@ The models were chosen with two sources, [CursorBench 4.0](https://cursor.com/cu
 - Gemini only takes a second seat on panels that an Anthropic agent leads.
 - Opus runs at High by default and at Extra High only where deeper reasoning changes the outcome.
 - Agents never start on Max but may escalate to it for the hardest work.
-- Each level is used as written, without the usual per-job lowering in `poteto-mode`.
+- Each level is used as written, without the usual per-job lowering in `j-mode`.
 
 | Role | Model | Why |
 |---|---|---|
