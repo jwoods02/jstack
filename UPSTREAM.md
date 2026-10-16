@@ -16,13 +16,20 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 | `pstack/` | `jstack/` |
 | `~/.cursor/rules/pstack-models.mdc`, written by upstream setup | `jstack/rules/jstack-models.mdc`, shipped in the plugin |
 | `pstack/skills/setup-pstack/` | removed |
+| `pstack/skills/poteto-mode/` | `jstack/skills/j-mode/` |
+| `pstack/skills/poteto-help/` | `jstack/skills/j-help/` |
+| `pstack/agents/poteto-agent.md` | `jstack/agents/j-agent.md` |
+| `pstack/docs/guide/02-poteto-mode.md` | `jstack/docs/guide/02-j-mode.md` |
 
 The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rename-upstream.py) reproduces it on files or on an upstream diff:
 
 - Paths, code spans and link targets become `jstack`.
 - Markdown prose becomes `JStack`.
 - It matches whole words only, so "upstack" is untouched.
-- Lines that link to `github.com/cursor/plugins` are left as written.
+- `poteto-mode`, `poteto-agent` and `poteto-help` become `j-mode`, `j-agent` and `j-help` everywhere. That includes the scripts' package name (`@cursor-skill/j-mode-tools`) and their install-key file (`.j-mode-tools-install-key`).
+- The display names "Poteto Mode", "Poteto mode", "Poteto subagent" and "Poteto help" become "J Mode", "J mode", "J subagent" and "J help".
+- "poteto's agent style" becomes "James's agent style", "is my style" becomes "is James's style", and the test branch prefix `poteto/` becomes `j/`.
+- Lines that link to `github.com/cursor/plugins` are left as written, so attribution to poteto stays.
 
 ## Removed
 
@@ -38,19 +45,19 @@ The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rena
 
 All paths are inside `jstack/`.
 
-- **Everywhere:** "pstack" becomes JStack, per the rename rules above.
+- **Everywhere:** "pstack" becomes JStack, and the poteto persona names become the `j-` names, per the rename rules above.
 - **`README.md`:** poteto's first-person intro is replaced by a short JStack intro that credits poteto. Install, getting started and the model split change as described under setup.
 - **`.cursor-plugin/plugin.json` and `plugin.json`:** these fields change.
   - The name is `jstack` and the display name is `jstack`.
   - The homepage and repository point to `jwoods02/jstack`.
   - The Cursor manifest adds `"rules": "./rules/"`.
-- **`skills/poteto-help/SKILL.md`:** public-copy links point to `jwoods02/jstack`. The setup changes below also apply.
+- **`skills/j-help/SKILL.md`:** public-copy links point to `jwoods02/jstack`. The setup changes below also apply.
 - **Setup removed:**
-  - `skills/poteto-mode/SKILL.md`: the Subagents section points to the shipped rule instead of `/setup-pstack`.
+  - `skills/j-mode/SKILL.md`: the Subagents section points to the shipped rule instead of `/setup-pstack`.
   - `skills/arena/SKILL.md`, `swarm/SKILL.md` and `interrogate/SKILL.md`: the user-level rule path becomes "the `jstack-models.mdc` rule".
-  - `skills/poteto-help/SKILL.md`: the model-rule check, the first-run setup offer, the setup steps and the setup table row are removed. The cost and troubleshooting advice now point to the rule file.
+  - `skills/j-help/SKILL.md`: the model-rule check, the first-run setup offer, the setup steps and the setup table row are removed. The cost and troubleshooting advice now point to the rule file.
   - `docs/guide/01-setup.md`: rewritten as "Install and run a first task", with no setup and no verification offer.
-  - `docs/guide/README.md`, `02-poteto-mode.md`, `04-design.md` and `10-recipes-and-pitfalls.md`: links and setup references updated.
+  - `docs/guide/README.md`, `02-j-mode.md`, `04-design.md` and `10-recipes-and-pitfalls.md`: links and setup references updated.
   - `automations/benny/FOR_AGENTS.md`, `README.md` and `skills/setup-benny/SKILL.md`: the settings snippet enables `jstack`.
 
 ## How to merge a new release
