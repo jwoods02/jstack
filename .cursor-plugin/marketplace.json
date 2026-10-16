@@ -1,0 +1,18 @@
+{
+	"name": "jstack",
+	"owner": {
+		"name": "James Woods"
+	},
+	"metadata": {
+		"description": "JStack: James Woods's personal adaptation of pstack by Lauren Tan (poteto). Upstream: https://github.com/cursor/plugins/tree/main/pstack",
+		"upstream": "https://github.com/cursor/plugins/tree/main/pstack",
+		"upstreamAuthor": "Lauren Tan (poteto)"
+	},
+	"plugins": [
+		{
+			"name": "jstack",
+			"source": "jstack",
+			"description": "James Woods's personal adaptation of pstack by Lauren Tan (poteto), Cursor-only, with his model choices baked in. Upstream: https://github.com/cursor/plugins/tree/main/pstack"
+		}
+	]
+}
