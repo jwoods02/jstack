@@ -1,6 +1,6 @@
 # JStack
 
-JStack is James Woods's personal, Cursor-only version of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan. It starts with every setup step already done, and it will be cut down and adapted to how James works, one step at a time.
+JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). It is Cursor-only. It starts with every setup step already done, and it will be cut down and adapted to how James works, one step at a time.
 
 ## v1 scope
 
@@ -54,4 +54,4 @@ Later versions will cut and change JStack, one PR at a time, from a backlog agre
 
 ## License
 
-The upstream code (pstack) is MIT-licensed, copyright (c) 2026 Lauren Tan. See [`jstack/LICENSE`](jstack/LICENSE).
+MIT. The upstream code (pstack) is copyright (c) 2026 Lauren Tan, and James Woods's changes are copyright (c) 2026 James Woods. See [`jstack/LICENSE`](jstack/LICENSE).

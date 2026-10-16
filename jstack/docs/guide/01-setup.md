@@ -1,6 +1,6 @@
 # Install and run a first task
 
-In this page you install the plugin and run your first task. The models are already chosen, so there is nothing to configure.
+In this page you install the plugin and run your first task. The plugin is James Woods's adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan (poteto). The models are already chosen, so there is nothing to configure.
 
 ## Install the plugin
 

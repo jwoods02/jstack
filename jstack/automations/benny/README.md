@@ -1,6 +1,6 @@
 # benny
 
-benny gives you two cursor automations for slack issue reports. one triages each report. the other reproduces confirmed bugs and may prepare a small draft fix.
+benny gives you two cursor automations for slack issue reports. one triages each report. the other reproduces confirmed bugs and may prepare a small draft fix. it ships with JStack, James Woods's adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan (poteto).
 
 the files in this directory are dormant setup and automation sources. they do not appear as slash skills.
 

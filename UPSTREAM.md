@@ -29,7 +29,7 @@ The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rena
 - `poteto-mode`, `poteto-agent` and `poteto-help` become `j-mode`, `j-agent` and `j-help` everywhere. That includes the scripts' package name (`@cursor-skill/j-mode-tools`) and their install-key file (`.j-mode-tools-install-key`).
 - The display names "Poteto Mode", "Poteto mode", "Poteto subagent" and "Poteto help" become "J Mode", "J mode", "J subagent" and "J help".
 - "poteto's agent style" becomes "James's agent style", "is my style" becomes "is James's style", and the test branch prefix `poteto/` becomes `j/`.
-- Lines that link to `github.com/cursor/plugins` are left as written, so attribution to poteto stays.
+- Lines that credit upstream are left as written, so attribution to pstack and poteto stays. These are lines that link to `github.com/cursor/plugins` or name Lauren Tan.
 
 ## Removed
 
@@ -48,9 +48,19 @@ All paths are inside `jstack/`.
 - **Everywhere:** "pstack" becomes JStack, and the poteto persona names become the `j-` names, per the rename rules above.
 - **`README.md`:** poteto's first-person intro is replaced by a short JStack intro that credits poteto. Install, getting started and the model split change as described under setup.
 - **`.cursor-plugin/plugin.json` and `plugin.json`:** these fields change.
-  - The name is `jstack` and the display name is `jstack`.
+  - The name is `jstack` and the display name is `JStack`.
+  - The description credits pstack, Lauren Tan (poteto) and the upstream link.
+  - The author is "James Woods, adapting pstack by Lauren Tan".
+  - The keywords add `poteto`. A `pstack` keyword would be renamed by the script, so the description and author carry that credit instead.
   - The homepage and repository point to `jwoods02/jstack`.
   - The Cursor manifest adds `"rules": "./rules/"`.
+- **Attribution:** these places now credit pstack by Lauren Tan (poteto).
+  - `LICENSE` adds James Woods's copyright line for JStack changes.
+  - The descriptions of `skills/j-mode/SKILL.md`, `skills/j-help/SKILL.md` and `agents/j-agent.md`.
+  - The opening line of `skills/j-help/SKILL.md`.
+  - The top of `docs/guide/README.md` and `docs/guide/01-setup.md`.
+  - `automations/benny/README.md` and `automations/benny/skills/setup-benny/SKILL.md`.
+- **`docs/guide/02-j-mode.md`:** the router illustration's alt text no longer names the command, because the picture shows the original upstream name.
 - **`skills/j-help/SKILL.md`:** public-copy links point to `jwoods02/jstack`. The setup changes below also apply.
 - **Setup removed:**
   - `skills/j-mode/SKILL.md`: the Subagents section points to the shipped rule instead of `/setup-pstack`.

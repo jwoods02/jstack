@@ -1,5 +1,7 @@
 # The JStack guide
 
+JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan (poteto). This guide and its illustrations come from pstack's guide, so the pictures show pstack's original command names.
+
 JStack works best when you stop micromanaging the agent. You describe what you want and how you'll know it's done. `/j-mode` picks the playbook, runs the other skills as the steps need them, and shows you the evidence. This guide teaches that habit with realistic prompts.
 
 Here's what you'll learn:

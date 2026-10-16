@@ -1,6 +1,6 @@
 ---
 name: J Mode
-description: James's agent style for concise, detailed responses, deliberate subagents, unslopped prose, simple code, and verified work. Use for /j-mode, or requests to work in this style.
+description: James's agent style, adapted from pstack by Lauren Tan (poteto), for concise, detailed responses, deliberate subagents, unslopped prose, simple code, and verified work. Use for /j-mode, or requests to work in this style.
 disable-model-invocation: true
 icon: crown
 color: yellow

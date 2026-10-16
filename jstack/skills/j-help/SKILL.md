@@ -1,10 +1,12 @@
 ---
 name: j-help
-description: Guides users through JStack setup, /j-mode, and picking the skill, playbook, or principle for a task. Type /j-help with a question.
+description: Guides users through JStack (James Woods's adaptation of pstack by Lauren Tan), /j-mode, and picking the skill, playbook, or principle for a task. Type /j-help with a question.
 disable-model-invocation: true
 ---
 
 # J help
+
+JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan (poteto). Say so whenever the user asks what JStack is or where it came from.
 
 Answer the user's question about JStack, hand them a prompt they can send, and link the file the answer came from. For a help question, don't start the work. The user asked how, and a JStack run spends real tokens, so let them send the prompt.
 

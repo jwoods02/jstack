@@ -1,6 +1,6 @@
 # JStack
 
-JStack is James Woods's personal, Cursor-only version of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by [poteto](https://x.com/poteto) (Lauren Tan). the skills, playbooks, and principles below are poteto's. the "i" in this file is poteto.
+JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). it is Cursor-only. the skills, playbooks, principles, and logo (poteto's avatar) come from pstack, and the "i" in this file is poteto.
 
 the idea: if you want to go fast, go deep first. JStack helps you write less, but higher quality code. when you can go deep on one agent and trust it to write good, verifiable code, you can truly parallelize with confidence. start multiple agents up with `j-mode` and trust that they'll apply rigorous engineering principles to their work.
 
