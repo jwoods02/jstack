@@ -7,8 +7,8 @@
 Paths, code spans and link targets get `jstack`; Markdown prose gets
 `JStack`. Whole words only, so "upstack" is untouched. The persona names
 poteto-mode, poteto-agent and poteto-help become j-mode, j-agent and j-help.
-Lines that link to github.com/cursor/plugins name upstream and are left as
-written.
+Lines that credit upstream (they link to github.com/cursor/plugins or name
+Lauren Tan) are left as written.
 """
 import os
 import re
@@ -28,7 +28,7 @@ PERSONA = [
 
 
 def rename(line, markdown):
-    if "github.com/cursor/plugins" in line:
+    if "github.com/cursor/plugins" in line or "Lauren Tan" in line:
         return line
     for pattern, replacement in PERSONA:
         line = re.sub(pattern, replacement, line)
