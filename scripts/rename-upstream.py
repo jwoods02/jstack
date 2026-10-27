@@ -8,7 +8,8 @@ Paths, code spans and link targets get `jstack`; Markdown prose gets
 `JStack`. Whole words only, so "upstack" is untouched. The persona names
 poteto-mode, poteto-agent and poteto-help become j-mode, j-agent and j-help.
 Lines that credit upstream (they link to github.com/cursor/plugins or name
-Lauren Tan) are left as written.
+Lauren Tan) are left as written. In --patch mode, diffs for upstream paths
+JStack removed are dropped and listed on stderr.
 """
 import os
 import re
@@ -17,6 +18,12 @@ import sys
 MARKDOWN = (".md", ".mdc")
 WORD = re.compile(r"\bpstack\b")
 CODE_OR_LINK = re.compile(r"`[^`]*`|\]\([^)]*\)")
+REMOVED = (
+    "pstack/skills/setup-pstack/",
+    "pstack/skills/poteto-mode/playbooks/",
+    "pstack/skills/poteto-mode/scripts/",
+    "pstack/docs/guide/",
+)
 PERSONA = [
     (r"\bpoteto-(mode|agent|help)\b", r"j-\1"),
     (r"\bPoteto (Mode|mode|subagent|help)\b", r"J \1"),
@@ -40,11 +47,16 @@ def rename(line, markdown):
 
 
 def rename_patch():
-    markdown = False
+    markdown = skipping = False
     for line in sys.stdin:
         if line.startswith("diff --git "):
+            path = line.split()[2][2:]
+            skipping = path.startswith(REMOVED)
+            if skipping:
+                print(f"dropped (removed in JStack): {path}", file=sys.stderr)
             markdown = line.rstrip().endswith(MARKDOWN)
-        sys.stdout.write(rename(line, markdown))
+        if not skipping:
+            sys.stdout.write(rename(line, markdown))
 
 
 def rename_files(roots):

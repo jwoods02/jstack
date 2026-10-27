@@ -15,29 +15,43 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 |---|---|
 | `pstack/` | `jstack/` |
 | `~/.cursor/rules/pstack-models.mdc`, written by upstream setup | `jstack/rules/jstack-models.mdc`, shipped in the plugin |
-| `pstack/skills/setup-pstack/` | removed |
-| `pstack/skills/poteto-mode/` | `jstack/skills/j-mode/` |
+| `pstack/skills/setup-pstack/` | removed (v1) |
+| `pstack/skills/poteto-mode/SKILL.md` | `jstack/skills/j-mode/SKILL.md`, rewritten in v2 |
+| `pstack/skills/poteto-mode/playbooks/` | removed (v2) |
+| `pstack/skills/poteto-mode/scripts/` | removed (v2) |
+| `pstack/skills/poteto-mode/references/` | `jstack/skills/j-mode/references/` |
 | `pstack/skills/poteto-help/` | `jstack/skills/j-help/` |
 | `pstack/agents/poteto-agent.md` | `jstack/agents/j-agent.md` |
-| `pstack/docs/guide/02-poteto-mode.md` | `jstack/docs/guide/02-j-mode.md` |
+| `pstack/docs/guide/` | removed (v2), replaced by `jstack/docs/guide.md` |
 
 The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rename-upstream.py) reproduces it on files or on an upstream diff:
 
 - Paths, code spans and link targets become `jstack`.
 - Markdown prose becomes `JStack`.
 - It matches whole words only, so "upstack" is untouched.
-- `poteto-mode`, `poteto-agent` and `poteto-help` become `j-mode`, `j-agent` and `j-help` everywhere. That includes the scripts' package name (`@cursor-skill/j-mode-tools`) and their install-key file (`.j-mode-tools-install-key`).
+- `poteto-mode`, `poteto-agent` and `poteto-help` become `j-mode`, `j-agent` and `j-help` everywhere.
 - The display names "Poteto Mode", "Poteto mode", "Poteto subagent" and "Poteto help" become "J Mode", "J mode", "J subagent" and "J help".
 - "poteto's agent style" becomes "James's agent style", "is my style" becomes "is James's style", and the test branch prefix `poteto/` becomes `j/`.
 - Lines that credit upstream are left as written, so attribution to pstack and poteto stays. These are lines that link to `github.com/cursor/plugins` or name Lauren Tan.
+- In `--patch` mode, diffs for removed upstream paths are dropped and listed on stderr.
 
 ## Removed
 
-- `skills/setup-pstack/`. Setup is done once; its result is `rules/jstack-models.mdc`.
+- `skills/setup-pstack/` (v1). Setup is done once, and its result is `rules/jstack-models.mdc`.
+- `skills/j-mode/playbooks/` (v2): all 23 playbooks. James's jobs in `skills/j-mode/SKILL.md` replace them.
+  - Investigation, Bug fix, Perf issue, Hillclimb, Runtime forensics, Trace forensics, Feature, Refactoring, Prototype, Visual parity.
+  - Authoring a skill, Eval, Babysit, Shipping, Autonomous run, Orchestrate, Autopilot-full, Autopilot-stack.
+  - Session pickup, Pause safely, Multi-phase plan, Worktree cleanup, Opening a PR.
+- `skills/j-mode/scripts/` (v2): the tools that only those playbooks used.
+  - The PR watcher (`watch-pr/`) and the orchestration bookkeeping (`orch/`).
+  - The plan checker (`check-plan.mjs` and its test) and the worktree audit (`worktree-audit.sh`).
+  - The Bun installer and package files (`bootstrap.ts`, `package.json`, `bun.lock`).
+- `docs/guide/` (v2): the 10-page guide, its index and its 6 images.
 
 ## Added
 
-- `jstack/rules/jstack-models.mdc`. James's model per role, in the format setup writes, shipped as an always-applied plugin rule.
+- `jstack/rules/jstack-models.mdc`. One model per role, shipped as an always-applied plugin rule. In v2 it lists James's jobs plus every skill role, and any other spawn uses `other helpers`.
+- `jstack/docs/guide.md` (v2). A one-page guide.
 - `.cursor-plugin/marketplace.json`. Lets Cursor install the plugin from this repo.
 - `scripts/rename-upstream.py`, `README.md` and `UPSTREAM.md` at the repo root.
 
@@ -45,39 +59,51 @@ The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rena
 
 All paths are inside `jstack/`.
 
-- **Everywhere:** "pstack" becomes JStack, and the poteto persona names become the `j-` names, per the rename rules above.
-- **`README.md`:** poteto's first-person intro is replaced by a short JStack intro that credits poteto. Install, getting started and the model split change as described under setup.
-- **`.cursor-plugin/plugin.json` and `plugin.json`:** these fields change.
-  - The name is `jstack` and the display name is `JStack`.
-  - The description credits pstack, Lauren Tan (poteto) and the upstream link.
-  - The author is "James Woods, adapting pstack by Lauren Tan".
-  - The keywords add `poteto`. A `pstack` keyword would be renamed by the script, so the description and author carry that credit instead.
-  - The homepage and repository point to `jwoods02/jstack`.
-  - The Cursor manifest adds `"rules": "./rules/"`.
-- **Attribution:** these places now credit pstack by Lauren Tan (poteto).
-  - `LICENSE` adds James Woods's copyright line for JStack changes.
-  - The descriptions of `skills/j-mode/SKILL.md`, `skills/j-help/SKILL.md` and `agents/j-agent.md`.
-  - The opening line of `skills/j-help/SKILL.md`.
-  - The top of `docs/guide/README.md` and `docs/guide/01-setup.md`.
-  - `automations/benny/README.md` and `automations/benny/skills/setup-benny/SKILL.md`.
-- **`docs/guide/02-j-mode.md`:** the router illustration's alt text no longer names the command, because the picture shows the original upstream name.
-- **`skills/j-help/SKILL.md`:** public-copy links point to `jwoods02/jstack`. The setup changes below also apply.
-- **Setup removed:**
-  - `skills/j-mode/SKILL.md`: the Subagents section points to the shipped rule instead of `/setup-pstack`.
-  - `skills/arena/SKILL.md`, `swarm/SKILL.md` and `interrogate/SKILL.md`: the user-level rule path becomes "the `jstack-models.mdc` rule".
-  - `skills/j-help/SKILL.md`: the model-rule check, the first-run setup offer, the setup steps and the setup table row are removed. The cost and troubleshooting advice now point to the rule file.
-  - `docs/guide/01-setup.md`: rewritten as "Install and run a first task", with no setup and no verification offer.
-  - `docs/guide/README.md`, `02-j-mode.md`, `04-design.md` and `10-recipes-and-pitfalls.md`: links and setup references updated.
-  - `automations/benny/FOR_AGENTS.md`, `README.md` and `skills/setup-benny/SKILL.md`: the settings snippet enables `jstack`.
+**Everywhere (v1).** "pstack" becomes JStack, and the poteto persona names become the `j-` names, per the rename rules above.
+
+**Manifests (v1).** These fields change in `.cursor-plugin/plugin.json` and `plugin.json`:
+
+- The name is `jstack`, and the display name is `JStack`.
+- The description credits pstack, Lauren Tan (poteto) and the upstream link.
+- The author is "James Woods, adapting pstack by Lauren Tan".
+- The keywords add `poteto`.
+- The homepage and repository point to `jwoods02/jstack`.
+- The Cursor manifest adds `"rules": "./rules/"`.
+
+**Attribution (v1).** These places credit pstack by Lauren Tan (poteto): `LICENSE`, the descriptions of `j-mode`, `j-help` and `j-agent`, the opening line of `j-help`, `README.md`, `docs/guide.md`, `automations/benny/README.md` and `automations/benny/skills/setup-benny/SKILL.md`.
+
+**Setup removed (v1).**
+
+- `skills/arena/SKILL.md`, `swarm/SKILL.md` and `interrogate/SKILL.md`: the user-level rule path becomes "the `jstack-models.mdc` rule".
+- `skills/j-help/SKILL.md`: the setup offer and the setup steps are gone, and the cost advice points to the rule file.
+- `automations/benny/FOR_AGENTS.md`, `README.md` and `skills/setup-benny/SKILL.md`: the settings snippet enables `jstack`.
+
+**James's workflow (v2).**
+
+- `skills/j-mode/SKILL.md`: rewritten as James's workflow, with Start, Jobs, PR rules, Skill triggers, Autonomy, Subagents, Writing the reply and Comments, plus a tie-break saying his standing orders win. The Principles index is kept word for word. Port only upstream changes to that index by hand.
+- `rules/jstack-models.mdc`: job lines replace the playbook lines, and every role has a line. Opus defaults to High, with Extra High only for hardest tasks, load-bearing architect and plan-review work, the arena judge and `/interrogate`.
+- `skills/how`, `why`, `swarm`, `arena`, `architect`, `interrogate` and `reflect` (each `SKILL.md`):
+  - Their fallback models are JStack's own, never Grok.
+  - Fallbacks recognise only the Claude and Gemini model families.
+  - The arena judge is always Anthropic.
+  - `swarm`'s steps are renumbered.
+- `skills/show-me-your-work/SKILL.md`: the trail reviewer uses the `trail reviewer` line, and a worker leaves that review to the coordinator.
+- `skills/no-comments/SKILL.md` and `skills/recall/SKILL.md`: they use the `comment sicko` and `other helpers` lines, and `recall` resumes via `j-mode`'s Start section.
+- `skills/benchmark-checklist/SKILL.md` and `skills/figure-it-out/SKILL.md`: no playbook references. `figure-it-out` plans a one-off run when no job fits.
+- `agents/j-agent.md`: the parent owns the job instead of a playbook.
+- `skills/j-help/SKILL.md` and its `references/`: jobs replace playbooks, links point to the one-page guide, and the recipes leave merging to James.
+- `skills/j-mode/references/bugbot-triage.md`: builders and reviewers use it, instead of the Babysit playbook.
+- `README.md`: rewritten around the jobs, keeping the skill and principle tables.
 
 ## How to merge a new release
 
 1. Add `https://github.com/cursor/plugins` as a remote named `upstream`, then fetch it.
-2. Run `git diff <last-merged> <new> -- pstack/ | python3 scripts/rename-upstream.py --patch > upstream.patch`. This maps paths to `jstack/` and renames prose the same way.
-3. Run `git apply --reject upstream.patch`. Hunks next to JStack's own changes come back as `.rej` files; resolve each one against the Changed list. When this was tested on upstream's last commit, 4 of 5 files applied cleanly, and the fifth conflicted where JStack had edited the adjacent line.
-4. Skip upstream edits to `setup-pstack`. If upstream's setup adds or renames a model role, add the role to `jstack/rules/jstack-models.mdc`, because a missing role falls back to upstream's default.
-5. Point any new reference to `/setup-pstack` or `~/.cursor/rules/pstack-models.mdc` at the shipped rule instead.
-6. Update "Last merged" and add a row to the merge log.
+2. Run `git diff <last-merged> <new> -- pstack/ | python3 scripts/rename-upstream.py --patch > upstream.patch`. This maps paths to `jstack/`, renames prose, and drops diffs for removed paths.
+3. Run `git apply --reject upstream.patch`. Hunks next to JStack's own changes come back as `.rej` files. Resolve each one against the Changed list.
+4. For `j-mode/SKILL.md`, keep JStack's version and port only upstream changes to the Principles index.
+5. If upstream adds or renames a model role, add it to `jstack/rules/jstack-models.mdc`. Until then, the new role's spawns use `other helpers`.
+6. Point any new reference to a removed playbook, tool, `/setup-pstack` or `~/.cursor/rules/pstack-models.mdc` at JStack's equivalent, or remove it.
+7. Update "Last merged" and add a row to the merge log.
 
 ## Merge log
 
