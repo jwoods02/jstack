@@ -1,6 +1,8 @@
 # JStack
 
-JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). it is Cursor-only. the skills, principles, and logo (poteto's avatar) come from pstack. the workflow in `j-mode` is James's own.
+<img src="./assets/logo.svg" alt="JStack logo" width="96" />
+
+JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). it is Cursor-only. the skills and principles come from pstack. the workflow in `j-mode` is James's own.
 
 ## install
 

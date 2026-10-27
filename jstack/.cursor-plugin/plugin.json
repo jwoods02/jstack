@@ -9,7 +9,7 @@
 	"homepage": "https://github.com/jwoods02/jstack/tree/main/jstack",
 	"repository": "https://github.com/jwoods02/jstack",
 	"license": "MIT",
-	"logo": "assets/logo.png",
+	"logo": "assets/logo.svg",
 	"keywords": [
 		"jstack",
 		"j-mode",
