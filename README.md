@@ -17,13 +17,13 @@ The models were chosen with two sources, [CursorBench 4.0](https://cursor.com/cu
 
 - Anthropic leads every role, and no OpenAI models are used.
 - Gemini only takes a second seat on panels that an Anthropic agent leads.
-- Opus runs at High by default and at Extra High only where deeper reasoning changes the outcome.
+- Opus runs at High by default and at Extra High only where deeper reasoning changes the outcome. Code delegates follow James's builder rule instead, starting on Opus Medium.
 - Agents never start on Max but may escalate to it for the hardest work.
 - Each level is used as written, without the usual per-job lowering in `j-mode`.
 
 | Role | Model | Why |
 |---|---|---|
-| Code delegates (feature, refactoring, bug fix, perf, hillclimb) | Sonnet 5.5 Extra High | 53.1% (CursorBench) and 52 (Artificial Analysis), at about 70% of Opus High's cost per task; Opus reviews the work |
+| Code delegates (feature, refactoring, bug fix, perf, hillclimb) | Opus 5.5 Medium by default; Opus 5.5 High for a very complex change; Sonnet 5.5 High for very well-planned work; Sonnet 5.5 Extra High for a simple change with some ambiguity | James's builder rule (27 Oct). Opus Medium scores 52.5% on CursorBench at $2.91 a task; agents pick the tier from one line in the rule file |
 | Hardest tasks | Opus 5.5 Extra High | The gnarliest changes, where extra reasoning pays off |
 | Judgment and prose | Opus 5.5 High | Everyday judgment; High ties Extra High on CursorBench (56.0%) at 57% of the cost |
 | `how` explainer | Opus 5.5 High | Synthesizes what the explorers already traced, with the code at hand |

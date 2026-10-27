@@ -8,11 +8,12 @@ alwaysApply: true
 # JStack: James Woods's choices, picked by CursorBench and Artificial Analysis scores. Anthropic leads every role; no OpenAI models.
 # Gemini appears only as a second seat on panels an Anthropic agent leads; it never owns a task on its own.
 # Each line is already matched to its job: use the level as written and don't lower it. Raise one step only for the hardest or subtlest work.
+# Code delegates (feature, refactoring, bug-fix, perf-issue, hillclimb) start on Opus 5.5 Medium. Pick claude-opus-5-5-high for a very complex change, claude-sonnet-5-5-high for very well-planned work, or claude-sonnet-5-5-xhigh for a simple change with some ambiguity.
 # Never start an Anthropic model on max. Escalating to max for the hardest or subtlest work, as j-mode allows, is fine.
-feature, refactoring: claude-sonnet-5-5-xhigh
-bug-fix: claude-sonnet-5-5-xhigh
-perf-issue: claude-sonnet-5-5-xhigh
-hillclimb: claude-sonnet-5-5-xhigh
+feature, refactoring: claude-opus-5-5-medium
+bug-fix: claude-opus-5-5-medium
+perf-issue: claude-opus-5-5-medium
+hillclimb: claude-opus-5-5-medium
 judgment and prose: claude-opus-5-5-high
 hardest tasks: claude-opus-5-5-xhigh
 how explorer: claude-sonnet-5-5-xhigh
