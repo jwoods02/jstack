@@ -25,8 +25,8 @@ To keep `/j-mode` on for the whole chat, pick it from the `/` menu and press Opt
 - **Investigator.** Answers "how does X work?" or "why is Y like this?". No PR.
 - **Architect.** Designs a big or unclear change and ends with a short decision list for you to answer.
 - **Builder.** One per PR. Opens a draft PR, gets CI green and says "ready for review".
-- **Reviewer.** A fresh agent per PR once CI is green, at most three rounds. Big changes get `/interrogate`.
-- **Parallel builders.** Up to three builder and reviewer pairs at once, each on its own PR.
+- **Reviewer.** A fresh agent per PR once CI is green, at most three rounds. Big changes get three lens reviewers, then a milestone review before you merge.
+- **Parallel builders.** As many builder and reviewer pairs as there are independent tasks. One builder per PR or task.
 
 In a Project, the coordinator chat picks the jobs and briefs you. In a single chat, the chat does the job itself.
 
@@ -35,6 +35,7 @@ In a Project, the coordinator chat picks the jobs and briefs you. In a single ch
 - PRs stay draft. No agent marks a PR ready, merges it or tags a release. You do all three.
 - Production is read-only unless you allow a specific action.
 - Your standing orders win over anything else in JStack.
+- JStack is the default for every Project. A Project's preferences hold only what is specific to that project.
 
 ## Prompts worth copying
 

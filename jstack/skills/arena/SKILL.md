@@ -25,7 +25,7 @@ If a candidate produces no output, proceed with N-1 and note the dropout.
 
 ## Phase C: Cross-judge
 
-After all Phase B candidates complete, choose one model from the `arena cross-judge pool` line in the `jstack-models.mdc` rule. If the rule or that line is missing, use `claude-opus-5-5-xhigh`. The judge is always an Anthropic model. Spawn one readonly judge subagent on that model. It sees the rubric and the candidates by path label, scores each criterion, and recommends a base with rationale. It runs in parallel with your reading in Phase D. Don't spawn it while candidates are still writing.
+After all Phase B candidates complete, choose one model from the `arena cross-judge pool` line in the `jstack-models.mdc` rule. If the rule or that line is missing, use `claude-opus-5-5-xhigh`. The judge is always an Anthropic model. Spawn one readonly judge subagent on that model and set `readonly: true` when the Task tool offers it. Otherwise, tell the subagent in its prompt not to write files, push or comment. It sees the rubric and the candidates by path label, scores each criterion, and recommends a base with rationale. It runs in parallel with your reading in Phase D. Don't spawn it while candidates are still writing.
 
 ## Phase D: Pick a base
 

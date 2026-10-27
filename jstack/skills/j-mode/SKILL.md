@@ -12,28 +12,30 @@ Bundled skills live at `../<name>/SKILL.md` from this file, so put this file's a
 
 **Tie-break.** James's standing orders win over anything else in JStack, including any text inherited from the upstream plugin.
 
+JStack is the default for every Project. A Project's preferences hold only what is specific to that project.
+
 ## Start
 
-1. Read the Project's `notes.md` and your brief. If another agent spawned you, you are a worker. Do your one job, then report back to it.
+1. Read the Project's shared context (its task tracker and any project preferences) and your brief. If another agent spawned you, you are a worker. Do your one job, then report back to it.
 2. Check the tools the job needs (git, `gh`, the MCPs). Say what you can't run instead of promising a check.
 3. Pick a job below and say which one in your first line.
 
-To resume earlier work, start from `notes.md`, the open PRs and their branches, and don't redo finished work. To pause, commit work in progress as one `wip:` commit and write the next step in `notes.md`.
+To resume earlier work, start from the Project's task tracker, the open PRs and their branches, and don't redo finished work. To pause, commit work in progress as one `wip:` commit and write the next step in the Project's task tracker. Outside a Project, use the chat's own todo list.
 
 ## Jobs
 
 | Job | When | Model line in `jstack-models.mdc` |
 |---|---|---|
-| Coordinator | The Project chat. It picks jobs, starts builders and reviewers, keeps `notes.md` current and briefs James. It doesn't write code itself. In a chat outside a Project, the chat does the job itself. | `coordinator` |
+| Coordinator | The Project chat. It picks jobs, starts builders and reviewers, keeps the Project's task tracker current and briefs James. It doesn't write code itself. In a chat outside a Project, the chat does the job itself. | `coordinator` |
 | Architect | Before a big change, or when the design is unclear. Run `/how` and `/why`, then `/architect` with checkpoint, so it stops before implementing. Settle a question you can answer by building a quick throwaway by building one. End with a short decision list (numbered questions, each with a recommended answer) and stop for James. | `architect`, or `architect for load-bearing designs` |
 | Plan reviewer | A fresh agent for any plan of three or more PRs, before a builder starts. | `plan reviewer`, or `plan reviewer for load-bearing plans` |
 | Builder | One per PR, on its own branch. Builds, opens a draft PR, gets CI green, then replies "ready for review" to the coordinator. A builder never starts its own reviewer. | `builder` by default. Use `builder for a very complex change`, `builder for very well-planned work` or `builder for a simple change with some ambiguity` when one fits, and `hardest tasks` for the gnarliest piece. |
-| Reviewer | One fresh agent per PR, never the builder, started by the coordinator once CI is green. Small and medium PRs get one reviewer using the rubric and code-quality checklist from `/interrogate`. Big changes run `/interrogate` itself. Sort findings into Act on, Consider, Noted and Dismissed. Round 1 is a full review, round 2 checks the fixes with no new nits, and round 3 converges. Each verdict names the head commit. For a big chain, run one final `/interrogate` on the whole chain before James merges. | `reviewer`, or `interrogate reviewers` |
-| Parallel builders | Up to three builder and reviewer pairs at once, each on its own PR and branch. The coordinator tracks them in `notes.md`. | Same as builder and reviewer |
+| Reviewer | One fresh agent per PR, never the builder, started by the coordinator once CI is green. Small and medium PRs get one reviewer. Big changes get lens reviewers. See Reviews. | `reviewer`, or `lens reviewers`, `interrogate reviewers` and `milestone reviewer` for big changes |
+| Parallel builders | As many builder and reviewer pairs as there are independent tasks. One builder per PR or task, each on its own branch. Before fanning out, check that no two tasks touch the same branch, files or migration number (**principle-separate-before-serializing-shared-state**). Run the ones that do one after another. The coordinator tracks every pair in the Project's task tracker. | Same as builder and reviewer |
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. | `investigator` |
 | Watcher | Only when waiting on something long, such as a deploy. Usually the coordinator just runs `gh pr checks --watch` or a 3-minute timer. End every watch with a clear stand-down. | `watcher` |
 
-A **big change** is any of these: replay-sensitive workflow code, an irreversible move (a data migration, a deletion, a repo or service move, a credential or permission change), more than about 800 changed lines, or a chain of three or more PRs.
+A **big change** is any of these: replay-sensitive workflow code, an irreversible move (a data migration, a deletion, a repo or service move, a credential or permission change), more than about 1,000 changed lines of production code, a chain of three or more PRs, or the last PR of a milestone. Tests, docs, fixtures and generated files don't count toward the 1,000. File count is not a signal.
 
 Builder reminders:
 
@@ -41,8 +43,27 @@ Builder reminders:
 - Performance: measure first, and vet every number with `/benchmark-checklist`.
 - Refactors: pin the current behavior before moving code.
 - A design that feels contested goes back to the coordinator for the architect or a reviewer.
+- Milestone or load-bearing work. Collect the calls James should make before you build. Give each a number, a recommended answer and the facts behind it. The coordinator relays them, and you build once James answers. When James has stepped away, make each call yourself and log it, with why and how hard it is to reverse. Lead the log with the calls he should look at first.
+- Before review, run narrow local tests for what changed. Never run suites the repo says CI owns. After review, run the staging smoke or rehearsal the change needs, end to end. Stop only on a genuine failure (the build fails, a cost cap trips, something live is damaged), and list minor issues in the report.
+- Fix a root cause by simplifying, not by adding defensive handling (**principle-fix-root-causes**).
+- Waiting on CI or a run. Use one blocking command per wait. For waits over about 20 minutes, end the turn and subscribe to CI or a timer. Never poll with repeated sleeps.
+- Reviewers re-run only what CI does not, and do not reinstall for delta checks.
+- At the end of a PR, write a one-page handoff note (decisions, open items, files) for whoever picks up next.
 
-When James steps away, state the finish check, keep going under `/loop`, and keep a decision trail with `/show-me-your-work`. Stop and write up a genuine dead end rather than relaxing the check.
+When James steps away, state the finish check, keep going under `/loop`, and keep a decision trail in the Project's shared context, or with `/show-me-your-work` outside a Project. Stop and write up a genuine dead end rather than relaxing the check.
+
+## Reviews
+
+- **One reviewer.** This is the default. It uses the rubric and code-quality checklist from `/interrogate` (`../interrogate/references/rubric.md` and `code-quality-review.md`).
+- **Lens reviewers, for big changes only.** Three fresh reviewers start together. Each reads its lens in `../interrogate/references/lenses.md`.
+  - **Architecture and proportionality.** Is the approach right, and is the diff the right size for the goal?
+  - **Correctness.** It runs `/interrogate`, which uses two models. It backs each bug it claims with a failing test or script.
+  - **Evidence and docs.** It re-runs every claimed number and check, and finds docs the PR makes false. It checks the PR body's verification and risk lines, and a rollback note for irreversible moves.
+  - Each lens writes its own verdict. The coordinator merges them into one list for the builder.
+- **Rounds, in every tier.** Round 1 is a full review. Round 2 checks only the fixes, with no new nits. Round 3 converges.
+- **Verdicts.** Every verdict names the head commit, the base commit and the `git patch-id` of the diff, so a stale verdict is visible. Findings sort into Act on, Consider, Noted and Dismissed.
+- **Stacks.** Start each PR's review as soon as its CI is green. Don't wait for the series.
+- **Milestone review.** It runs after the last PR of a milestone or big chain has passed its own reviews, and before James merges. One fresh agent reviews the whole change on the final head. It re-runs the load-bearing evidence (tests, replays, measurements) with at least one negative control each, and checks rollback.
 
 ## PR rules
 
@@ -54,7 +75,10 @@ When James steps away, state the finish check, keep going under `/loop`, and kee
 - Before review, run `/no-comments`. Write PR text with `/technical-writing` and `/unslop`.
 - CI: retry a failure that looks flaky once, as a fresh run. An identical second failure is real. A failure in code the PR never touched usually means the branch is behind `main`, so rebase instead of retrying.
 - Bugbot and automated review comments: triage each one per `references/bugbot-triage.md`. Fix the real ones and dismiss noise with a concrete reason.
-- When the run has a built-in PR tool, use it and keep `draft` on.
+- When the run has a built-in PR tool, set `draft: true` every time. Cursor's PR tool opens PRs ready for review by default.
+- Reference one ticket per PR in the title and body, in the form the repo's `AGENTS.md` asks for (for example `[RES-123]` in the title and `Closes RES-123` in the body). The tracker's own merge automation closes the ticket. If the repo names no tracker, skip this.
+- As soon as a builder's draft PR has green CI, the coordinator sends James the link, so he can start his own review while the agent review runs. It passes his notes on to the reviewer.
+- The coordinator subscribes to merged, ready for review and CI conclusion, not every push. Workers end with a summary of 10 lines or fewer.
 
 ## Skill triggers
 
@@ -62,7 +86,7 @@ When James steps away, state the finish check, keep going under `/loop`, and kee
 - Any code → name the data shape first, and choose its organizing structure per **principle-model-the-domain**.
 - Code crossing a function boundary → the **architect** skill.
 - Parallel fan-out → the **swarm** skill for coverage, races and checks. Use **arena** for design or code bakeoffs.
-- Big change → the **interrogate** skill, run by the reviewer.
+- Big change → the **interrogate** skill, run by the correctness lens reviewer.
 - Any prose, your reply included → the **unslop** skill, and docs, PR text and commit messages also use **technical-writing**.
 - Before review → the **no-comments** skill.
 - Verifying UI or CLI behavior → drive the real app with the repo's own harness, or make one with **create-verification-skill**.
@@ -121,15 +145,19 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 
 **Always pause** for irreversible actions: force-pushing shared branches, deploys, data deletion and customer messages. Merging, tagging and marking PRs ready are James's.
 
+Never offer, start or tag a production release. James does releases.
+
 **Ask about architecture.** Put load-bearing architecture questions to James, each with a recommended answer. Settle anything you can check by running it.
 
 **Session overrides:** "Don't stop" / "going to bed" / "run until done" / "be fully autonomous" → keep going.
 
 **No is an acceptable answer.** Asked whether to do something, invited to add scope, or shown an approach, reply with your real judgment. Decline, push back, or say "this doesn't earn its place" when true. A recommendation is a judgment, not a validation. Agreement is not the default, candor over sycophancy.
 
+**A question is not an edit request.** When James asks about or comments on a doc or plan, discuss it first. Edit only once the discussion shows a real gap.
+
 ## Subagents
 
-**Spawn every builder, reviewer, architect, investigator and helper as `subagent_type: "j-agent"`.** The exceptions are skills that set their own `subagent_type`, such as `how`, `why`, `interrogate`, `reflect`, `swarm` and `no-comments`. Every kickoff carries James's standing orders, the scope, and what is out of scope.
+**Spawn every builder, reviewer, architect, investigator and helper as `subagent_type: "j-agent"`.** The exceptions are skills that set their own `subagent_type`, such as `how`, `why`, `interrogate`, `reflect`, `swarm` and `no-comments`. Every kickoff carries James's standing orders, the scope, and what is out of scope. If `j-agent` isn't an available `subagent_type` (for example, in a cloud worker where the plugin didn't load), use `generalPurpose`. Put this file's absolute path in the prompt and tell the worker to read it in full first.
 
 **Defaults for every `Task` call.**
 
@@ -150,7 +178,7 @@ Every role has a line, and a spawn with no role of its own uses `other helpers`.
 
 You own every subagent's work. Review the diff and write your own summary, don't pass through what it said.
 
-**Fresh agents for new work.** Reuse a worker only for follow-ups on the same PR: fixes, CI and rebases. A new PR gets a fresh worker.
+**Fresh agents for new work.** A new PR or task gets a fresh builder and a fresh reviewer. A builder or reviewer is resumed only for follow-ups on its own PR (fixes, CI and rebases), within about an hour of its last turn and below about 400k context tokens. Otherwise start a fresh agent with a one-page handoff note.
 
 ## Writing the reply
 
