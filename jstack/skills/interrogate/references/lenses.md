@@ -42,7 +42,7 @@ Every lens follows these rules.
 - Run `/interrogate` on the diff against the stated intent.
 - Back each bug you claim with a failing test or script. Commit nothing. Put the test or script in the verdict so the builder can rerun it.
 - A finding with no failing test is labeled "reasoned, not tested", and it can't be Act on unless the reasoning is a proof.
-- Check retries, restarts, partial failures, and concurrent writers. Look for state that a second run can't recover from.
+- Check retries, restarts, partial failures and concurrent writers. Look for state that a second run can't recover from.
 - Check that each new test fails when the behavior breaks.
 
 **Handoff.** A design objection goes to the architecture lens. A false claim in the PR body, an unverified number or a stale doc goes to the evidence and docs lens. Write it as "outside my lens, for the architecture reviewer" or "outside my lens, for the evidence and docs reviewer", with the file and line.
