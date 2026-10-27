@@ -23,6 +23,8 @@ REMOVED = (
     "pstack/skills/poteto-mode/playbooks/",
     "pstack/skills/poteto-mode/scripts/",
     "pstack/docs/guide/",
+    "pstack/skills/make-bot-ui/",
+    "pstack/assets/logo.png",
 )
 PERSONA = [
     (r"\bpoteto-(mode|agent|help)\b", r"j-\1"),

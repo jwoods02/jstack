@@ -23,6 +23,8 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 | `pstack/skills/poteto-help/` | `jstack/skills/j-help/` |
 | `pstack/agents/poteto-agent.md` | `jstack/agents/j-agent.md` |
 | `pstack/docs/guide/` | removed (v2), replaced by `jstack/docs/guide.md` |
+| `pstack/skills/make-bot-ui/` | removed (v2) |
+| `pstack/assets/logo.png` | removed (v2), replaced by `jstack/assets/logo.svg` |
 
 The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rename-upstream.py) reproduces it on files or on an upstream diff:
 
@@ -47,11 +49,14 @@ The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rena
   - The plan checker (`check-plan.mjs` and its test) and the worktree audit (`worktree-audit.sh`).
   - The Bun installer and package files (`bootstrap.ts`, `package.json`, `bun.lock`).
 - `docs/guide/` (v2): the 10-page guide, its index and its 6 images.
+- `skills/make-bot-ui/` (v2): the Grok Bot webhook page skill, along with its rows in `README.md` and `skills/j-help/SKILL.md`.
+- `assets/logo.png` (v2): poteto's avatar, used as the listing logo, along with the README line that credited it.
 
 ## Added
 
 - `jstack/rules/jstack-models.mdc`. One model per role, shipped as an always-applied plugin rule. In v2 it lists James's jobs plus every skill role, and any other spawn uses `other helpers`.
 - `jstack/docs/guide.md` (v2). A one-page guide.
+- `jstack/assets/logo.svg` (v2). A plain, hand-made JStack logo: a white "J" on a slate-grey rounded square. `.cursor-plugin/plugin.json` points at it, and both READMEs and the guide show it.
 - `.cursor-plugin/marketplace.json`. Lets Cursor install the plugin from this repo.
 - `scripts/rename-upstream.py`, `README.md` and `UPSTREAM.md` at the repo root.
 
@@ -83,7 +88,7 @@ All paths are inside `jstack/`.
 - `skills/j-mode/SKILL.md`: rewritten as James's workflow, with Start, Jobs, PR rules, Skill triggers, Autonomy, Subagents, Writing the reply and Comments, plus a tie-break saying his standing orders win. The Principles index is kept word for word. Port only upstream changes to that index by hand.
 - `rules/jstack-models.mdc`: job lines replace the playbook lines, and every role has a line. Opus defaults to High, with Extra High only for hardest tasks, load-bearing architect and plan-review work, the arena judge and `/interrogate`.
 - `skills/how`, `why`, `swarm`, `arena`, `architect`, `interrogate` and `reflect` (each `SKILL.md`):
-  - Their fallback models are JStack's own, never Grok.
+  - Their fallback models are JStack's own.
   - Fallbacks recognise only the Claude and Gemini model families.
   - The arena judge is always Anthropic.
   - `swarm`'s steps are renumbered.
