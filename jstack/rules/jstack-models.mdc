@@ -2,28 +2,59 @@
 description: JStack per-role model choices (overrides skill defaults)
 alwaysApply: true
 ---
-# JStack model configuration. One line per role. Delete a line to fall back to the skill default.
-# `inherit-parent` or `auto` as a value: the role runs on the parent chat model (omit Task `model`). Alias entries in a panel list still count toward its fan-out.
-# budget: per role (Opus at high by default, extra high only where deeper reasoning changes the outcome)
-# JStack: James Woods's choices, picked by CursorBench and Artificial Analysis scores. Anthropic leads every role; no OpenAI models.
-# Gemini appears only as a second seat on panels an Anthropic agent leads; it never owns a task on its own.
-# Each line is already matched to its job: use the level as written and don't lower it. Raise one step only for the hardest or subtlest work.
-# Code delegates (feature, refactoring, bug-fix, perf-issue, hillclimb) start on Opus 5.5 Medium. Pick claude-opus-5-5-high for a very complex change, claude-sonnet-5-5-high for very well-planned work, or claude-sonnet-5-5-xhigh for a simple change with some ambiguity.
-# Never start an Anthropic model on max. Escalating to max for the hardest or subtlest work, as j-mode allows, is fine.
-feature, refactoring: claude-opus-5-5-medium
-bug-fix: claude-opus-5-5-medium
-perf-issue: claude-opus-5-5-medium
-hillclimb: claude-opus-5-5-medium
-judgment and prose: claude-opus-5-5-high
+# JStack model configuration, read by j-mode and the skills. One line per role. A comma in a role name means those roles share the line.
+# Every role has a line. Any spawn without its own role uses `other helpers`. Never fall back to a model this file doesn't name.
+# James Woods's choices: Anthropic leads every role and no OpenAI models are used. Gemini only takes a second seat on a panel an Anthropic agent leads.
+# Use each level as written. Raise one step only for the hardest or subtlest work. Never start an Anthropic model on max, though escalating to max is fine.
+# Load-bearing means hard to undo: data models and storage, public APIs, cross-service boundaries, and security.
+
+# Jobs (see j-mode).
+# Opus High: the Project chat routes work and briefs James. Cursor's Project settings set it; this line records it.
+coordinator: claude-opus-5-5-high
+# Opus High: an ordinary design is cheap to change later, so Extra High adds little.
+architect: claude-opus-5-5-high
+# Opus Extra High: a load-bearing design is hard to undo, so deeper reasoning changes the outcome.
+architect for load-bearing designs: claude-opus-5-5-xhigh
+# Opus High: an ordinary plan review checks order, gaps and risk lines.
+plan reviewer: claude-opus-5-5-high
+# Opus Extra High: on a load-bearing plan, its verdict gates every builder that follows.
+plan reviewer for load-bearing plans: claude-opus-5-5-xhigh
+# Builders start on Opus 5.5 Medium. Switch to the matching line below for a very complex change, very well-planned work, or a simple change with some ambiguity.
+# Opus Medium: James's default builder (27 Oct). The plan and the reviewer carry the judgment.
+builder: claude-opus-5-5-medium
+# Opus High: a very complex change needs more reasoning than the default builder.
+builder for a very complex change: claude-opus-5-5-high
+builder for very well-planned work: claude-sonnet-5-5-high
+builder for a simple change with some ambiguity: claude-sonnet-5-5-xhigh
+# Opus Extra High: the hardest pieces (subtle concurrency, tricky algorithms, a bug two fixes have failed to kill) are where deeper reasoning changes the outcome.
 hardest tasks: claude-opus-5-5-xhigh
+# Opus High: one fresh holistic review per small or medium PR. High ties Extra High on CursorBench at about half the cost.
+reviewer: claude-opus-5-5-high
+investigator: claude-sonnet-5-5-high
+watcher: claude-sonnet-5-5-medium
+# Opus High: prose and judgment calls inside a job.
+judgment and prose: claude-opus-5-5-high
+
+# Skills.
 how explorer: claude-sonnet-5-5-xhigh
+# Opus High: explains what the explorers already traced, with the code at hand.
 how explainer: claude-opus-5-5-high
 why investigators: claude-sonnet-5-5-xhigh
-why synthesizer: claude-opus-5-5-xhigh
+# Opus High: careful synthesis, but its answer informs James and gates nothing.
+why synthesizer: claude-opus-5-5-high
 reflect tooling: claude-sonnet-5-5-xhigh
-reflect judgment, divergent, synthesizer: claude-opus-5-5-xhigh
+# Opus High: James approves every proposed skill edit, so these seats don't make the final call.
+reflect judgment, divergent, synthesizer: claude-opus-5-5-high
+# Opus High: runners only produce candidates for the parent to pick from.
 arena runners: claude-opus-5-5-high, gemini-4-argon-high
+# Opus Extra High: the judge's verdict picks the base that later work builds on.
 arena cross-judge pool: claude-opus-5-5-xhigh
 swarm workers: claude-sonnet-5-5-high
-architect runners: claude-opus-5-5-xhigh, gemini-4-argon-high
+# Opus High: runners produce candidate designs; the architect makes the call.
+architect runners: claude-opus-5-5-high, gemini-4-argon-high
+# Opus Extra High: /interrogate runs on big changes, where a missed bug is costly.
 interrogate reviewers: claude-opus-5-5-xhigh, gemini-4-argon-high
+# Opus High: scans a decision trail for weak evidence and flags it. The flags are advice.
+trail reviewer: claude-opus-5-5-high
+comment sicko: claude-sonnet-5-5-high
+other helpers: claude-sonnet-5-5-high

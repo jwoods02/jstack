@@ -36,14 +36,14 @@ Swap in the real paths, skills, and done checks. Informal wording works.
 - `/interrogate the whole branch, but skeptically. don't change anything yet. no nitpicks unless it's a real bug or regression.` Read the dismissals too.
 - `/swarm check every package under <dir> against its check script. one worker per package. one report.`
 - `/j-mode open the pr. small ordered commits, evidence in the description.`
-- `/j-mode babysit this pr. get it green.` For status only: `/j-mode check on pr <number>. anything outstanding?`
-- `/j-mode land the stack.`
+- `/j-mode get pr <number> green. fix what's failing, then hand it to a reviewer.` For status only: `/j-mode check on pr <number>. anything outstanding?`
+- `/j-mode is the stack ready for me to merge? check each pr's review and ci.`
 
 ## Away and back
 
 - `/j-mode im going to bed. <goal> in a fresh worktree off <base>. done means <checks>. keep a decision log. don't ask me before committing. /loop until done. if you're truly stuck after a few hours, stop and write up why.`
 - `/show-me-your-work catch me up on what you did last night.` Read its Attention section first.
-- `/j-mode full autopilot on this queue. each item is independent.`
-- `/j-mode autopilot these changes but stack them, don't ship. i'll land the stack.`
+- `/j-mode build these three changes in parallel, one builder and reviewer each. each one is independent.`
+- `/j-mode build these changes as a stack, one draft pr per phase. i'll merge.`
 - `/reflect capture what we learned so the next run doesn't repeat it.` Approve only edits that change a future decision.
 - `/bro` restates the last reply in plain words.
