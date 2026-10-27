@@ -1,6 +1,6 @@
 # Word the prompt
 
-A prompt states the intent and the check for done. The playbook supplies the steps, so a few plain sentences beat a spec.
+A prompt states the intent and the check for done. The job supplies the steps, so a few plain sentences beat a spec.
 
 ## Put in
 
@@ -13,7 +13,7 @@ A prompt states the intent and the check for done. The playbook supplies the ste
 ## Leave out
 
 - The how. Say what to achieve, and leave the agent room to find a better way.
-- A list of skills or steps. A hand-written order drops or reorders steps the playbook keeps. Name a skill only to override one choice.
+- A list of skills or steps. A hand-written order drops or reorders steps the job keeps. Name a skill only to override one choice.
 - The user's theory of the cause, until the agent restates the problem. A stated guess narrows the search.
 
 ## Load the context first
