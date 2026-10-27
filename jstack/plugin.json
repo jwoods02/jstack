@@ -1,0 +1,22 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "jstack",
+  "version": "0.15.25",
+  "description": "James Woods's personal adaptation of pstack by Lauren Tan (poteto): https://github.com/cursor/plugins/tree/main/pstack. If you want to go fast, go deep first: write less but higher quality code, with rigorous agent workflows you can parallelize with confidence.",
+  "author": {
+    "name": "James Woods, adapting pstack by Lauren Tan"
+  },
+  "homepage": "https://github.com/jwoods02/jstack/tree/main/jstack",
+  "repository": "https://github.com/jwoods02/jstack",
+  "license": "MIT",
+  "keywords": [
+    "jstack",
+    "j-mode",
+    "poteto",
+    "workflow",
+    "principles",
+    "agent-style",
+    "subagents",
+    "unslop"
+  ]
+}
