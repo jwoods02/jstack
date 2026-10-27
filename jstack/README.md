@@ -1,105 +1,41 @@
 # JStack
 
-JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). it is Cursor-only. the skills, playbooks, principles, and logo (poteto's avatar) come from pstack, and the "i" in this file is poteto.
-
-the idea: if you want to go fast, go deep first. JStack helps you write less, but higher quality code. when you can go deep on one agent and trust it to write good, verifiable code, you can truly parallelize with confidence. start multiple agents up with `j-mode` and trust that they'll apply rigorous engineering principles to their work.
+JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). it is Cursor-only. the skills, principles, and logo (poteto's avatar) come from pstack. the workflow in `j-mode` is James's own.
 
 ## install
 
-in cursor, open customize, choose from github repository, and add `jwoods02/jstack`. install the `jstack` plugin.
+in cursor, open customize, choose from github repository, and add `jwoods02/jstack`. install the `jstack` plugin. models are already chosen in [`rules/jstack-models.mdc`](./rules/jstack-models.mdc), so there is nothing to set up. the [guide](./docs/guide.md) is one short page.
 
-## get started
+## how it works
 
-one step: use [`/j-mode`](./skills/j-mode/SKILL.md) whenever you're doing anything that requires rigor. models are already chosen in [`rules/jstack-models.mdc`](./rules/jstack-models.mdc), so there is nothing to set up.
+type [`/j-mode`](./skills/j-mode/SKILL.md) with a goal and a way to check it's done. it picks one job:
 
-new here? the [JStack guide](./docs/guide/README.md) walks you through a first real task, from setup and prompting through verification and overnight runs. stuck, or unsure which skill fits? ask [`/j-help`](./skills/j-help/SKILL.md).
+| job | when | model |
+|---|---|---|
+| coordinator | the Project chat. picks jobs, starts builders and reviewers, briefs James | opus 5.5 high |
+| architect | before a big change, or when the design is unclear. ends with a short decision list | opus 5.5 high; extra high for load-bearing designs |
+| plan reviewer | plans of three or more PRs, before any builder starts | opus 5.5 high; extra high for load-bearing plans |
+| builder | one per PR. draft PR, CI green, then "ready for review" | opus 5.5 medium by default; opus 5.5 high for a very complex change; sonnet 5.5 high for very well-planned work; sonnet 5.5 extra high for a simple change with some ambiguity |
+| reviewer | one fresh agent per PR once CI is green, at most three rounds. big changes run `/interrogate` | opus 5.5 high; `/interrogate` on opus 5.5 extra high plus a gemini 4 argon seat |
+| parallel builders | up to three builder and reviewer pairs at once, each on its own PR | same as builder and reviewer |
+| investigator | read-only questions. no PR | sonnet 5.5 high |
+| watcher | only when waiting on something long, such as a deploy | sonnet 5.5 medium |
 
-that's it. the other skills are situational; the mode skill uses them for you as needed. out of the box the mode splits work by model strength: code delegates (feature, refactoring, bug fix, perf, hillclimb) go to sonnet 5.5, while the hardest changes, prose, judgment, and review go to opus 5.5. review and design panels pair opus 5.5 with gemini 4 argon. edit [`rules/jstack-models.mdc`](./rules/jstack-models.mdc) to change any of it.
+PRs stay draft. no agent marks a PR ready, merges it, or tags a release; James does all three. James's standing orders win over anything else in JStack.
 
-## usage
-
-use [`/j-mode`](./skills/j-mode/SKILL.md) at the start of a task. it reads your request, picks from a set of playbooks, and runs the other skills as the steps need them.
-
-pick `/j-mode` from the `/` menu before you type your task, so cursor attaches the skill to the message.
-
-### just use [`/j-mode`](./skills/j-mode/SKILL.md)
-
-this skill is the main shortcut. i use it whenever i need the agent to do rigorous engineering work. it comes with twenty-three playbooks:
-
-```
-/j-mode this pr has a subtle bug where the scroll drifts every 750ms even when idle. repro
-first, then fix and verify.
-```
-
-```
-/j-mode i'm going to bed. land the stack even if ci flakes. i want everything merged by
-morning.
-```
-
-<details>
-<summary>the twenty-three playbooks</summary>
-
-| playbook | for |
-|---|---|
-| [investigation](./skills/j-mode/playbooks/investigation.md) | a read-only question. how does x work, why was y built this way, are we sure. |
-| [bug fix](./skills/j-mode/playbooks/bug-fix.md) | reproduce a defect, root-cause it, and fix with runtime evidence. |
-| [perf](./skills/j-mode/playbooks/perf-issue.md) | trace a measured slowness and improve it against a baseline. |
-| [hillclimb](./skills/j-mode/playbooks/hillclimb.md) | sustained, scientific improvement of one metric against a target, looping hypotheses with before/after measurement and one commit per accepted win. |
-| [runtime forensics](./skills/j-mode/playbooks/runtime-forensics.md) | diagnose a live symptom (leak, idle-cpu spin, glitch) from instrumentation. |
-| [trace forensics](./skills/j-mode/playbooks/trace-forensics.md) | diagnose a captured profiling artifact (cpuprofile, trace, spindump, heap snapshot). |
-| [feature](./skills/j-mode/playbooks/feature.md) | new or changed behavior, built from a named data shape. |
-| [refactoring](./skills/j-mode/playbooks/refactoring.md) | a behavior-preserving change to structure or shape. |
-| [prototype](./skills/j-mode/playbooks/prototype.md) | a throwaway sketch to make a design or behavioral decision cheaply, or to settle an empirical fork by observing it. |
-| [visual parity](./skills/j-mode/playbooks/visual-parity.md) | pixel-exact ui equivalence between two implementations. |
-| [authoring a skill](./skills/j-mode/playbooks/authoring-a-skill.md) | writing or editing a SKILL.md. |
-| [eval](./skills/j-mode/playbooks/eval.md) | test how a skill or prompt change affects agent behavior, blinded. |
-| [babysit](./skills/j-mode/playbooks/babysit.md) | drive a pr or a stack to merge-ready: conflicts, review threads, ci. |
-| [shipping](./skills/j-mode/playbooks/shipping.md) | independently verify a green stack, then land the contiguous verified run bottom-up through github by default or origin when available. |
-| [autonomous run](./skills/j-mode/playbooks/autonomous-run.md) | drive a long task to completion without stopping. |
-| [orchestrate](./skills/j-mode/playbooks/orchestrate.md) | a standing project handed to one coordinator chat: multi-day, many stacked prs, fleets of subagents. |
-| [autopilot-full](./skills/j-mode/playbooks/autopilot-full.md) | run independent prs to merged with one owner per pr and a root swarm verdict on each round, from the code-ready head on. |
-| [autopilot-stack](./skills/j-mode/playbooks/autopilot-stack.md) | build and verify one linear base-branch stack for the operator to review and land. |
-| [session pickup](./skills/j-mode/playbooks/session-pickup.md) | resume or take over a prior agent's in-flight work. |
-| [pause safely](./skills/j-mode/playbooks/pause-safely.md) | suspend in-flight work cleanly so it can be resumed later. |
-| [multi-phase plan](./skills/j-mode/playbooks/multi-phase-plan.md) | work that spans phases or stacked PRs. |
-| [worktree cleanup](./skills/j-mode/playbooks/worktree-cleanup.md) | reclaim disk by pruning merged or abandoned worktrees and stale ios simulators, safety-gated. |
-| [opening a pr](./skills/j-mode/playbooks/opening-a-pr.md) | open a ready pr from small ordered commits with a conventional commits title and a briefing-style body. invoked at the end of every other playbook. |
-
-</details>
-
-
-
-when invoked it:
-
-1. matches your task to a [playbook](./skills/j-mode/playbooks/) and opens a todo list whose first items are its steps, copied in verbatim.
-2. routes to the other skills as the steps fire.
-3. writes unslopped replies framed for the consumer and the maintainer.
-
-the full rules and playbooks live in [`skills/j-mode/SKILL.md`](./skills/j-mode/SKILL.md).
-
-to keep [`/j-mode`](./skills/j-mode/SKILL.md) on across turns, pick it from the `/` menu and press option+enter (mac) or alt+enter (windows) instead of enter. that makes it a [custom mode](https://cursor.com/docs/skills), which cursor offers in the agents window and the cli. it stays in context every turn, applies itself when a playbook matches or the task needs rigor, and stays out of the way otherwise. plain enter attaches it to one message only. say so to opt out, or exit the mode to turn it off.
-
-[`/j-mode`](./skills/j-mode/SKILL.md) works extremely well with cursor's `/loop` command. you can make cursor work for many hours without sacrificing rigor.
+to keep `/j-mode` on across turns, pick it from the `/` menu and press option+enter (mac) or alt+enter (windows). that makes it a [custom mode](https://cursor.com/docs/skills).
 
 ## skills
 
-[`/j-mode`](./skills/j-mode/SKILL.md) runs most of these for you when a step needs them (`how`, `why`, `architect`, `arena`, `swarm`, `interrogate`, `unslop`, `no-comments`, `technical-writing`, `tdd`, and the principles). the table below is for when you want one directly:
-
-```
-/how do we cancel runs? do we have an n+1 when we look up every run to cancel?
-```
-
-```
-/interrogate review this pr.
-```
+`/j-mode` runs most of these for you when a job needs them. the table is for when you want one directly.
 
 <details>
 <summary>all skills</summary>
 
 | skill | use it when |
 |---|---|
-| [`/j-mode`](./skills/j-mode/SKILL.md) | default entry point for any non-trivial task. |
-| [`/j-help`](./skills/j-help/SKILL.md) | you're new to JStack, or unsure which skill, playbook, or principle fits. finds out what you're trying to do, answers that part, and hands you a prompt to type. runs only when you type `/j-help`. |
+| [`/j-mode`](./skills/j-mode/SKILL.md) | default entry point. picks one job (architect, builder, reviewer, investigator, or parallel builders) and keeps PRs draft. |
+| [`/j-help`](./skills/j-help/SKILL.md) | you're new to JStack, or unsure which job, skill, or principle fits. finds out what you're trying to do, answers that part, and hands you a prompt to type. runs only when you type `/j-help`. |
 | [`/in-your-own-words`](./skills/in-your-own-words/SKILL.md) | you want the agent to play back your goal and the problem before it starts. runs only when you type `/in-your-own-words`. |
 | [`/sharpen`](./skills/sharpen/SKILL.md) | you want a task approached the way a top expert would, aimed at what you're really after, without overspecifying it or deciding your choices for you. |
 | [`/how`](./skills/how/SKILL.md) | you want a walkthrough of how a subsystem works. |
@@ -120,7 +56,7 @@ to keep [`/j-mode`](./skills/j-mode/SKILL.md) on across turns, pick it from the 
 | [`/benchmark-checklist`](./skills/benchmark-checklist/SKILL.md) | you ran a benchmark or measured a speedup or regression. vets the number (limiter, tuning, errors, repeat runs, end-to-end relevance) before you report or act on it. |
 | [`/no-comments`](./skills/no-comments/SKILL.md) | strip comments before review; spawns Comment Sicko, fixes accepted findings, offers encodings for claimed constraints. |
 | [`/typescript-best-practices`](./skills/typescript-best-practices/SKILL.md) | you're reading or editing typescript. grounds the type-system-discipline principle in syntax. |
-| [`/figure-it-out`](./skills/figure-it-out/SKILL.md) | no bundled playbook fits. designs a rigorous, auditable playbook for the task. |
+| [`/figure-it-out`](./skills/figure-it-out/SKILL.md) | no job fits. designs a rigorous, auditable one-off plan for the task. |
 | [`/show-me-your-work`](./skills/show-me-your-work/SKILL.md) | you want a reviewable decision trail. logs decisions to a tsv you can commit. |
 | [`/create-verification-skill`](./skills/create-verification-skill/SKILL.md) | your project has no scripted way to prove app behavior. generates a project-local verify skill with a feature map, for any language or platform. |
 | [`/maintain-verification-skill`](./skills/maintain-verification-skill/SKILL.md) | your verify skill's feature map has drifted from the app. source wave + one live pass, at most one PR of proven corrections. |
@@ -130,68 +66,13 @@ to keep [`/j-mode`](./skills/j-mode/SKILL.md) on across turns, pick it from the 
 
 </details>
 
-
-
-### examples
-
-mostly i type [`/j-mode`](./skills/j-mode/SKILL.md) at the start of a task and let it route to a playbook. the other skills fire as the steps need them. a few i reach for directly.
-
-
-<details>
-<summary>all the examples</summary>
-
-```
-bug fix:           /j-mode this pr has a subtle bug where the scroll drifts every 750ms even
-                   when idle. repro first, then fix and verify.
-perf:              /j-mode a big list takes a second or two to load even though we virtualize.
-                   run a cpu trace and tell me why.
-feature:           /j-mode build a small feature behind a feature flag. verify it really works.
-prototype:         /j-mode build two prototypes of the markdown renderer so we can compare.
-                   spawn an agent for each.
-multi-phase:       /j-mode open source these skills as a plugin. nothing internal leaks, work
-                   in a temp dir, show me the dependency graph first.
-overnight run:     /j-mode i'm going to bed. land the stack even if ci flakes. i want
-                   everything merged by morning.
-babysit:           /j-mode check on pr 123. anything outstanding?
-visual parity:     /j-mode the row spacing is too tall when this flag is on. the second image
-                   is correct. repro and fix until it matches.
-figure it out:     /j-mode i'm stepping away. migrate every caller from the synchronous store
-                   to the new async one, keeping behavior identical. i want to trust it was done
-                   right when i'm back.
-how:               /how do we cancel runs? do we have an n+1 when we look up every run to cancel?
-why:               /why is this feature flag not on yet?
-architect:         design this instrumentation to be high signal with no false positives. /architect
-                   this first.
-arena:             /arena take my prompt to the arena verbatim. i want to compare their proposals
-                   with yours.
-swarm:             /swarm check every package under packages/ against its check.sh. one worker per
-                   package. one report.
-interrogate:       /interrogate review this pr.
-tdd:               /tdd implement
-unslop:            can we unslop and tighten the new changes?
-reflect:           /reflect that took too long. capture what we learned so the next run doesn't
-                   repeat it.
-correct:           /correct
-show-me-your-work: /show-me-your-work keep a decision trail i can review when i'm back.
-automate-me:       /automate-me
-help:              /j-help which skill should i use to review this branch?
-```
-
-</details>
-
 ## the `j-agent` and Comment Sicko subagents
 
-[`/j-mode`](./skills/j-mode/SKILL.md) runs in the chat that receives it. that chat owns the playbook, the todo list, and every subagent spawn.
-
-JStack also ships [`subagent_type: "j-agent"`](./agents/j-agent.md) as the wrapper for delegates spawned during a run. it reads `j-mode` in full, including its inline principles index, before doing any work. substituting `generalPurpose` skips that read and drifts. do not spawn `j-agent` to run the playbook itself.
-
-[`/j-mode`](./skills/j-mode/SKILL.md) and [`subagent_type: "j-agent"`](./agents/j-agent.md) route through the same wrapper.
-
-JStack also ships [Comment Sicko](./agents/comment-sicko.md), a read-only comment reviewer available as `subagent_type: "comment-sicko"`. usually invoke it through [`/no-comments`](./skills/no-comments/SKILL.md), not directly.
+every builder, reviewer, architect, and helper is spawned as [`subagent_type: "j-agent"`](./agents/j-agent.md), which reads `j-mode` in full before doing any work. [Comment Sicko](./agents/comment-sicko.md) is a read-only comment reviewer. usually invoke it through [`/no-comments`](./skills/no-comments/SKILL.md).
 
 ## principles
 
-twenty-four short skills, one principle each. `j-mode` indexes them inline and reads that index at task start. the standalone files are there so other skills can reference a principle by name, and so the index can point at the full rule for each.
+twenty-four short skills, one principle each. `j-mode` indexes them inline. the standalone files let other skills reference a principle by name.
 
 <details>
 <summary>all twenty-four principles</summary>
@@ -224,28 +105,6 @@ twenty-four short skills, one principle each. `j-mode` indexes them inline and r
 | [encode-lessons-in-structure](./skills/principle-encode-lessons-in-structure/SKILL.md) | meta | Encode the rule as a lint, metadata flag, runtime check, or script instead of more text. |
 
 </details>
-
-## not shipped here
-
-a few things `j-mode` references but doesn't bundle:
-
-- `/deslop` and the `deslop` skill ship in the `cursor-team-kit` plugin.
-- `control-cli` (for CLIs and TUIs) and `control-ui` (for browser, Electron, web) ship in `cursor-team-kit` too.
-- `/create-skill` is a cursor built-in. cursor also ships a built-in `/babysit`; inside `j-mode`, the [babysit playbook](./skills/j-mode/playbooks/babysit.md) supersedes it for pr-status requests.
-
-install `cursor-team-kit` alongside JStack if you want the full set.
-
-## why are there no planning skills?
-
-cursor already has a great plan mode which works great with JStack. but personally, i don't believe in planning. the best spec is code. if you do want to make a plan, [`/j-mode`](./skills/j-mode/SKILL.md) covers it, but it's not a default. 
-
-## make it yours
-
-`j-mode` is James's style. you may not want exactly that.
-
-type [`/automate-me`](./skills/automate-me/SKILL.md). it mines your recent transcripts, drafts a `<your-name>-mode` skill from how you've actually worked, and routes through JStack underneath. you keep JStack as the base and end up with your own routing skill alongside `j-mode`.
-
-models are configurable too. edit [`rules/jstack-models.mdc`](./rules/jstack-models.mdc), a small always-applied rule mapping each role (code, judgment, the review panels) to a model. every skill reads it and falls back to its own default for a role the rule leaves out.
 
 ## automations
 
