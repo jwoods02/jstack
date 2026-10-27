@@ -42,7 +42,7 @@ Builder reminders:
 - Refactors: pin the current behavior before moving code.
 - Design: one that feels contested goes back to the coordinator for the architect or a reviewer.
 - Milestone or load-bearing work: collect the calls James should make before you build. Give each a number, a recommended answer and the facts behind it. The coordinator relays them, and you build once James answers. When James has stepped away, make each call yourself and log it, with why and how hard it is to reverse. Lead the log with the calls he should look at first.
-- Tests: before review, run narrow local tests for what changed. Never run suites the repo says CI owns. After review, run the staging smoke or rehearsal the change needs, end to end. If it needs a deploy, pause first. Stop only on a genuine failure (the build fails, a cost cap trips, something live is damaged), and list minor issues in the report.
+- Tests: before review, run narrow local tests for what changed. Never run suites the repo says CI owns.
 - Root causes: fix a root cause by simplifying, not by adding defensive handling (**principle-fix-root-causes**).
 - Waiting on CI or a run: one blocking command per wait. For waits over about 20 minutes, end the turn and subscribe to CI or a timer. Never poll with repeated sleeps.
 - Handoff: at the end of a PR, write a one-page handoff note (decisions, open items, files) for whoever picks up next.

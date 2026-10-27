@@ -111,7 +111,7 @@ All paths are inside `jstack/`.
   - A new big-change definition (about 1,000 production lines, the last PR of a milestone, no file count).
   - A Reviews section with one reviewer by default, three lens reviewers for big changes, rounds, verdicts that name head, base and patch id, stacks, and a milestone review.
   - Project context by role (the Project's task tracker and shared context) instead of `notes.md`, with the chat's own todo list outside a Project.
-  - Builder reminders for upfront calls, narrow local tests before review and smokes after (paused first if a deploy is needed), root-cause fixes, one blocking command per wait with a timer or CI subscription for long waits, and a handoff note.
+  - Builder reminders for upfront calls, narrow local tests before review, root-cause fixes, one blocking command per wait with a timer or CI subscription for long waits, and a handoff note.
   - Reviewers re-run only what CI does not. The Watcher row carries the no-polling and subscribe rules (merged, ready for review and CI conclusion, not every push). Workers end with a summary of 10 lines or fewer.
   - Autonomy additions (no production releases, a question is not an edit request), a tie-break that makes JStack the default for every Project, and a `generalPurpose` fallback when `j-agent` is missing.
   - The big-change skill trigger now names the correctness lens, and the correctness lens has no model line of its own.
