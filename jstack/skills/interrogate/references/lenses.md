@@ -8,7 +8,7 @@ Every lens follows these rules.
 - Round 1 is a full review. Round 2 checks only the fixes, with no new nits. Round 3 converges.
 - Findings sort into Act on, Consider, Noted and Dismissed.
 - Re-run only what CI does not, and do not reinstall for delta checks.
-- Don't write files, push or comment on the PR. Hand the verdict back to the coordinator.
+- Scratch files are fine. Don't commit, push or comment on the PR. Hand the verdict back to the coordinator.
 
 ## Architecture and proportionality
 
@@ -81,4 +81,4 @@ Every lens follows these rules.
 
 ## Milestone review
 
-The milestone reviewer is not a lens. It runs once, on the final head, after every PR of the milestone or chain has passed its own reviews and before James merges. It re-runs the load-bearing evidence (tests, replays, measurements), each with at least one negative control that should fail. It checks the rollback path. Its verdict uses the format above and gates the merge.
+The milestone reviewer is not a lens. It runs once, on the final head, after every PR of the milestone or chain has passed its own reviews and before James merges. It re-runs the load-bearing evidence (tests, replays, measurements), each with at least one negative control that should fail. It checks the rollback path. Its verdict uses the verdict format in the lens sections above and gates the merge.

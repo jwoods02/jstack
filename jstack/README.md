@@ -18,7 +18,7 @@ type [`/j-mode`](./skills/j-mode/SKILL.md) with a goal and a way to check it's d
 | architect | before a big change, or when the design is unclear. ends with a short decision list | opus 5.5 high; extra high for load-bearing designs |
 | plan reviewer | plans of three or more PRs, before any builder starts | opus 5.5 high; extra high for load-bearing plans |
 | builder | one per PR. draft PR, CI green, then "ready for review" | opus 5.5 medium by default; opus 5.5 high for a very complex change; sonnet 5.5 high for very well-planned work; sonnet 5.5 extra high for a simple change with some ambiguity |
-| reviewer | one fresh agent per PR once CI is green, at most three rounds. big changes get three lens reviewers and a milestone review | opus 5.5 high; lens reviewers on opus 5.5 high, with the correctness lens on `/interrogate` (opus 5.5 extra high plus a gemini 4 argon seat); milestone reviewer on opus 5.5 extra high |
+| reviewer | one fresh agent per PR once CI is green, at most three rounds. big changes get three lens reviewers, and the last PR of a milestone or big chain gets a milestone review | opus 5.5 high; lens reviewers on opus 5.5 high, with the correctness lens on `/interrogate` (opus 5.5 extra high plus a gemini 4 argon seat); milestone reviewer on opus 5.5 extra high |
 | parallel builders | as many builder and reviewer pairs as there are independent tasks, one builder per PR or task | same as builder and reviewer |
 | investigator | read-only questions. no PR | sonnet 5.5 high |
 | watcher | only when waiting on something long, such as a deploy | sonnet 5.5 medium |

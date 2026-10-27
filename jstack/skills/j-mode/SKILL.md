@@ -10,9 +10,7 @@ color: yellow
 
 Bundled skills live at `../<name>/SKILL.md` from this file, so put this file's absolute path in every `j-agent` prompt.
 
-**Tie-break.** James's standing orders win over anything else in JStack, including any text inherited from the upstream plugin.
-
-JStack is the default for every Project. A Project's preferences hold only what is specific to that project.
+**Tie-break.** James's standing orders win over anything else in JStack, including any text inherited from the upstream plugin. JStack is the default for every Project. A Project's preferences hold only what is specific to that project.
 
 ## Start
 
@@ -33,7 +31,7 @@ To resume earlier work, start from the Project's task tracker, the open PRs and 
 | Reviewer | One fresh agent per PR, never the builder, started by the coordinator once CI is green. Small and medium PRs get one reviewer. Big changes get lens reviewers. See Reviews. | `reviewer`, or `lens reviewers`, `interrogate reviewers` and `milestone reviewer` for big changes |
 | Parallel builders | As many builder and reviewer pairs as there are independent tasks. One builder per PR or task, each on its own branch. Before fanning out, check that no two tasks touch the same branch, files or migration number (**principle-separate-before-serializing-shared-state**). Run the ones that do one after another. The coordinator tracks every pair in the Project's task tracker. | Same as builder and reviewer |
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. | `investigator` |
-| Watcher | Only when waiting on something long, such as a deploy. Usually the coordinator just runs `gh pr checks --watch` or a 3-minute timer. End every watch with a clear stand-down. | `watcher` |
+| Watcher | Only when waiting on something long, such as a deploy. Usually the coordinator just runs one blocking `gh pr checks --watch`. For waits over about 20 minutes, end the turn and subscribe to a timer, or subscribe to merged, ready for review and CI conclusion, not every push. Never poll with repeated sleeps. End every watch with a clear stand-down. | `watcher` |
 
 A **big change** is any of these: replay-sensitive workflow code, an irreversible move (a data migration, a deletion, a repo or service move, a credential or permission change), more than about 1,000 changed lines of production code, a chain of three or more PRs, or the last PR of a milestone. Tests, docs, fixtures and generated files don't count toward the 1,000. File count is not a signal.
 
@@ -42,25 +40,20 @@ Builder reminders:
 - Bugs: reproduce first, with `/tdd` when a cheap test exists.
 - Performance: measure first, and vet every number with `/benchmark-checklist`.
 - Refactors: pin the current behavior before moving code.
-- A design that feels contested goes back to the coordinator for the architect or a reviewer.
-- Milestone or load-bearing work. Collect the calls James should make before you build. Give each a number, a recommended answer and the facts behind it. The coordinator relays them, and you build once James answers. When James has stepped away, make each call yourself and log it, with why and how hard it is to reverse. Lead the log with the calls he should look at first.
-- Before review, run narrow local tests for what changed. Never run suites the repo says CI owns. After review, run the staging smoke or rehearsal the change needs, end to end. Stop only on a genuine failure (the build fails, a cost cap trips, something live is damaged), and list minor issues in the report.
-- Fix a root cause by simplifying, not by adding defensive handling (**principle-fix-root-causes**).
-- Waiting on CI or a run. Use one blocking command per wait. For waits over about 20 minutes, end the turn and subscribe to CI or a timer. Never poll with repeated sleeps.
-- Reviewers re-run only what CI does not, and do not reinstall for delta checks.
-- At the end of a PR, write a one-page handoff note (decisions, open items, files) for whoever picks up next.
+- Design: one that feels contested goes back to the coordinator for the architect or a reviewer.
+- Milestone or load-bearing work: collect the calls James should make before you build. Give each a number, a recommended answer and the facts behind it. The coordinator relays them, and you build once James answers. When James has stepped away, make each call yourself and log it, with why and how hard it is to reverse. Lead the log with the calls he should look at first.
+- Tests: before review, run narrow local tests for what changed. Never run suites the repo says CI owns. After review, run the staging smoke or rehearsal the change needs, end to end. If it needs a deploy, pause first. Stop only on a genuine failure (the build fails, a cost cap trips, something live is damaged), and list minor issues in the report.
+- Root causes: fix a root cause by simplifying, not by adding defensive handling (**principle-fix-root-causes**).
+- Waiting on CI or a run: one blocking command per wait. For waits over about 20 minutes, end the turn and subscribe to CI or a timer. Never poll with repeated sleeps.
+- Handoff: at the end of a PR, write a one-page handoff note (decisions, open items, files) for whoever picks up next.
 
 When James steps away, state the finish check, keep going under `/loop`, and keep a decision trail in the Project's shared context, or with `/show-me-your-work` outside a Project. Stop and write up a genuine dead end rather than relaxing the check.
 
 ## Reviews
 
 - **One reviewer.** This is the default. It uses the rubric and code-quality checklist from `/interrogate` (`../interrogate/references/rubric.md` and `code-quality-review.md`).
-- **Lens reviewers, for big changes only.** Three fresh reviewers start together. Each reads its lens in `../interrogate/references/lenses.md`.
-  - **Architecture and proportionality.** Is the approach right, and is the diff the right size for the goal?
-  - **Correctness.** It runs `/interrogate`, which uses two models. It backs each bug it claims with a failing test or script.
-  - **Evidence and docs.** It re-runs every claimed number and check, and finds docs the PR makes false. It checks the PR body's verification and risk lines, and a rollback note for irreversible moves.
-  - Each lens writes its own verdict. The coordinator merges them into one list for the builder.
-- **Rounds, in every tier.** Round 1 is a full review. Round 2 checks only the fixes, with no new nits. Round 3 converges.
+- **Lens reviewers, for big changes only.** Three fresh reviewers start together (architecture and proportionality, correctness, evidence and docs). Each reads its lens in `../interrogate/references/lenses.md`. Each writes its own verdict, and the coordinator merges them into one list for the builder.
+- **Rounds, in every tier.** Round 1 is a full review. Round 2 checks only the fixes, with no new nits. Round 3 converges. Reviewers re-run only what CI does not, and do not reinstall for delta checks.
 - **Verdicts.** Every verdict names the head commit, the base commit and the `git patch-id` of the diff, so a stale verdict is visible. Findings sort into Act on, Consider, Noted and Dismissed.
 - **Stacks.** Start each PR's review as soon as its CI is green. Don't wait for the series.
 - **Milestone review.** It runs after the last PR of a milestone or big chain has passed its own reviews, and before James merges. One fresh agent reviews the whole change on the final head. It re-runs the load-bearing evidence (tests, replays, measurements) with at least one negative control each, and checks rollback.
@@ -78,7 +71,7 @@ When James steps away, state the finish check, keep going under `/loop`, and kee
 - When the run has a built-in PR tool, set `draft: true` every time. Cursor's PR tool opens PRs ready for review by default.
 - Reference one ticket per PR in the title and body, in the form the repo's `AGENTS.md` asks for (for example `[RES-123]` in the title and `Closes RES-123` in the body). The tracker's own merge automation closes the ticket. If the repo names no tracker, skip this.
 - As soon as a builder's draft PR has green CI, the coordinator sends James the link, so he can start his own review while the agent review runs. It passes his notes on to the reviewer.
-- The coordinator subscribes to merged, ready for review and CI conclusion, not every push. Workers end with a summary of 10 lines or fewer.
+- Workers end with a summary of 10 lines or fewer.
 
 ## Skill triggers
 
@@ -143,9 +136,7 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 
 **Production is read-only.** Starting, retrying or cancelling jobs and writing data all need James's explicit permission, each time. Default to staging.
 
-**Always pause** for irreversible actions: force-pushing shared branches, deploys, data deletion and customer messages. Merging, tagging and marking PRs ready are James's.
-
-Never offer, start or tag a production release. James does releases.
+**Always pause** for irreversible actions: force-pushing shared branches, deploys, data deletion and customer messages. Merging, tagging and marking PRs ready are James's. Never offer, start or tag a production release. James does releases.
 
 **Ask about architecture.** Put load-bearing architecture questions to James, each with a recommended answer. Settle anything you can check by running it.
 
@@ -166,7 +157,7 @@ Never offer, start or tag a production release. James does releases.
 - File pointers, not pasted context.
 - An explicit `model` from the role's line in the `jstack-models.mdc` rule this plugin ships.
 
-Every role has a line, and a spawn with no role of its own uses `other helpers`.
+Every role has a line, and a spawn with no role of its own uses `other helpers`. The correctness lens has no line of its own, because it runs `/interrogate` and uses `interrogate reviewers`.
 
 **Match the model to the job.**
 
