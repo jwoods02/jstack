@@ -108,7 +108,7 @@ All paths are inside `jstack/`.
   - Draft-only PRs stay, with `draft: true` on the built-in PR tool and a rule that the coordinator sends James the link once a draft PR has green CI.
   - A generic one-ticket-per-PR rule that follows the repo's `AGENTS.md`.
   - No builder cap. One builder per PR or task, a check for shared branches, files and migration numbers, and a resume limit for builders and reviewers (about an hour and about 400k tokens).
-  - A new big-change definition (about 1,000 production lines, the last PR of a milestone, no file count).
+  - A new big-change definition built on one-way doors and load-bearing code. It is a change that is hard to reverse, or a large change to load-bearing machinery on a live production system. The list is an irreversible move, more than about 1,000 production lines, a chain of three or more PRs, and the last PR of a milestone. File count is not a signal. "Replay-sensitive workflow code" is dropped, and prototypes and projects not yet live always get one reviewer. The milestone review and the correctness lens no longer say "replays".
   - A Reviews section with one reviewer by default, three lens reviewers for big changes, rounds, verdicts that name head, base and patch id, stacks, and a milestone review.
   - Project context by role (the Project's task tracker and shared context) instead of `notes.md`, with the chat's own todo list outside a Project.
   - Builder reminders for upfront calls, narrow local tests before review, root-cause fixes, one blocking command per wait with a timer or CI subscription for long waits, and a handoff note.

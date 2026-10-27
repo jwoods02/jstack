@@ -109,7 +109,7 @@ Jobs are sections of `/j-mode`, not skills, so they have no slash command. Descr
 
 - "How does X work?" or "why is Y like this?" runs the investigator. No PR.
 - "Design X", or any big change, runs the architect. It ends with a short decision list and stops for the user.
-- "Fix", "build" or "change X" runs a builder. It opens a draft PR, and a fresh reviewer starts once CI is green. A big change gets three lens reviewers, and the last PR of a milestone gets a milestone review.
+- "Fix", "build" or "change X" runs a builder. It opens a draft PR, and a fresh reviewer starts once CI is green. A big change (one that is hard to reverse, or a large change to load-bearing machinery on a live production system) gets three lens reviewers, and the last PR of a milestone gets a milestone review.
 - Several independent changes run as one builder and reviewer pair each, at once.
 
 No agent marks a PR ready or merges it. The user does both. JStack has no planning skill. Plans of three or more PRs get a plan review before any builder starts.

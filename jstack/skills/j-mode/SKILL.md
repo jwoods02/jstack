@@ -33,7 +33,14 @@ To resume earlier work, start from the Project's task tracker, the open PRs and 
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. | `investigator` |
 | Watcher | Only when waiting on something long, such as a deploy. Usually the coordinator just runs one blocking `gh pr checks --watch`. For waits over about 20 minutes, end the turn and subscribe to a timer, or subscribe to merged, ready for review and CI conclusion, not every push. Never poll with repeated sleeps. End every watch with a clear stand-down. | `watcher` |
 
-A **big change** is any of these: replay-sensitive workflow code, an irreversible move (a data migration, a deletion, a repo or service move, a credential or permission change), more than about 1,000 changed lines of production code, a chain of three or more PRs, or the last PR of a milestone. Tests, docs, fixtures and generated files don't count toward the 1,000. File count is not a signal.
+A **big change** is one that is hard to reverse (a one-way door), or a large change to core, load-bearing machinery on a live production system. These count as big changes:
+
+- An irreversible move (a data migration, a deletion, a repo or service move, a credential or permission change).
+- More than about 1,000 changed lines of production code.
+- A chain of three or more PRs.
+- The last PR of a milestone.
+
+Tests, docs, fixtures and generated files don't count toward the 1,000. File count is not a signal. Prototypes, and projects not yet live in production, always get one reviewer, never lens reviews.
 
 Builder reminders:
 
@@ -56,7 +63,7 @@ When James steps away, state the finish check, keep going under `/loop`, and kee
 - **Rounds, in every tier.** Round 1 is a full review. Round 2 checks only the fixes, with no new nits. Round 3 converges. Reviewers re-run only what CI does not, and do not reinstall for delta checks.
 - **Verdicts.** Every verdict names the head commit, the base commit and the `git patch-id` of the diff, so a stale verdict is visible. Findings sort into Act on, Consider, Noted and Dismissed.
 - **Stacks.** Start each PR's review as soon as its CI is green. Don't wait for the series.
-- **Milestone review.** It runs after the last PR of a milestone or big chain has passed its own reviews, and before James merges. One fresh agent reviews the whole change on the final head. It re-runs the load-bearing evidence (tests, replays, measurements) with at least one negative control each, and checks rollback.
+- **Milestone review.** It runs after the last PR of a milestone or big chain has passed its own reviews, and before James merges. One fresh agent reviews the whole change on the final head. It re-runs the load-bearing evidence (tests and measurements) with at least one negative control each, and checks rollback.
 
 ## PR rules
 

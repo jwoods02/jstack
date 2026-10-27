@@ -1,6 +1,6 @@
 # Review lenses
 
-j-mode runs lens reviews only for big changes. Three fresh reviewers start together, one per lens. Each reads only its own section. The coordinator merges the three verdicts into one list for the builder.
+j-mode runs lens reviews only for big changes. Prototypes, and projects not yet live in production, get one reviewer instead. Three fresh reviewers start together, one per lens. Each reads only its own section. The coordinator merges the three verdicts into one list for the builder.
 
 Every lens follows these rules.
 
@@ -42,7 +42,7 @@ Every lens follows these rules.
 - Run `/interrogate` on the diff against the stated intent.
 - Back each bug you claim with a failing test or script. Commit nothing. Put the test or script in the verdict so the builder can rerun it.
 - A finding with no failing test is labeled "reasoned, not tested", and it can't be Act on unless the reasoning is a proof.
-- Check retries, restarts, partial failures, concurrent writers and replays. Look for state that a second run can't recover from.
+- Check retries, restarts, partial failures, and concurrent writers. Look for state that a second run can't recover from.
 - Check that each new test fails when the behavior breaks.
 
 **Handoff.** A design objection goes to the architecture lens. A false claim in the PR body, an unverified number or a stale doc goes to the evidence and docs lens. Write it as "outside my lens, for the architecture reviewer" or "outside my lens, for the evidence and docs reviewer", with the file and line.
@@ -81,4 +81,4 @@ Every lens follows these rules.
 
 ## Milestone review
 
-The milestone reviewer is not a lens. It runs once, on the final head, after every PR of the milestone or chain has passed its own reviews and before James merges. It re-runs the load-bearing evidence (tests, replays, measurements), each with at least one negative control that should fail. It checks the rollback path. Its verdict uses the verdict format in the lens sections above and gates the merge.
+The milestone reviewer is not a lens. It runs once, on the final head, after every PR of the milestone or chain has passed its own reviews and before James merges. It re-runs the load-bearing evidence (tests and measurements), each with at least one negative control that should fail. It checks the rollback path. Its verdict uses the verdict format in the lens sections above and gates the merge.
