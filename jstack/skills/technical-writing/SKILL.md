@@ -91,6 +91,7 @@ Don't mix modes: no reference tables inside a tutorial, no tutorial hand-holding
 ## Voice and repo specifics
 
 - Apply the **unslop** skill to every doc this skill touches. That skill owns the slop-pattern catalog: AI vocabulary, filler, hedging, formatting tells.
+- When the text goes out as James (a PR description, a doc he signs), also load the **james-voice** skill if it's installed. It isn't part of JStack. It owns his voice; this skill still owns structure and sentences.
 - PR descriptions and commit messages are writing too. Every layer except Diátaxis applies to them. A PR body is a briefing that a reviewer can read in under a minute. Do not paste swarm logs, SHA lists, or metric tables. Link them.
 - Product UI strings are not documentation. Use your product's copy guidelines for those.
 - Indent code snippets with tabs. Write real paths. Make every count or tree claim true at the commit that lands it, and include the command that regenerates it.
