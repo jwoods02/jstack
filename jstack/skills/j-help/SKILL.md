@@ -42,7 +42,7 @@ JStack is built for Cursor. Its skills use the Agent Skills format, so other too
 
 ## Start a task with `/j-mode`
 
-`/j-mode` picks one job: architect, builder, reviewer, investigator, or up to three builder and reviewer pairs at once. It runs the skills that job needs. PRs stay draft, and James merges. A good prompt states the goal and how to tell it's done. It doesn't list skills, because the job already picks them. Read [`references/prompting.md`](references/prompting.md) before you help word one. [The guide](../../docs/guide.md) has examples.
+`/j-mode` picks one job: architect, builder, reviewer, investigator, or as many builder and reviewer pairs as there are independent tasks. It runs the skills that job needs. PRs stay draft, and James merges. A good prompt states the goal and how to tell it's done. It doesn't list skills, because the job already picks them. Read [`references/prompting.md`](references/prompting.md) before you help word one. [The guide](../../docs/guide.md) has examples.
 
 Whether `/j-mode` stays on depends on how the user starts it:
 
@@ -109,8 +109,8 @@ Jobs are sections of `/j-mode`, not skills, so they have no slash command. Descr
 
 - "How does X work?" or "why is Y like this?" runs the investigator. No PR.
 - "Design X", or any big change, runs the architect. It ends with a short decision list and stops for the user.
-- "Fix", "build" or "change X" runs a builder. It opens a draft PR, and a fresh reviewer starts once CI is green.
-- Several independent changes run as up to three builder and reviewer pairs at once.
+- "Fix", "build" or "change X" runs a builder. It opens a draft PR, and a fresh reviewer starts once CI is green. A big change (one that is hard to reverse, or a large change to load-bearing machinery on a live production system) gets three lens reviewers, and the last PR of a milestone gets a milestone review.
+- Several independent changes run as one builder and reviewer pair each, at once.
 
 No agent marks a PR ready or merges it. The user does both. JStack has no planning skill. Plans of three or more PRs get a plan review before any builder starts.
 

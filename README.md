@@ -4,11 +4,11 @@
 
 JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). It is Cursor-only. It keeps pstack's skills and principles and runs James's own Cursor Project workflow through `/j-mode`.
 
-## v2 scope
+## v3 scope
 
 - The plugin lives in [`jstack/`](jstack/). It is based on upstream release 0.15.25.
-- [`/j-mode`](jstack/skills/j-mode/SKILL.md) is a one-page router over James's jobs: architect, builder, reviewer, investigator and up to three builder and reviewer pairs at once. pstack's 23 playbooks and the tools only they used are gone.
-- PRs stay draft. No agent marks a PR ready, merges it or tags a release. James's standing orders win over anything else in JStack.
+- [`/j-mode`](jstack/skills/j-mode/SKILL.md) is a one-page router over James's jobs: architect, builder, reviewer, investigator and as many builder and reviewer pairs as there are independent tasks. pstack's 23 playbooks and the tools only they used are gone.
+- PRs stay draft. No agent marks a PR ready, merges it or tags a release. James's standing orders win over anything else in JStack. JStack is the default workflow for every Project, and a Project's preferences hold only what is specific to that project.
 - Every role has an explicit model in [`jstack/rules/jstack-models.mdc`](jstack/rules/jstack-models.mdc), an always-applied plugin rule.
 - The guide is [one page](jstack/docs/guide.md). [UPSTREAM.md](UPSTREAM.md) lists every removal and change.
 
@@ -26,7 +26,9 @@ The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) an
 | Builder | Opus 5.5 Medium by default; Opus 5.5 High for a very complex change; Sonnet 5.5 High for very well-planned work; Sonnet 5.5 Extra High for a simple change with some ambiguity | James's builder rule (27 Oct) |
 | Hardest tasks | Opus 5.5 Extra High | Subtle concurrency, tricky algorithms and repeat-failure bugs are where depth pays |
 | Reviewer (small and medium PRs) | Opus 5.5 High | High ties Extra High on CursorBench at about half the cost |
-| `/interrogate` (big changes) | Opus 5.5 Extra High + Gemini 4 Argon High | A missed bug in a big change is costly; the Opus lead weighs Gemini's findings |
+| Lens reviewers (architecture and evidence lenses, big changes) | Opus 5.5 High | Three fresh lenses read a big change from different angles |
+| `/interrogate` (the correctness lens, big changes) | Opus 5.5 Extra High + Gemini 4 Argon High | A missed bug in a big change is costly. The Opus lead weighs Gemini's findings. |
+| Milestone reviewer | Opus 5.5 Extra High | Its verdict gates merging a milestone |
 | Investigator | Sonnet 5.5 High | Read-only questions |
 | Watcher | Sonnet 5.5 Medium | Only when waiting on something long |
 | Judgment and prose | Opus 5.5 High | Everyday calls inside a job |

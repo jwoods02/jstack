@@ -7,6 +7,7 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 - Upstream: `cursor/plugins`, path `pstack/`.
 - Commit: `99743e9c151c8537cbbf1f98bb38f34ef3368453`, merged 15 Oct 2026.
 - Version: 0.15.25.
+- JStack's own version is 3.0.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
 - Upstream `pstack/` tree hash at import: `0d5fd349cbc77d054eed60f0e8cdfbea86321ff9`.
 
 ## Path mapping
@@ -59,6 +60,7 @@ The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rena
 - `jstack/assets/logo.svg` (v2). A plain, hand-made JStack logo: a white "J" on a slate-grey rounded square. `.cursor-plugin/plugin.json` points at it, and both READMEs and the guide show it.
 - `.cursor-plugin/marketplace.json`. Lets Cursor install the plugin from this repo.
 - `scripts/rename-upstream.py`, `README.md` and `UPSTREAM.md` at the repo root.
+- `jstack/skills/interrogate/references/lenses.md` (v3). The architecture, correctness and evidence lenses for big changes, with each lens's scope, checks, handoff wording and verdict format.
 
 ## Changed
 
@@ -99,6 +101,26 @@ All paths are inside `jstack/`.
 - `skills/j-help/SKILL.md` and its `references/`: jobs replace playbooks, links point to the one-page guide, and the recipes leave merging to James.
 - `skills/j-mode/references/bugbot-triage.md`: builders and reviewers use it, instead of the Babysit playbook.
 - `README.md`: rewritten around the jobs, keeping the skill and principle tables.
+
+**James's workflow (v3).**
+
+- `skills/j-mode/SKILL.md`:
+  - Draft-only PRs stay, with `draft: true` on the built-in PR tool and a rule that the coordinator sends James the link once a draft PR has green CI.
+  - A generic one-ticket-per-PR rule that follows the repo's `AGENTS.md`.
+  - No builder cap. One builder per PR or task, a check for shared branches, files and migration numbers, and a resume limit for builders and reviewers (about an hour and about 400k tokens).
+  - A new big-change definition built on one-way doors and load-bearing code. It is a change that is hard to reverse, or a large change to load-bearing machinery on a live production system. The list is an irreversible move, more than about 1,000 production lines, a chain of three or more PRs, and the last PR of a milestone. File count is not a signal. "Replay-sensitive workflow code" is dropped, and prototypes and projects not yet live always get one reviewer. The milestone review and the correctness lens no longer say "replays".
+  - A Reviews section with one reviewer by default, three lens reviewers for big changes, rounds, verdicts that name head, base and patch id, stacks, and a milestone review.
+  - Project context by role (the Project's task tracker and shared context) instead of `notes.md`, with the chat's own todo list outside a Project.
+  - Builder reminders for upfront calls, narrow local tests before review, root-cause fixes, one blocking command per wait with a timer or CI subscription for long waits, and a handoff note.
+  - Reviewers re-run only what CI does not. The Watcher row carries the no-polling and subscribe rules (merged, ready for review and CI conclusion, not every push). Workers end with a summary of 10 lines or fewer.
+  - Autonomy additions (no production releases, a question is not an edit request), a tie-break that makes JStack the default for every Project, and a `generalPurpose` fallback when `j-agent` is missing.
+  - The big-change skill trigger now names the correctness lens, and the correctness lens has no model line of its own.
+- `rules/jstack-models.mdc`: adds `lens reviewers` and `milestone reviewer`. No other line changes.
+- `skills/interrogate/SKILL.md`: one line on the correctness lens, and the `readonly` fallback.
+- `skills/how/SKILL.md` and `skills/arena/SKILL.md`: the `readonly` fallback.
+- `skills/recall/SKILL.md`: says "task tracker" instead of `notes.md`.
+- `skills/j-help/SKILL.md`, `docs/guide.md`, `README.md` and the root `README.md`: synced with the changes above, with "up to three" removed.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 3.0.0.
 
 ## How to merge a new release
 

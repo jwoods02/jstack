@@ -34,6 +34,10 @@ investigator: claude-sonnet-5-5-high
 watcher: claude-sonnet-5-5-medium
 # Opus High: prose and judgment calls inside a job.
 judgment and prose: claude-opus-5-5-high
+# Opus High: the architecture and evidence lenses on a big change. The correctness lens uses `interrogate reviewers`.
+lens reviewers: claude-opus-5-5-high
+# Opus Extra High: its verdict gates merging a milestone, like the arena judge.
+milestone reviewer: claude-opus-5-5-xhigh
 
 # Skills.
 how explorer: claude-sonnet-5-5-xhigh

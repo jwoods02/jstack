@@ -8,6 +8,8 @@ disable-model-invocation: true
 
 Spawn one reviewer per configured model to adversarially review code changes. The adversarial signal comes from model diversity, not assigned personas. The deliverable is a synthesized verdict. Do NOT auto-apply changes.
 
+When j-mode runs lens reviews, the correctness lens runs this skill. `references/lenses.md` describes the other lenses.
+
 ## Step 1, Scope
 
 Identify what to review from context:
@@ -31,7 +33,7 @@ Launch all reviewers in a single message with the Task tool, one per entry on th
 | Reviewer A | `claude-opus-5-5-xhigh` |
 | Reviewer B | `gemini-4-argon-high` |
 
-Each reviewer gets `subagent_type: generalPurpose`, `readonly: true`, and `model` set to its configured entry, or its table default when there is no configured line. Omit `model` for an `auto` or `inherit-parent` entry, so that reviewer runs on the parent model.
+Each reviewer gets `subagent_type: generalPurpose` and `model` set to its configured entry, or its table default when there is no configured line. It also gets `readonly: true` when the Task tool offers it. Otherwise, tell the subagent in its prompt not to write files, push or comment. Omit `model` for an `auto` or `inherit-parent` entry, so that reviewer runs on the parent model.
 
 If the Task tool rejects a configured entry, run that reviewer on its family's table default and say so. Families go by prefix: `claude-*` and `gemini-*`. A refused `gemini-*` entry runs on Reviewer B's default. With no family match, use Reviewer A's default. If it rejects a table default, spawn with the closest equivalent from the valid slugs in its error message (prefer the same family and reasoning tier), and open a separate PR to update the default table. Do not block the review on the slug issue. Never treat an alias entry as a rejected slug or apply either fallback to it.
 
