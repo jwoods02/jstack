@@ -122,6 +122,10 @@ All paths are inside `jstack/`.
 - `skills/j-help/SKILL.md`, `docs/guide.md`, `README.md` and the root `README.md`: synced with the changes above, with "up to three" removed.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 3.0.0.
 
+**Optional voice skill (v3.1).**
+
+- `skills/j-mode/SKILL.md` and `skills/technical-writing/SKILL.md`: text written as James also loads his `james-voice` skill when it's installed. JStack doesn't bundle it.
+
 ## How to merge a new release
 
 1. Add `https://github.com/cursor/plugins` as a remote named `upstream`, then fetch it.

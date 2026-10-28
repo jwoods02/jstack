@@ -88,6 +88,7 @@ When James steps away, state the finish check, keep going under `/loop`, and kee
 - Parallel fan-out → the **swarm** skill for coverage, races and checks. Use **arena** for design or code bakeoffs.
 - Big change → the **interrogate** skill, run by the correctness lens reviewer.
 - Any prose, your reply included → the **unslop** skill, and docs, PR text and commit messages also use **technical-writing**.
+- Text written as James (PR descriptions, Slack messages, emails, docs he signs) → also load his **james-voice** skill if it's installed. JStack doesn't ship it. It sets the voice; unslop and technical-writing still apply. Skip it for replies to James.
 - Before review → the **no-comments** skill.
 - Verifying UI or CLI behavior → drive the real app with the repo's own harness, or make one with **create-verification-skill**.
 - A number you measured → the **benchmark-checklist** skill before you report or act on it.
