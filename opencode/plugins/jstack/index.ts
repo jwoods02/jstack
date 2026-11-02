@@ -196,14 +196,28 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     return [...targets.values()].map((t) => ({ ...t, numbers: [...new Set(t.numbers)], branches: [...new Set(t.branches)] }))
   }
 
-  async function poll(list: M.Target[], at: number) {
-    log("gh", { args: "api graphql", prs: list.flatMap((t) => t.numbers), branches: list.flatMap((t) => t.branches) })
-    const response = await run(gh, ["api", "graphql", "-f", `query=${M.buildQuery(list)}`])
-    let data: any
+  async function graphql(query: string, extra: Record<string, unknown>) {
+    log("gh", { args: "api graphql", ...extra })
+    const response = await run(gh, ["api", "graphql", "-f", `query=${query}`])
     try {
-      data = JSON.parse(response.stdout).data
+      const data = JSON.parse(response.stdout).data
+      if (data) return data
     } catch {}
-    if (!data) return log("gh failed", { error: response.stderr.slice(0, 500) })
+    log("gh failed", { error: response.stderr.slice(0, 500) })
+  }
+
+  async function completeActivity(repo: M.Repo, number: number, node: any, prev: M.PrState | undefined) {
+    for (let missing = M.missingPages(node, prev); Object.keys(missing).length; missing = M.missingPages(node, prev)) {
+      const page = (await graphql(M.pageQuery(repo, number, missing), { page: M.prKey(repo, number), missing }))?.r0?.[`p${number}`]
+      if (!page) return undefined
+      node = M.mergePage(node, page, missing)
+    }
+    return node
+  }
+
+  async function poll(list: M.Target[], at: number) {
+    const data = await graphql(M.buildQuery(list), { prs: list.flatMap((t) => t.numbers), branches: list.flatMap((t) => t.branches) })
+    if (!data) return
     const result = M.parseResult(list, data)
 
     const updates = new Map<string, { pr: M.PrState; changes: M.Change[] }[]>()
@@ -215,10 +229,13 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
       }
       for (const n of [...t.numbers]) {
         const key = M.prKey(t.owner.repo, n)
-        const fetched = result.prs.get(key)
-        if (!fetched) continue
-      if (fetched.manyChecks) log("checks past 100, counts decide pending", { pr: key })
+        const node = result.prs.get(key)
+        if (!node) continue
         const prev = (await ctx.storage.get(`pr/${key}`)) as M.PrState | undefined
+        const complete = await completeActivity(t.owner.repo, n, node, prev)
+        if (!complete) continue
+        const fetched = M.parsePr(complete)
+        if (fetched.manyChecks) log("checks past 100, counts decide pending", { pr: key })
         const next = fetched.state
         const changes = M.diff(prev, next, fetched.activity, ignoreFor(t.owner.sessionID, result.viewer))
         if (JSON.stringify(prev) !== JSON.stringify(next)) await ctx.storage.set(`pr/${key}`, next)

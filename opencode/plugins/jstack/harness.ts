@@ -48,8 +48,9 @@ export function github(viewer = "jwoods02") {
   let beforeAnswer: (() => void | Promise<void>) | undefined
 
   function node(pr: FixturePr, query: string) {
-    const commentArgs = query.match(/\bcomments\(([^)]*)\)\s*\{\s*pageInfo/)?.[1] ?? ""
-    const reviewArgs = query.match(/\breviews\(([^)]*)\)/)?.[1] ?? ""
+    const args = (field: string) => [...query.matchAll(new RegExp(`\\b${field}\\(([^)]*last:[^)]*)\\)`, "g"))][0]?.[1] ?? ""
+    const commentArgs = args("comments")
+    const reviewArgs = args("reviews")
     return {
       number: pr.number,
       title: pr.title,

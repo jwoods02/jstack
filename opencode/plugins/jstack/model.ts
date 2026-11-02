@@ -24,6 +24,7 @@ export type Activity = {
   body: string
   url: string
   verdict?: string
+  comments?: number
 }
 
 export type Change =
@@ -77,6 +78,16 @@ export function stackPrs(view: unknown, branch: string): number[] {
   return branches.flatMap((entry) => (entry.pr && entry.pr.state === "OPEN" ? [entry.pr.number] : []))
 }
 
+const PAGE = "pageInfo { hasPreviousPage startCursor }"
+
+function activityFields(args: string, connections: ActivityConnection[] = ["comments", "reviews"]) {
+  const fields = {
+    comments: `comments(${args}) { ${PAGE} nodes { id author { login } body createdAt url } }`,
+    reviews: `reviews(${args}) { ${PAGE} nodes { id author { login } state body submittedAt url comments(first: 1) { totalCount nodes { body url } } } }`,
+  }
+  return connections.map((c) => fields[c]).join("\n  ")
+}
+
 const PR_FIELDS = `number title url state isDraft headRefOid
   commits(last: 1) { nodes { commit { statusCheckRollup { state contexts(first: 100) {
     checkRunCountsByState { state count }
@@ -84,9 +95,38 @@ const PR_FIELDS = `number title url state isDraft headRefOid
     pageInfo { hasNextPage }
     nodes { __typename ... on CheckRun { name status conclusion } ... on StatusContext { context state } }
   } } } } }
-  reviews(last: 20) { nodes { id author { login } state body submittedAt url } }
-  comments(last: 20) { nodes { id author { login } body createdAt url } }
-  reviewThreads(last: 20) { nodes { comments(last: 10) { nodes { id author { login } body createdAt url } } } }`
+  ${activityFields("last: 20")}`
+
+export type ActivityConnection = "comments" | "reviews"
+export type MissingPages = Partial<Record<ActivityConnection, string>>
+
+const oldestAt = (connection: ActivityConnection, nodes: any[]) =>
+  connection === "comments" ? nodes[0]?.createdAt : nodes.find((r) => r.submittedAt)?.submittedAt
+
+export function missingPages(node: any, prev: PrState | undefined): MissingPages {
+  const missing: MissingPages = {}
+  if (!prev) return missing
+  for (const connection of ["comments", "reviews"] as const) {
+    const page = node[connection]
+    const oldest = oldestAt(connection, page?.nodes ?? [])
+    if (page?.pageInfo?.hasPreviousPage && (oldest === undefined || oldest >= prev.activityAt)) missing[connection] = page.pageInfo.startCursor
+  }
+  return missing
+}
+
+export function pageQuery(repo: Repo, number: number, missing: MissingPages) {
+  const connections = Object.keys(missing) as ActivityConnection[]
+  const fields = connections.map((c) => activityFields(`last: 100, before: ${JSON.stringify(missing[c])}`, [c])).join("\n      ")
+  return `query {\n  r0: repository(owner: ${JSON.stringify(repo.owner)}, name: ${JSON.stringify(repo.name)}) {\n    p${number}: pullRequest(number: ${number}) {\n      ${fields}\n    }\n  }\n}`
+}
+
+export function mergePage(node: any, page: any, missing: MissingPages) {
+  const merged = { ...node }
+  for (const connection of Object.keys(missing) as ActivityConnection[]) {
+    merged[connection] = { pageInfo: page[connection].pageInfo, nodes: [...page[connection].nodes, ...node[connection].nodes] }
+  }
+  return merged
+}
 
 export type Target = { repo: Repo; numbers: number[]; branches: string[] }
 
@@ -103,7 +143,7 @@ export function buildQuery(targets: Target[]) {
 
 export type QueryResult = {
   viewer: string
-  prs: Map<string, ReturnType<typeof parsePr>>
+  prs: Map<string, any>
   branches: Map<string, number | undefined>
 }
 
@@ -117,12 +157,12 @@ export function parseResult(targets: Target[], data: any): QueryResult {
     if (!repo) return
     for (const n of target.numbers) {
       const node = repo[`p${n}`]
-      if (node) result.prs.set(prKey(target.repo, n), parsePr(node))
+      if (node) result.prs.set(prKey(target.repo, n), node)
     }
     target.branches.forEach((branch, b) => {
       const node = repo[`b${b}`]?.nodes?.[0]
       result.branches.set(branchKey(target.repo, branch), node?.number)
-      if (node) result.prs.set(prKey(target.repo, node.number), parsePr(node))
+      if (node) result.prs.set(prKey(target.repo, node.number), node)
     })
   })
   return result
@@ -145,6 +185,14 @@ function checksRunning(rollup: any) {
   )
 }
 
+function reviewActivity(review: any, author: string): Activity {
+  const inline = review.comments?.totalCount ?? 0
+  const first = review.comments?.nodes?.[0]
+  const base = { id: review.id, author, at: review.submittedAt }
+  if (review.state === "COMMENTED" && !review.body?.trim() && inline === 1 && first) return { ...base, kind: "review comment", body: first.body ?? "", url: first.url }
+  return { ...base, kind: "review", body: review.body ?? "", url: review.url, verdict: review.state, comments: inline }
+}
+
 export function parsePr(node: any): { state: PrState; activity: Activity[]; manyChecks: boolean } {
   const rollup = node.commits?.nodes?.[0]?.commit?.statusCheckRollup
   const contexts: any[] = rollup?.contexts?.nodes ?? []
@@ -154,13 +202,8 @@ export function parsePr(node: any): { state: PrState; activity: Activity[]; many
   const checks: Checks = !rollup ? "none" : checksRunning(rollup) ? "pending" : rollup.state === "SUCCESS" ? "passed" : "failed"
   const login = (author: any) => author?.login ?? "ghost"
   const activity: Activity[] = [
-    ...(node.reviews?.nodes ?? [])
-      .filter((r: any) => r.submittedAt && r.state !== "PENDING")
-      .map((r: any) => ({ id: r.id, kind: "review" as const, author: login(r.author), at: r.submittedAt, body: r.body ?? "", url: r.url, verdict: r.state })),
     ...(node.comments?.nodes ?? []).map((c: any) => ({ id: c.id, kind: "comment" as const, author: login(c.author), at: c.createdAt, body: c.body ?? "", url: c.url })),
-    ...(node.reviewThreads?.nodes ?? []).flatMap((t: any) =>
-      (t.comments?.nodes ?? []).map((c: any) => ({ id: c.id, kind: "review comment" as const, author: login(c.author), at: c.createdAt, body: c.body ?? "", url: c.url })),
-    ),
+    ...(node.reviews?.nodes ?? []).filter((r: any) => r.submittedAt && r.state !== "PENDING").map((r: any) => reviewActivity(r, login(r.author))),
   ].sort((a, b) => a.at.localeCompare(b.at))
   const activityAt = activity.reduce((max, item) => (item.at > max ? item.at : max), "")
   return {
@@ -219,7 +262,8 @@ export function describe(change: Change): string {
       return `checks failing on ${short(change.head)} while others run: ${change.checks.join(", ")}`
     case "activity": {
       const { item } = change
-      const what = item.kind === "review" ? `review (${item.verdict?.toLowerCase().replace(/_/g, " ")})` : item.kind
+      const count = item.comments ? `, ${item.comments} comment${item.comments === 1 ? "" : "s"}` : ""
+      const what = item.kind === "review" ? `review (${item.verdict?.toLowerCase().replace(/_/g, " ")}${count})` : item.kind
       const body = excerpt(item.body)
       return `${what} from ${item.author}${body ? `: ${body}` : ""} ${item.url}`
     }

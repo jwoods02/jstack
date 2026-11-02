@@ -15,7 +15,6 @@ function prNode(overrides: Record<string, any> = {}) {
     commits: { nodes: [{ commit: { statusCheckRollup: null } }] },
     reviews: { nodes: [] },
     comments: { nodes: [] },
-    reviewThreads: { nodes: [] },
     ...overrides,
   }
 }
@@ -202,8 +201,13 @@ describe("change detection", () => {
     const before = { comments: { nodes: [comment("c1", "jwoods02", "2026-11-02T10:00:00Z")] } }
     const after = {
       comments: { nodes: [comment("c1", "jwoods02", "2026-11-02T10:00:00Z"), comment("c2", "cursor", "2026-11-02T10:05:00Z", "Bug: off by one")] },
-      reviews: { nodes: [{ id: "r1", author: { login: "jwoods02" }, state: "CHANGES_REQUESTED", body: "", submittedAt: "2026-11-02T10:06:00Z", url: "u" }, { id: "r0", author: { login: "x" }, state: "PENDING", submittedAt: null }] },
-      reviewThreads: { nodes: [{ comments: { nodes: [comment("t1", "copilot", "2026-11-02T10:06:00Z")] } }] },
+      reviews: {
+        nodes: [
+          { id: "r1", author: { login: "jwoods02" }, state: "CHANGES_REQUESTED", body: "", submittedAt: "2026-11-02T10:06:00Z", url: "u" },
+          { id: "t1", author: { login: "copilot" }, state: "COMMENTED", body: "", submittedAt: "2026-11-02T10:06:00Z", url: "u", comments: { totalCount: 1, nodes: [{ body: "nit", url: "v" }] } },
+          { id: "r0", author: { login: "x" }, state: "PENDING", submittedAt: null },
+        ],
+      },
     }
     const changes = step(before, after)
     expect(changes.map((c) => c.kind === "activity" && [c.item.kind, c.item.author])).toEqual([
@@ -241,6 +245,39 @@ describe("change detection", () => {
     expect(text).toBe(
       `[github] #12 feat(opencode): [RES-391] Sessions say what they wait on (head da94c0f) https://github.com/jwoods02/jstack/pull/12\n- CI failed on da94c0f: lint, test\n- marked ready for review`,
     )
+  })
+})
+
+describe("activity pages", () => {
+  const page = (connection: "comments" | "reviews", at: string[], hasPreviousPage: boolean) => ({
+    [connection]: {
+      pageInfo: { hasPreviousPage, startCursor: "cur" },
+      nodes: at.map((t, i) => (connection === "comments" ? comment(`c${i}`, "a", t) : { id: `r${i}`, state: "COMMENTED", body: "x", submittedAt: t, url: "u" })),
+    },
+  })
+  const seen = { ...parse().state, activityAt: "2026-11-02T10:00:00Z" }
+
+  test("a page that reaches back to the watermark is complete", () => {
+    expect(M.missingPages(prNode(page("comments", ["2026-11-02T09:59:00Z", "2026-11-02T10:01:00Z"], true)), seen)).toEqual({})
+    expect(M.missingPages(prNode(page("comments", ["2026-11-02T10:01:00Z"], false)), seen)).toEqual({})
+  })
+
+  test("a page newer than the watermark, or level with it, needs the page before", () => {
+    expect(M.missingPages(prNode(page("comments", ["2026-11-02T10:01:00Z"], true)), seen)).toEqual({ comments: "cur" })
+    expect(M.missingPages(prNode(page("reviews", ["2026-11-02T10:00:00Z"], true)), seen)).toEqual({ reviews: "cur" })
+  })
+
+  test("the first sighting is a baseline and needs no pages", () => {
+    expect(M.missingPages(prNode(page("comments", ["2026-11-02T10:01:00Z"], true)), undefined)).toEqual({})
+  })
+
+  test("an older page goes in front of the newer one", () => {
+    const node = prNode(page("comments", ["2026-11-02T10:01:00Z"], true))
+    const older = { comments: { pageInfo: { hasPreviousPage: false, startCursor: "x" }, nodes: [comment("c9", "a", "2026-11-02T09:00:00Z")] } }
+    const merged = M.mergePage(node, older, { comments: "cur" })
+    expect(merged.comments.nodes.map((c: any) => c.id)).toEqual(["c9", "c0"])
+    expect(M.missingPages(merged, seen)).toEqual({})
+    expect(M.pageQuery(repo, 12, { comments: "cur" })).toContain('comments(last: 100, before: "cur")')
   })
 })
 
