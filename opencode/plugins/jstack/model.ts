@@ -75,7 +75,7 @@ export function parseRemote(url: string): Repo | undefined {
 export function stackPrs(view: unknown, branch: string): number[] {
   const branches = (view as { branches?: { name: string; pr?: { number: number; state: string } }[] })?.branches ?? []
   if (!branches.some((entry) => entry.name === branch)) return []
-  return branches.flatMap((entry) => (entry.pr && entry.pr.state === "OPEN" ? [entry.pr.number] : []))
+  return branches.flatMap((entry) => (entry.pr ? [entry.pr.number] : []))
 }
 
 const PAGE = "pageInfo { hasPreviousPage startCursor }"
@@ -134,7 +134,7 @@ export function buildQuery(targets: Target[]) {
   const repos = targets.map((target, r) => {
     const prs = target.numbers.map((n) => `p${n}: pullRequest(number: ${n}) { ...pr }`)
     const branches = target.branches.map(
-      (branch, b) => `b${b}: pullRequests(headRefName: ${JSON.stringify(branch)}, states: OPEN, first: 1) { nodes { ...pr } }`,
+      (branch, b) => `b${b}: pullRequests(headRefName: ${JSON.stringify(branch)}, first: 1, orderBy: { field: CREATED_AT, direction: DESC }) { nodes { ...pr } }`,
     )
     return `r${r}: repository(owner: ${JSON.stringify(target.repo.owner)}, name: ${JSON.stringify(target.repo.name)}) {\n    ${[...prs, ...branches].join("\n    ")}\n  }`
   })

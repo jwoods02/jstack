@@ -114,4 +114,31 @@ describe("plugin", () => {
     await runner.tick()
     expect(w.calls.prompts[0].text).toContain("review (changes requested, 2 comments) from jwoods02: Needs work https://x/rv")
   })
+
+  test("a PR merged while the service was down wakes once after restart", async () => {
+    const store = storage()
+    const before = world({ store })
+    before.gh.set(fixturePr())
+    await start(before).tick()
+    expect(store.map.get("pr/jwoods02/jstack#13").state).toBe("OPEN")
+    await stops.pop()!()
+
+    before.gh.set(fixturePr({ state: "MERGED", isDraft: false }))
+    const after = world({ store, gh: before.gh })
+    await start(after).tick()
+    expect(after.calls.prompts.map((p) => p.text)).toEqual([expect.stringMatching(/^\[github\] #13 [\s\S]*\n- merged$/)])
+    await stops.pop()!()
+
+    const again = world({ store, gh: before.gh })
+    await start(again).tick()
+    expect(again.calls.prompts).toHaveLength(0)
+  })
+
+  test("a merged PR never seen before sends nothing", async () => {
+    const w = world()
+    w.gh.set(fixturePr({ state: "MERGED", isDraft: false }))
+    await start(w).tick()
+    expect(w.calls.prompts).toHaveLength(0)
+    expect(w.store.map.get("pr/jwoods02/jstack#13").state).toBe("MERGED")
+  })
 })

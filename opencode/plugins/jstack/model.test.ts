@@ -106,7 +106,7 @@ describe("map", () => {
     expect(owners.map((o) => o.sessionID)).toEqual(["in"])
   })
 
-  test("a stack's open PRs come from gh stack view when the branch is in it", () => {
+  test("a stack's PRs come from gh stack view when the branch is in it", () => {
     const view = {
       currentBranch: "feat/b",
       branches: [
@@ -116,7 +116,7 @@ describe("map", () => {
         { name: "feat/d" },
       ],
     }
-    expect(M.stackPrs(view, "feat/b")).toEqual([950, 952])
+    expect(M.stackPrs(view, "feat/b")).toEqual([946, 950, 952])
     expect(M.stackPrs(view, "feat/z")).toEqual([])
   })
 
@@ -301,7 +301,7 @@ describe("cadence and commands", () => {
     const query = M.buildQuery([{ repo, numbers: [12, 13], branches: ["feat/x"] }])
     expect(query).toContain('r0: repository(owner: "jwoods02", name: "jstack")')
     expect(query).toContain("p12: pullRequest(number: 12)")
-    expect(query).toContain('b0: pullRequests(headRefName: "feat/x", states: OPEN, first: 1)')
+    expect(query).toContain('b0: pullRequests(headRefName: "feat/x", first: 1, orderBy: { field: CREATED_AT, direction: DESC })')
     const result = M.parseResult([{ repo, numbers: [12], branches: ["feat/x", "feat/none"] }], {
       viewer: { login: "jwoods02" },
       r0: { p12: prNode(), b0: { nodes: [prNode({ number: 13 })] }, b1: { nodes: [] } },
