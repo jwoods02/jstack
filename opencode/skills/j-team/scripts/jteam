@@ -180,7 +180,7 @@ status() { # [board file]
 oneline() { tr '\n' ' ' <"$1" | sed 's/ *$//'; }
 
 watch_pr() { # PR number, URL or branch -> report on its checks and on reviews and comments since the head commit
-  local pr="$1" view n since watch_err watch_rc=0 checks checks_err rc=0 verdict status=0
+  local pr="$1" view n since watch_err watch_rc=0 checks checks_err rc=0 verdict status=0 spec page findings=""
   watch_err="$(mktemp)" checks_err="$(mktemp)"
   gh pr checks "$pr" --watch --interval 30 >/dev/null 2>"$watch_err" || watch_rc=$?
   view="$(gh pr view "$pr" --json number,title,headRefOid)" || return 2
@@ -208,12 +208,16 @@ watch_pr() { # PR number, URL or branch -> report on its checks and on reviews a
   fi
   rm -f "$watch_err" "$checks_err"
   echo "$verdict"
-  {
-    gh api --paginate "repos/{owner}/{repo}/pulls/$n/reviews" | jq -c '.[] | {kind: "review", at: .submitted_at, state, who: .user.login, body, url: .html_url}'
-    gh api --paginate "repos/{owner}/{repo}/pulls/$n/comments" | jq -c '.[] | {kind: "review comment", at: .created_at, who: .user.login, body, url: .html_url}'
-    gh api --paginate "repos/{owner}/{repo}/issues/$n/comments" | jq -c '.[] | {kind: "comment", at: .created_at, who: .user.login, body, url: .html_url}'
-  } | jq -rs --arg since "$since" 'sort_by(.at)[] | select(.at > $since)
-    | "\(.kind) by \(.who)\(if .state then " \(.state)" else "" end): \((.body // "") | split("\n") | map(select(test("\\S") and (test("^\\s*<!--") | not))) | (.[0] // "") | .[0:160]) \(.url)"' || status=2
+  for spec in "review:pulls/$n/reviews" "review comment:pulls/$n/comments" "comment:issues/$n/comments"; do
+    if page="$(gh api --paginate "repos/{owner}/{repo}/${spec#*:}")" && page="$(jq -c --arg k "${spec%%:*}" '.[]
+      | {kind: $k, at: (.submitted_at // .created_at), state, who: .user.login, body, url: .html_url}' <<<"$page")"; then
+      findings+="$page"$'\n'
+    else
+      echo "Findings unreadable: ${spec#*:}"; status=2
+    fi
+  done
+  jq -rs --arg since "$since" 'sort_by(.at)[] | select(.at > $since)
+    | "\(.kind) by \(.who)\(if .state then " \(.state)" else "" end): \((.body // "") | split("\n") | map(select(test("\\S") and (test("^\\s*<!--") | not))) | (.[0] // "") | .[0:160]) \(.url)"' <<<"$findings" || status=2
   return "$status"
 }
 

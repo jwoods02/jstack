@@ -18,6 +18,7 @@ case "$1 $2" in
     "commits": [{"committedDate": "2026-11-01T09:00:00Z"}]}';;
   "api repos/{owner}/{repo}/commits/abcdef1234567890") echo 2026-11-02T12:00:00Z;;
   "api --paginate")
+    [ "$3" != "${FAILING_ENDPOINT:-}" ] || { echo "HTTP 502: Bad Gateway ($3)" >&2; exit 1; }
     case "$3" in
       */pulls/7/reviews) echo '[
         {"user": {"login": "cursor[bot]"}, "state": "COMMENTED", "body": "Old finding\nmore", "html_url": "https://x/old", "submitted_at": "2026-11-02T11:00:00Z"},
@@ -67,5 +68,12 @@ exits "watch error" "$rc" 2
 rc=0; out="$(run '[{"name": "test", "bucket": "pending"}]' CHECKS_RC=8)" || rc=$?
 expect "checks still pending after the watch say pending" "CI pending: test" "$out"
 exits "pending" "$rc" 2
+
+for endpoint in pulls/7/reviews pulls/7/comments issues/7/comments; do
+  rc=0; out="$(run '[{"name": "test", "bucket": "pass"}]' FAILING_ENDPOINT="repos/{owner}/{repo}/$endpoint")" || rc=$?
+  expect "failed $endpoint query shows gh's error" "HTTP 502: Bad Gateway (repos/{owner}/{repo}/$endpoint)" "$out"
+  expect "failed $endpoint query is named" "Findings unreadable: $endpoint" "$out"
+  exits "failed $endpoint query" "$rc" 2
+done
 
 exit "$fail"
