@@ -290,4 +290,85 @@ describe("plugin", () => {
       expect(w.calls.context).toBe(3)
     })
   })
+
+  describe("the session's own posts", () => {
+    const at = Date.parse("2026-11-02T10:00:00Z")
+    const created = (id: string) => ({ type: "shell.created", data: { info: { id, command: "gh pr comment 13 -b hello", metadata: { sessionID: "ses_owner" } } } })
+    const exited = (id: string) => ({ type: "shell.exited", data: { id } })
+    const restart = () => delete (globalThis as any).__jstackGithub
+    const selfComment = (offset: number) => fixturePr({ comments: [comment("self", new Date(at + offset).toISOString().replace(/\.\d+Z/, "Z"), "jwoods02")] })
+
+    function setup() {
+      const store = storage()
+      const w = world({ store })
+      baseline(w)
+      return { store, w }
+    }
+
+    test("a post recorded before a restart, but not yet polled, doesn't wake after it", async () => {
+      const { store, w } = setup()
+      const a = start(w, { now: () => at })
+      await a.tick()
+      a.onEvent(created("sh1"))
+      a.onEvent(exited("sh1"))
+      w.gh.set(selfComment(1_000))
+      await Bun.sleep(1)
+      await a.stop()
+      restart()
+      const b = world({ store, gh: w.gh })
+      await start(b, { now: () => at + 60_000 }).tick()
+      expect(b.calls.prompts).toEqual([])
+    })
+
+    test("a post that starts before the first tick is still the session's own", async () => {
+      const { w } = setup()
+      const runner = start(w, { now: () => at })
+      runner.onEvent(created("sh2"))
+      runner.onEvent(exited("sh2"))
+      w.gh.set(selfComment(1_000))
+      await Bun.sleep(1)
+      await runner.tick()
+      expect(w.calls.prompts).toEqual([])
+    })
+
+    test("a post that spans a leader handoff is still the session's own", async () => {
+      const { store, w } = setup()
+      const a = start(world({ store, gh: w.gh }), { now: () => at })
+      const b = world({ store, gh: w.gh })
+      const next = start(b, { now: () => at })
+      await a.tick()
+      a.onEvent(created("sh3"))
+      next.onEvent(created("sh3"))
+      await a.stop()
+      next.onEvent(exited("sh3"))
+      w.gh.set(selfComment(1_000))
+      await Bun.sleep(1)
+      await next.tick()
+      expect(b.calls.prompts).toEqual([])
+    })
+
+    test("a post whose exit a restart lost is still the session's own", async () => {
+      const { store, w } = setup()
+      const a = start(w, { now: () => at })
+      a.onEvent(created("sh4"))
+      await Bun.sleep(1)
+      await a.stop()
+      restart()
+      w.gh.set(selfComment(5_000))
+      const b = world({ store, gh: w.gh })
+      await start(b, { now: () => at + 30_000 }).tick()
+      expect(b.calls.prompts).toEqual([])
+    })
+
+    test("the same account commenting outside any post still wakes", async () => {
+      const { w } = setup()
+      const runner = start(w, { now: () => at })
+      runner.onEvent(created("sh5"))
+      runner.onEvent(exited("sh5"))
+      w.gh.set(selfComment(10 * 60_000))
+      await Bun.sleep(1)
+      await runner.tick()
+      expect(w.calls.prompts.map((p) => p.text)).toEqual([expect.stringContaining("comment from jwoods02")])
+    })
+  })
 })

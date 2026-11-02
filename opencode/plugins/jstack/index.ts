@@ -8,6 +8,8 @@ type Options = { scope?: string; gh?: string; log?: string }
 type TitleRecord = { set?: string; setAt?: number; task?: string; james?: string }
 type Tracked = { owner: M.Owner; branch: string; numbers: Set<number>; lookup: boolean }
 type ShellRun = { sessionID: string; kind: "push" | "post"; start: number }
+type Post = { sessionID: string; start: number; end?: number }
+type Shared = { leader?: string; shells: Map<string, ShellRun>; done: Set<string>; pushed: Set<string> }
 type RunResult = { ok: boolean; stdout: string; stderr: string }
 type Polled = { tracked: Tracked; key: string; number: number; prev?: M.PrState; next: M.PrState; changes: M.Change[] }
 export type Deps = {
@@ -18,6 +20,8 @@ export type Deps = {
 const DRAIN_MS = 10_000
 const PUSH_FAST_MS = 2 * 60_000
 const SELF_POST_SLACK_MS = 30_000
+const OPEN_POST_MS = 60_000
+const POST_KEEP_MS = 24 * 60 * 60_000
 
 function run(command: string, args: string[], cwd?: string, signal?: AbortSignal) {
   return new Promise<RunResult>((resolve) =>
@@ -52,7 +56,6 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
   const options: Options = ctx.options ?? {}
   const gh = options.gh ?? "gh"
   const me = `${process.pid}-${Math.random().toString(36).slice(2, 10)}`
-  const shared: { leader?: string } = ((globalThis as any).__jstackGithub ??= {})
   const abort = new AbortController()
   const log = (msg: string, extra: Record<string, unknown> = {}) => {
     if (options.log) appendFileSync(options.log, JSON.stringify({ at: new Date().toISOString(), me, msg, ...extra }) + "\n")
@@ -62,8 +65,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
   const tracked = new Map<string, Tracked>()
   const due = new Map<string, M.Due>()
   const latest = new Map<string, M.PrState>()
-  const shells = new Map<string, ShellRun>()
-  const selfPosts: { sessionID: string; start: number; end: number }[] = []
+  const shared: Shared = ((globalThis as any).__jstackGithub ??= { shells: new Map(), done: new Set(), pushed: new Set() })
   const dirty = new Set<string>()
   const contexts = new Map<string, { updated: number; recent: any[] }>()
   let current: Promise<void> | undefined
@@ -130,11 +132,25 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     }
   }
 
-  function ignoreFor(sessionID: string, viewer: string) {
+  async function loadPosts() {
+    const posts: Post[] = []
+    for (let after: string | undefined, more = true; more; ) {
+      const page = await ctx.storage.scan({ prefix: "post/", after })
+      for (const { key, value } of page.entries) {
+        if (now() - (value.end ?? value.start) < POST_KEEP_MS) posts.push(value)
+        else if (fence()) await ctx.storage.remove(key)
+      }
+      after = page.next
+      more = !!after
+    }
+    return posts
+  }
+
+  function ignoreFor(sessionID: string, viewer: string, posts: Post[]) {
     return (item: M.Activity) => {
       if (item.author !== viewer) return false
       const at = Date.parse(item.at)
-      return selfPosts.some((p) => p.sessionID === sessionID && at >= p.start - 5_000 && at <= p.end + SELF_POST_SLACK_MS)
+      return posts.some((p) => p.sessionID === sessionID && at >= p.start - 5_000 && at <= (p.end ?? p.start + OPEN_POST_MS) + SELF_POST_SLACK_MS)
     }
   }
 
@@ -224,6 +240,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     const data = await graphql(M.buildQuery(list), { prs: list.flatMap((t) => t.numbers), branches: list.flatMap((t) => t.branches) })
     if (!data) return
     const result = M.parseResult(list, data)
+    const posts = await loadPosts()
 
     const bySession = new Map<string, Polled[]>()
     for (const t of tracked.values()) {
@@ -241,7 +258,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
         if (!complete) continue
         const fetched = M.parsePr(complete)
         if (fetched.manyChecks) log("checks past 100, counts decide pending", { pr: key })
-        const changes = M.diff(prev, fetched.state, fetched.activity, ignoreFor(t.owner.sessionID, result.viewer))
+        const changes = M.diff(prev, fetched.state, fetched.activity, ignoreFor(t.owner.sessionID, result.viewer, posts))
         const polled = { tracked: t, key, number: n, prev, next: fetched.state, changes }
         bySession.set(t.owner.sessionID, [...(bySession.get(t.owner.sessionID) ?? []), polled])
       }
@@ -275,6 +292,8 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     try {
       if (!fence()) return
       const at = now()
+      for (const sessionID of shared.pushed) pushed(sessionID)
+      shared.pushed.clear()
       await refresh()
       const list = dueTargets(at)
       if (list.length) await poll(list, at)
@@ -287,7 +306,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     }
   }
 
-  function checkSoon(sessionID: string) {
+  function pushed(sessionID: string) {
     dirty.add(sessionID)
     for (const t of tracked.values()) {
       if (t.owner.sessionID !== sessionID) continue
@@ -296,28 +315,32 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
         due.set(key, { checks: due.get(key)?.checks ?? "none", checkedAt: 0, fastUntil: now() + PUSH_FAST_MS })
       }
     }
-    clearTimeout(soon)
-    soon = setTimeout(() => void tick(), 2_000)
   }
 
-  function onEvent(event: any) {
-    if (shared.leader !== me) return
+  async function onEvent(event: any) {
     if (event.type === "shell.created") {
       const info = event.data?.info
       const sessionID = info?.metadata?.sessionID
-      if (!sessionID || !info.command) return
+      if (!sessionID || !info.command || shared.shells.has(info.id) || shared.done.has(info.id)) return
       const kind = M.isPushCommand(info.command) ? "push" : M.isPostCommand(info.command) ? "post" : undefined
-      if (kind) shells.set(info.id, { sessionID, kind, start: now() })
+      if (!kind) return
+      const shell = { sessionID, kind, start: now() } as const
+      shared.shells.set(info.id, shell)
+      if (kind === "post") await ctx.storage.set(`post/${info.id}`, { sessionID, start: shell.start })
     } else if (event.type === "shell.exited") {
-      const shell = shells.get(event.data?.id)
-      if (!shell) return
-      shells.delete(event.data.id)
-      if (shell.kind === "post") {
-        selfPosts.push({ sessionID: shell.sessionID, start: shell.start, end: now() })
-        if (selfPosts.length > 50) selfPosts.shift()
+      const id = event.data?.id
+      const shell = shared.shells.get(id)
+      if (shell) {
+        shared.shells.delete(id)
+        shared.done.add(id)
+        if (shared.done.size > 500) shared.done.delete(shared.done.values().next().value!)
+        shared.pushed.add(shell.sessionID)
+        log("shell", { sessionID: shell.sessionID, kind: shell.kind })
+        if (shell.kind === "post") await ctx.storage.set(`post/${id}`, { sessionID: shell.sessionID, start: shell.start, end: now() })
       }
-      log("shell", { sessionID: shell.sessionID, kind: shell.kind })
-      checkSoon(shell.sessionID)
+      if (!shared.done.has(id)) return
+      clearTimeout(soon)
+      soon = setTimeout(() => void tick(), 2_000)
     } else if (event.type === "vcs.branch.updated") {
       const directory = event.location?.directory
       for (const [key, info] of gitCache) if (key === directory || info?.top === directory) gitCache.delete(key)
@@ -344,7 +367,7 @@ export default {
     const controller = new AbortController()
     void (async () => {
       for await (const event of ctx.event.subscribe({ types: ["shell.created", "shell.exited", "vcs.branch.updated"], signal: controller.signal })) {
-        onEvent(event)
+        await onEvent(event).catch((error) => log("event failed", { error: String(error) }))
       }
     })().catch((error) => {
       if (!controller.signal.aborted) log("events failed", { error: String(error) })
