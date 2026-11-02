@@ -77,6 +77,22 @@ remove_worktree() { # project ID, main checkout, worktree directory, force
     || if [ "$4" = true ]; then git -C "$2" worktree remove --force "$3"; else git -C "$2" worktree remove "$3"; fi
 }
 
+board_path() { # brief text, main checkout -> the first existing board file named in the brief or the repo's AGENTS.md, else the repo's own
+  local candidate
+  while read -r candidate; do
+    candidate="${candidate/#\~/$HOME}"
+    [ -f "$candidate" ] && { echo "$candidate"; return; }
+  done < <({ echo "$1"; cat "$2/AGENTS.md" 2>/dev/null; } | grep -oE '~?/[^[:space:]`"'"'"'<>]*board\.md' || true)
+  [ -f "$2/.opencode/jstack-board.md" ] && echo "$2/.opencode/jstack-board.md" || true
+}
+
+board_excerpt() { # table rows and the shared-resources section, each line cut to 400 chars
+  awk '
+    /^## / { shared = tolower($0) ~ /shared resources/; next }
+    /^\|[ :-]*\|/ && !/[A-Za-z0-9]/ { next }
+    /^\|/ || (shared && NF) { print substr($0, 1, 400) }' "$1"
+}
+
 prune() { # main checkout, project ID
   local repo="$1" pid="$2" merged dir head branch pr pr_head
   merged="$(cd "$repo" && gh pr list --state merged --limit 200 --json number,headRefName,headRefOid 2>/dev/null || echo '[]')"
@@ -173,7 +189,7 @@ case "$cmd" in
       elif [ ! -f "$log" ] || [ "$(tail -n 1 "$log")" = "worktree setup ok" ]; then
         setup_note="Setup ran."
       else
-        setup_note="Setup did not finish. Read $log, then report blocked to the coordinator."
+        setup_note="Setup did not finish. Read $log, then mark your board row blocked and wait."
       fi
       footer="Worktree: $dir (branch $branch off $base). $setup_note"
     fi
@@ -182,14 +198,22 @@ case "$cmd" in
     [ -n "$model" ] && body="$(jq -c --argjson m "$(model_ref "$model")" '. + {model: $m}' <<<"$body")"
     sid="$(api post /api/session -d "$body" | data | jq -r .id)"
 
-    coordinator="${OPENCODE_SESSION_ID:-}"
-    if [ -n "$coordinator" ]; then
+    footer="Your session: $sid.
+$footer"
+    parent="${OPENCODE_SESSION_ID:-}"
+    if [ -n "$parent" ]; then
       footer="$footer
-Coordinator session: $coordinator. Report to it with: $SELF send $coordinator \"<one or two lines>\""
+Started from session $parent. To send it a line (optional): $SELF send $parent \"<one or two lines>\""
+    fi
+    board="$(board_path "$brief" "$repo")"
+    if [ -n "$board" ]; then
+      footer="$footer
+Board: $board. Its rows and shared resources now:
+$(board_excerpt "$board")"
     fi
     api post "/api/session/$sid/prompt" -d "$(jq -cn --arg t "$brief
 
-$footer" --arg f "$coordinator" '{text: $t, metadata: {jteam: ({kind: "brief"} + if $f == "" then {} else {from: $f} end)}}')" >/dev/null
+$footer" --arg f "$parent" '{text: $t, metadata: {jteam: ({kind: "brief"} + if $f == "" then {} else {from: $f} end)}}')" >/dev/null
     printf '%s\t%s\t%s\t%s\n' "$sid" "$branch" "$dir" "$setup_note"
     ;;
   prune)

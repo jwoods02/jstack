@@ -4,11 +4,11 @@ The skills and principles in [`../jstack/skills/`](../jstack/skills/) run unchan
 
 ## How it works
 
-Parallel work runs as separate sessions, not subagents. Each builder gets its own top-level session in its own git worktree, so you can open any thread and talk to it. One coordinator session starts the builders, tracks them on a board file, and passes you PR links and decisions. Builders start their own reviewers as subagents and report back to the coordinator.
+Parallel work runs as separate sessions, not subagents. Each stream gets its own top-level session in its own git worktree, so you can open any thread and talk to it. Each session owns its stream: it designs when the design is unclear, builds, runs its own reviewers as subagents, and keeps its row on a shared board file. An optional coordinator session catches up on them, tidies the board and puts cross-stream calls to you.
 
 | Agent | Mode | Job |
 |---|---|---|
-| [`Orchestrator`](agents/Orchestrator.md) | primary | The coordinator. Starts builder sessions with `jteam spawn` and keeps the board. Writes no code. |
+| [`Orchestrator`](agents/Orchestrator.md) | primary | The optional coordinator. Starts sessions with `jteam spawn`, catches up on them and tidies the board. Writes no code. |
 | [`JMode`](agents/JMode.md) | primary | j-mode for a single thread: architect, builder, reviewer or investigator. Spawned builders run as `JMode`. |
 | [`j-agent`](agents/j-agent.md) | subagent | Reviewers and helpers started during a j-mode run |
 
@@ -51,4 +51,4 @@ Or work in one thread with `JMode`, the default agent, exactly as with `/j-mode`
 
 ## Worktrees and local resources
 
-Builders run in OpenCode worktrees, so their sessions belong to the repo's project. `jteam prune`, which runs on every spawn, removes a worktree and its branch once the PR is merged and nothing local is left. Each worktree needs its own env files and dependencies, which the setup script handles. Ten worktrees can't all run the same local stack. Ports clash, and so can test databases and job queues. Keep one stack for the repo, and have the coordinator hand it to whichever builder needs it. The others rely on typecheck, unit tests and CI.
+Builders run in OpenCode worktrees, so their sessions belong to the repo's project. `jteam prune`, which runs on every spawn, removes a worktree and its branch once the PR is merged and nothing local is left. Each worktree needs its own env files and dependencies, which the setup script handles. Ten worktrees can't all run the same local stack. Ports clash, and so can test databases and job queues. Keep one stack for the repo. Its line on the board names the session holding it, and a session asks before taking it. The others rely on typecheck, unit tests and CI.
