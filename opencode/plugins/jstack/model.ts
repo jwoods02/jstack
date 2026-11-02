@@ -46,7 +46,7 @@ export type SessionRef = {
 
 export type GitInfo = { top: string; main: string; branch: string; repo: Repo }
 
-export type Owner = { sessionID: string; title: string; top: string; main: string; branch: string; repo: Repo }
+export type Owner = { sessionID: string; title: string; directory: string; updated: number; top: string; main: string; branch: string; repo: Repo }
 
 export function inScope(directory: string, scope: string | undefined) {
   if (!scope) return true
@@ -55,16 +55,16 @@ export function inScope(directory: string, scope: string | undefined) {
 }
 
 export function buildMap(sessions: SessionRef[], git: (directory: string) => GitInfo | undefined, scope?: string): Owner[] {
-  const byTop = new Map<string, Owner & { updated: number }>()
+  const byTop = new Map<string, Owner>()
   for (const session of sessions) {
     if (session.parentID || session.archived || !inScope(session.directory, scope)) continue
     const info = git(session.directory)
     if (!info || !info.branch || info.top === info.main) continue
     const held = byTop.get(info.top)
     if (held && held.updated >= session.updated) continue
-    byTop.set(info.top, { sessionID: session.id, title: session.title, updated: session.updated, ...info })
+    byTop.set(info.top, { sessionID: session.id, title: session.title, directory: session.directory, updated: session.updated, ...info })
   }
-  return [...byTop.values()].map(({ updated, ...owner }) => owner)
+  return [...byTop.values()]
 }
 
 export function parseRemote(url: string): Repo | undefined {

@@ -188,4 +188,28 @@ describe("plugin", () => {
     expect(w.calls.prompts).toHaveLength(0)
     expect(w.store.map.get("pr/jwoods02/jstack#13").activityAt).toBe("")
   })
+  for (const [what, change] of [
+    ["moved out of scope", (s: any) => (s.location.directory = "/outside/wt")],
+    ["moved to another worktree", (s: any) => (s.location.directory = "/scratch/other")],
+    ["archived", (s: any) => (s.time.archived = 5)],
+  ] as const) {
+    test(`a session ${what} during polling gets no message or rename until it owns the PR again`, async () => {
+      const w = world()
+      w.worktrees.set("/scratch/other", { top: "/scratch/other", main: "/scratch/main", branch: "feat/other" })
+      let clock = 1_000_000
+      baseline(w)
+      w.gh.set(fixturePr({ comments: [comment("bot", "2026-11-02T10:00:00Z")] }))
+      const owner = w.sessions.get("ses_owner")!
+      const saved = structuredClone(owner)
+      w.gh.before(() => change(owner))
+      const runner = start(w, { now: () => clock })
+      await runner.tick()
+      expect([...w.calls.prompts, ...w.calls.titles]).toEqual([])
+      w.gh.before(undefined)
+      w.sessions.set("ses_owner", saved)
+      clock += 30_000
+      await runner.tick()
+      expect(w.calls.prompts.map((p) => p.text)).toEqual([expect.stringContaining("comment from cursor")])
+    })
+  }
 })

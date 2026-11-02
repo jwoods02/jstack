@@ -101,6 +101,13 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     }
   }
 
+  async function ownedNow(owner: M.Owner) {
+    const s = await ctx.session.get({ sessionID: owner.sessionID }).catch(() => undefined)
+    const directory = s?.location?.directory
+    if (s && !s.parentID && !s.time?.archived && directory === owner.directory && M.inScope(directory, options.scope)) return s
+    log("not owned now", { sessionID: owner.sessionID, directory })
+  }
+
   async function messages(sessionID: string): Promise<any[]> {
     const context: any[] = (await ctx.session.context({ sessionID })) ?? []
     return context.slice(-40).reverse()
@@ -150,7 +157,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
       task = current
     }
     const want = M.sessionTitle(prs, task, await waitingOnJames(owner, recent))
-    if (!want || want === current || !fence()) return
+    if (!want || want === current || !(await ownedNow(owner)) || !fence()) return
     await ctx.session.update({ sessionID: owner.sessionID, title: want })
     await ctx.storage.set(key, { set: want, task })
     log("title", { sessionID: owner.sessionID, title: want })
@@ -235,6 +242,8 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     }
 
     for (const [sessionID, polled] of bySession) {
+      const changed = polled.filter((p) => p.changes.length).map((p) => ({ pr: p.next, changes: p.changes }))
+      if (changed.length && !(await ownedNow(polled[0].tracked.owner))) continue
       if (!fence()) return
       for (const p of polled) if (JSON.stringify(p.prev) !== JSON.stringify(p.next)) await ctx.storage.set(`pr/${p.key}`, p.next)
       for (const p of polled) {
@@ -242,7 +251,6 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
         latest.set(p.key, p.next)
         if (p.next.state !== "OPEN") p.tracked.numbers.delete(p.number)
       }
-      const changed = polled.filter((p) => p.changes.length).map((p) => ({ pr: p.next, changes: p.changes }))
       if (!changed.length) continue
       const text = M.wakeText(changed)
       if (!fence()) return log("wake dropped", { sessionID, text })
