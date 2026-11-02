@@ -83,12 +83,12 @@ orchestrators() { # session ID to leave out -> open Orchestrator sessions, most 
       | sort_by(-.time.updated) | .[] | "\(.id)\t\(.title // "-")"'
 }
 
-board_path() { # brief text, main checkout -> the first existing board file named in the brief or the repo's AGENTS.md, else the repo's own
+board_path() { # brief text, main checkout -> the first existing board file named in the brief, the repo's or the global AGENTS.md, else the repo's own
   local candidate
   while read -r candidate; do
     candidate="${candidate/#\~/$HOME}"
     [ -f "$candidate" ] && { echo "$candidate"; return; }
-  done < <({ echo "$1"; cat "$2/AGENTS.md" 2>/dev/null; } | grep -oE '~?/[^[:space:]`"'"'"'<>]*board\.md' || true)
+  done < <({ echo "$1"; cat "$2/AGENTS.md" "$CONFIG_DIR/AGENTS.md" 2>/dev/null; } | grep -oE '~?/[^[:space:]`"'"'"'<>]*board\.md' || true)
   [ -f "$2/.opencode/jstack-board.md" ] && echo "$2/.opencode/jstack-board.md" || true
 }
 

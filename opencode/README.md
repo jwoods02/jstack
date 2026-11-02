@@ -34,7 +34,7 @@ You need OpenCode V2 with its `opencode` CLI on your PATH, plus `git`, `jq` and 
    ```
 
    With depth 2, a reviewer that a builder starts can run `/interrogate`'s own reviewers. `worktree.directory` puts worktrees beside each repo instead of in OpenCode's data folder.
-5. Optional: tell your agents where the board lives in `~/.config/opencode/AGENTS.md`, for example `JStack boards live at ~/docs/<project>/board.md`. Without one, the board is `.opencode/jstack-board.md` in the repo.
+5. Optional: tell your agents where the board lives in `~/.config/opencode/AGENTS.md`, for example `JStack boards live at ~/docs/<project>/board.md`. `jteam spawn` can't fill in `<project>`, so name the concrete board path in each brief. Without one, the board is `.opencode/jstack-board.md` in the repo.
 6. Optional: for each repo that needs setup in a fresh worktree (env files, dependency install), add an executable `~/.config/opencode/worktree-setup/<repo-name>.sh`. `jteam spawn` makes it the project's start command, so OpenCode runs it inside every new worktree, including ones you create in the app. Have it write its output to `$(git rev-parse --git-dir)/worktree-setup.log` and end with the line `worktree setup ok`, which is how `jteam` knows it worked. `git worktree list --porcelain | awk 'NR == 1 { print $2 }'` gives it the main checkout.
 
 Skills load from the clone, so `git pull` updates them. Copy the agents again when they change.
