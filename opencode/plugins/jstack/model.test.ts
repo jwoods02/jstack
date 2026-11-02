@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import live from "./fixtures/azure-47790-rollup.json"
 import * as M from "./model"
 
 const repo = { owner: "jwoods02", name: "jstack" }
@@ -144,6 +145,45 @@ describe("change detection", () => {
   test("CI finishing on a new head wakes even if pending was never seen", () => {
     const changes = step({ commits: rollup("SUCCESS") }, { headRefOid: "b".repeat(40), commits: rollup("SUCCESS") })
     expect(changes).toEqual([{ kind: "ci", head: "b".repeat(40), passed: true, failing: [] }])
+  })
+
+  test("a failure rollup with checks still running is pending", () => {
+    const mixed = { commits: rollup("FAILURE", [run("lint", "COMPLETED", "FAILURE"), run("test", "IN_PROGRESS", null)]) }
+    expect(parse(mixed).state.checks).toBe("pending")
+    const status = (context: string, state: string) => ({ __typename: "StatusContext", context, state })
+    expect(parse({ commits: rollup("FAILURE", [run("lint", "COMPLETED", "FAILURE"), status("deploy", "EXPECTED")]) }).state.checks).toBe("pending")
+    expect(parse({ commits: rollup("FAILURE", [run("lint", "COMPLETED", "FAILURE"), status("deploy", "PENDING")]) }).state.checks).toBe("pending")
+    expect(parse({ commits: rollup("FAILURE", [run("lint", "COMPLETED", "FAILURE"), status("deploy", "SUCCESS")]) }).state.checks).toBe("failed")
+  })
+
+  test("a real GitHub failure rollup with a queued run is pending", () => {
+    expect(live.commits.nodes[0].commit.statusCheckRollup.state).toBe("FAILURE")
+    const parsed = parse({ commits: live.commits })
+    expect(parsed.state.checks).toBe("pending")
+    expect(parsed.state.failing).toEqual(["Automated merging requirements met"])
+  })
+
+  test("past 100 contexts, the counts decide whether checks still run", () => {
+    const done = Array.from({ length: 100 }, (_, i) => run(`job${i}`, "COMPLETED", "SUCCESS"))
+    const many = (counts: { state: string; count: number }[]) => ({
+      nodes: [{ commit: { statusCheckRollup: { state: "SUCCESS", contexts: { nodes: done, pageInfo: { hasNextPage: true }, checkRunCountsByState: counts, statusContextCountsByState: [] } } } }],
+    })
+    expect(parse({ commits: many([{ state: "SUCCESS", count: 100 }, { state: "QUEUED", count: 3 }]) }).state.checks).toBe("pending")
+    expect(parse({ commits: many([{ state: "SUCCESS", count: 103 }]) }).state.checks).toBe("passed")
+  })
+
+  test("CI is finished only once every check completes", () => {
+    const early = { commits: rollup("FAILURE", [run("lint", "COMPLETED", "FAILURE"), run("test", "QUEUED", null)]) }
+    const late = { commits: rollup("FAILURE", [run("lint", "COMPLETED", "FAILURE"), run("test", "COMPLETED", "FAILURE")]) }
+    expect(step({ commits: rollup("PENDING") }, early)).toEqual([{ kind: "failing", head: prNode().headRefOid, checks: ["lint"] }])
+    expect(step(early, late)).toEqual([{ kind: "ci", head: prNode().headRefOid, passed: false, failing: ["lint", "test"] }])
+    expect(M.isDue({ checks: parse(early).state.checks, checkedAt: 0, fastUntil: 0 }, 30_000)).toBe(true)
+  })
+
+  test("the query asks for complete check counts", () => {
+    const query = M.buildQuery([{ repo, numbers: [12], branches: [] }])
+    expect(query).toContain("checkRunCountsByState { state count }")
+    expect(query).toContain("statusContextCountsByState { state count }")
   })
 
   test("no checks at all never wakes", () => {

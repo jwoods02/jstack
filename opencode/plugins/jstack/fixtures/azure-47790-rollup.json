@@ -1,0 +1,328 @@
+{
+  "source": "gh api graphql, read-only, 2 Nov 2026",
+  "url": "https://github.com/Azure/azure-rest-api-specs/pull/47790",
+  "commits": {
+    "nodes": [
+      {
+        "commit": {
+          "statusCheckRollup": {
+            "state": "FAILURE",
+            "contexts": {
+              "nodes": [
+                {
+                  "__typename": "CheckRun",
+                  "name": "pre_activation",
+                  "status": "COMPLETED",
+                  "conclusion": "SKIPPED"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "TypeSpec Migration Validation",
+                  "status": "COMPLETED",
+                  "conclusion": "SKIPPED"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "ARM Modeling Review",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "ARM Universal Auto SignOff",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Breaking Change(Cross-Version) - Analyze Code",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Set Breaking Change(Cross-Version) Status / Breaking Change(Cross-Version) - Set Status",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "notify",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Protected Files",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Sdk Suppressions",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Spec Change Policies",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "SpellCheck",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Summarize Checks",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Summarize PR Impact",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Swagger Avocado - Analyze Code",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Set Avocado Status / Swagger Avocado - Set Status",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Swagger BreakingChange - Analyze Code",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Set BreakingChange Status / Swagger BreakingChange - Set Status",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Swagger LintDiff - Analyze Code",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Set LintDiff Status / Swagger LintDiff - Set Status",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Swagger ModelValidation - Analyze Code",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Set ModelValidation Status / Swagger ModelValidation - Set Status",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Swagger SemanticValidation - Analyze Code",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Set SemanticValidation Status / Swagger SemanticValidation - Set Status",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "TypeSpec Suppressions - Analyze Code",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Set TypeSpec Suppressions Status / TypeSpec Suppressions - Set Status",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "TypeSpec Validation",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "activation",
+                  "status": "COMPLETED",
+                  "conclusion": "SKIPPED"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "dispatch-arm-review",
+                  "status": "COMPLETED",
+                  "conclusion": "SKIPPED"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Post TypeSpec Suppressions Comment",
+                  "status": "COMPLETED",
+                  "conclusion": "SKIPPED"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "TypeSpec Requirement",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "agent",
+                  "status": "COMPLETED",
+                  "conclusion": "SKIPPED"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "detection",
+                  "status": "COMPLETED",
+                  "conclusion": "SKIPPED"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "safe_outputs",
+                  "status": "COMPLETED",
+                  "conclusion": "SKIPPED"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "conclusion",
+                  "status": "COMPLETED",
+                  "conclusion": "SKIPPED"
+                },
+                {
+                  "__typename": "StatusContext",
+                  "context": "Automated merging requirements met",
+                  "state": "FAILURE"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "SDK Validation - JS",
+                  "status": "QUEUED",
+                  "conclusion": null
+                },
+                {
+                  "__typename": "StatusContext",
+                  "context": "SDK Validation Status",
+                  "state": "PENDING"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Contributor readiness",
+                  "status": "COMPLETED",
+                  "conclusion": "NEUTRAL"
+                },
+                {
+                  "__typename": "StatusContext",
+                  "context": "Breaking Change(Cross-Version)",
+                  "state": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "SDK Validation - .NET",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "SDK Validation - Go",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "SDK Validation - Java",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "SDK Validation - Python",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "SDK Validation - Rust",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Swagger APIView",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "StatusContext",
+                  "context": "Swagger Avocado",
+                  "state": "SUCCESS"
+                },
+                {
+                  "__typename": "StatusContext",
+                  "context": "Swagger BreakingChange",
+                  "state": "SUCCESS"
+                },
+                {
+                  "__typename": "StatusContext",
+                  "context": "Swagger LintDiff",
+                  "state": "SUCCESS"
+                },
+                {
+                  "__typename": "StatusContext",
+                  "context": "Swagger ModelValidation",
+                  "state": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "Swagger PrettierCheck",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                },
+                {
+                  "__typename": "StatusContext",
+                  "context": "Swagger SemanticValidation",
+                  "state": "SUCCESS"
+                },
+                {
+                  "__typename": "StatusContext",
+                  "context": "TypeSpec Suppressions",
+                  "state": "SUCCESS"
+                },
+                {
+                  "__typename": "CheckRun",
+                  "name": "license/cla",
+                  "status": "COMPLETED",
+                  "conclusion": "SUCCESS"
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

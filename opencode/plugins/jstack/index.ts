@@ -217,6 +217,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
         const key = M.prKey(t.owner.repo, n)
         const fetched = result.prs.get(key)
         if (!fetched) continue
+      if (fetched.manyChecks) log("checks past 100, counts decide pending", { pr: key })
         const prev = (await ctx.storage.get(`pr/${key}`)) as M.PrState | undefined
         const next = fetched.state
         const changes = M.diff(prev, next, fetched.activity, ignoreFor(t.owner.sessionID, result.viewer))

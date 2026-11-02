@@ -78,7 +78,12 @@ export function stackPrs(view: unknown, branch: string): number[] {
 }
 
 const PR_FIELDS = `number title url state isDraft headRefOid
-  commits(last: 1) { nodes { commit { statusCheckRollup { state contexts(first: 100) { nodes { __typename ... on CheckRun { name status conclusion } ... on StatusContext { context state } } } } } } }
+  commits(last: 1) { nodes { commit { statusCheckRollup { state contexts(first: 100) {
+    checkRunCountsByState { state count }
+    statusContextCountsByState { state count }
+    pageInfo { hasNextPage }
+    nodes { __typename ... on CheckRun { name status conclusion } ... on StatusContext { context state } }
+  } } } } }
   reviews(last: 20) { nodes { id author { login } state body submittedAt url } }
   comments(last: 20) { nodes { id author { login } body createdAt url } }
   reviewThreads(last: 20) { nodes { comments(last: 10) { nodes { id author { login } body createdAt url } } } }`
@@ -98,7 +103,7 @@ export function buildQuery(targets: Target[]) {
 
 export type QueryResult = {
   viewer: string
-  prs: Map<string, { state: PrState; activity: Activity[] }>
+  prs: Map<string, ReturnType<typeof parsePr>>
   branches: Map<string, number | undefined>
 }
 
@@ -125,20 +130,28 @@ export function parseResult(targets: Target[], data: any): QueryResult {
 
 const FAILED_RUN = new Set(["FAILURE", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE"])
 const FAILED_STATUS = new Set(["FAILURE", "ERROR"])
+const RUNNING_RUN = new Set(["REQUESTED", "QUEUED", "IN_PROGRESS", "WAITING", "PENDING"])
+const RUNNING_STATUS = new Set(["PENDING", "EXPECTED"])
 
-export function parsePr(node: any): { state: PrState; activity: Activity[] } {
+function checksRunning(rollup: any) {
+  const contexts = rollup.contexts ?? {}
+  const counted = (counts: { state: string; count: number }[] | undefined, running: Set<string>) =>
+    (counts ?? []).some((c) => running.has(c.state) && c.count > 0)
+  return (
+    RUNNING_STATUS.has(rollup.state) ||
+    counted(contexts.checkRunCountsByState, RUNNING_RUN) ||
+    counted(contexts.statusContextCountsByState, RUNNING_STATUS) ||
+    (contexts.nodes ?? []).some((c: any) => (c.__typename === "CheckRun" ? c.status !== "COMPLETED" : RUNNING_STATUS.has(c.state)))
+  )
+}
+
+export function parsePr(node: any): { state: PrState; activity: Activity[]; manyChecks: boolean } {
   const rollup = node.commits?.nodes?.[0]?.commit?.statusCheckRollup
   const contexts: any[] = rollup?.contexts?.nodes ?? []
   const failing = contexts.flatMap((c) =>
     c.__typename === "CheckRun" ? (FAILED_RUN.has(c.conclusion) ? [c.name] : []) : FAILED_STATUS.has(c.state) ? [c.context] : [],
   )
-  const checks: Checks = !rollup
-    ? "none"
-    : rollup.state === "SUCCESS"
-      ? "passed"
-      : rollup.state === "FAILURE" || rollup.state === "ERROR"
-        ? "failed"
-        : "pending"
+  const checks: Checks = !rollup ? "none" : checksRunning(rollup) ? "pending" : rollup.state === "SUCCESS" ? "passed" : "failed"
   const login = (author: any) => author?.login ?? "ghost"
   const activity: Activity[] = [
     ...(node.reviews?.nodes ?? [])
@@ -164,6 +177,7 @@ export function parsePr(node: any): { state: PrState; activity: Activity[] } {
       activityIDs: activity.filter((item) => item.at === activityAt).map((item) => item.id),
     },
     activity,
+    manyChecks: !!rollup?.contexts?.pageInfo?.hasNextPage,
   }
 }
 
