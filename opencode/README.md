@@ -53,7 +53,13 @@ Skills load from the clone, so `git pull` updates them. Copy the agents again wh
 
 ## Use it
 
-Open a session with `JMode`, the default agent, and give it a job, exactly as with `/j-mode` in Cursor. Agree its plan and say go, and it leads the stream through every PR. A lead whose context gets heavy hands the same worktree to a fresh lead with `jteam spawn --continue`. Run `jteam status` any time to see stale board rows, sessions with no row, your draft PRs with CI state, and the worktrees `jteam prune` would remove.
+Open a session with `JMode`, the default agent, and give it a job, exactly as with `/j-mode` in Cursor. Agree its plan and say go, and it leads the stream through every PR. To start a stream from a brief file, name its branch `<type>/<ticket>-<slug>`, or `<type>/<slug>` with no ticket:
+
+```sh
+jteam spawn my-app feat/res-391-chat-prompt "Chat prompt" brief.md
+```
+
+A lead whose context gets heavy hands the same worktree to a fresh lead with `jteam spawn --continue`. Run `jteam status` any time to see stale board rows, sessions with no row, your draft PRs with CI state, and the worktrees `jteam prune` would remove.
 
 ## Worktrees and local resources
 

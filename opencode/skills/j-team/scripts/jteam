@@ -17,7 +17,8 @@ jteam send [--now] <session> <text...>       queue a message; --now delivers it 
 jteam spawn <repo> <branch|-> <title> <brief-file|-> [model] [agent]
                                              new OpenCode worktree and branch off origin's default branch,
                                              set up by the project's start command, with a session given the brief;
-                                             branch - runs the session in the main checkout with no worktree
+                                             branch - runs the session in the main checkout with no worktree;
+                                             e.g. jteam spawn my-app feat/res-391-chat-prompt "Chat prompt" brief.md
 jteam spawn --continue <worktree> <title> <brief-file|-> [model] [agent]
                                              a session in an existing worktree on its current branch, for handoffs;
                                              makes no worktree or branch and doesn't prune

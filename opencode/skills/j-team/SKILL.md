@@ -129,7 +129,7 @@ jteam rm <worktree> [--force]                remove one worktree and archive its
 
 `status` reads a row as stale once every PR in its PR cell is merged or closed, or once every session it names is archived.
 
-A spawn brief carries what j-mode's kickoff needs: the job, the scope and what is out of scope, the finish check, and James's standing orders that apply. Name branches the way the repo's instructions ask.
+A spawn brief carries what j-mode's kickoff needs: the job, the scope and what is out of scope, the finish check, and James's standing orders that apply. Name branches `<type>/<ticket>-<slug>`, with `<type>` the PR title's conventional-commit type, for example `feat/res-391-chat-prompt`. With no ticket, use `<type>/<slug>`.
 
 A plain `send` waits until the receiver's current turn ends. Use `--now` only when the message changes what the receiver is doing right now, such as a stop or a fix that unblocks it.
 
