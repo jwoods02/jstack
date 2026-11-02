@@ -110,8 +110,8 @@ export default {
     }
 
     async function messages(sessionID: string): Promise<any[]> {
-      const page = await ctx.session.message.list({ sessionID, limit: 40, order: "desc" })
-      return page?.data ?? page?.items ?? (Array.isArray(page) ? page : [])
+      const context: any[] = (await ctx.session.context({ sessionID })) ?? []
+      return context.slice(-40).reverse()
     }
 
     async function stackNumbers(owner: M.Owner) {
@@ -148,7 +148,7 @@ export default {
       if (current === record.james) return
       const recent = await messages(owner.sessionID)
       let task = record.task
-      if (current !== record.set && current !== task) {
+      if (current && current !== record.set && current !== task) {
         const inputs = recent.flatMap((m) => (m.content ?? []).filter((p: any) => p.type === "tool").map((p: any) => p.state?.input))
         if (!M.selfRenamed(inputs, current)) {
           await ctx.storage.set(key, { ...record, james: current })
@@ -164,82 +164,86 @@ export default {
       log("title", { sessionID: owner.sessionID, title: want })
     }
 
+    async function refresh() {
+      const sessions = (await listSessions()).filter((s) => !s.parentID && !s.archived && M.inScope(s.directory, options.scope))
+      for (const s of sessions) if (!gitCache.has(s.directory)) gitCache.set(s.directory, await gitInfo(s.directory))
+      const owners = M.buildMap(sessions, (d) => gitCache.get(d) ?? undefined, options.scope)
+      const live = new Set(owners.map((o) => o.top))
+      for (const top of tracked.keys()) if (!live.has(top)) tracked.delete(top)
+      for (const owner of owners) {
+        const held = tracked.get(owner.top)
+        if (held && held.branch === owner.branch && !dirty.has(owner.sessionID)) {
+          held.owner = owner
+          continue
+        }
+        dirty.delete(owner.sessionID)
+        const kept = held?.branch === owner.branch ? [...held.numbers] : []
+        tracked.set(owner.top, { owner, branch: owner.branch, numbers: new Set([...kept, ...(await stackNumbers(owner))]), lookup: true })
+      }
+    }
+
+    function dueTargets(now: number): M.Target[] {
+      const targets = new Map<string, M.Target>()
+      const target = (repo: M.Repo) => {
+        const key = M.repoKey(repo)
+        if (!targets.has(key)) targets.set(key, { repo, numbers: [], branches: [] })
+        return targets.get(key)!
+      }
+      for (const t of tracked.values()) {
+        if (t.lookup) target(t.owner.repo).branches.push(t.branch)
+        for (const n of t.numbers) if (M.isDue(due.get(M.prKey(t.owner.repo, n)), now)) target(t.owner.repo).numbers.push(n)
+      }
+      return [...targets.values()].map((t) => ({ ...t, numbers: [...new Set(t.numbers)], branches: [...new Set(t.branches)] }))
+    }
+
+    async function poll(list: M.Target[], now: number) {
+      log("gh", { args: "api graphql", prs: list.flatMap((t) => t.numbers), branches: list.flatMap((t) => t.branches) })
+      const response = await run(gh, ["api", "graphql", "-f", `query=${M.buildQuery(list)}`])
+      let data: any
+      try {
+        data = JSON.parse(response.stdout).data
+      } catch {}
+      if (!data) return log("gh failed", { error: response.stderr.slice(0, 500) })
+      const result = M.parseResult(list, data)
+
+      const updates = new Map<string, { pr: M.PrState; changes: M.Change[] }[]>()
+      for (const t of tracked.values()) {
+        if (t.lookup && result.branches.has(M.branchKey(t.owner.repo, t.branch))) {
+          const found = result.branches.get(M.branchKey(t.owner.repo, t.branch))
+          if (found) t.numbers.add(found)
+          t.lookup = false
+        }
+        for (const n of [...t.numbers]) {
+          const key = M.prKey(t.owner.repo, n)
+          const fetched = result.prs.get(key)
+          if (!fetched) continue
+          const prev = (await ctx.storage.get(`pr/${key}`)) as M.PrState | undefined
+          const next = fetched.state
+          const changes = M.diff(prev, next, fetched.activity, ignoreFor(t.owner.sessionID, result.viewer))
+          if (JSON.stringify(prev) !== JSON.stringify(next)) await ctx.storage.set(`pr/${key}`, next)
+          due.set(key, { checks: next.checks, checkedAt: now, fastUntil: due.get(key)?.fastUntil ?? 0 })
+          latest.set(key, next)
+          if (next.state !== "OPEN") t.numbers.delete(n)
+          if (changes.length) updates.set(t.owner.sessionID, [...(updates.get(t.owner.sessionID) ?? []), { pr: next, changes }])
+        }
+      }
+
+      for (const [sessionID, prs] of updates) {
+        const text = M.wakeText(prs)
+        await ctx.session.prompt({ sessionID, text, delivery: "queue", metadata: { jteam: { kind: "github" } } })
+        log("wake", { sessionID, text })
+      }
+    }
+
     async function tick() {
       if (running) return
       running = true
       try {
         if (!(await lead())) return
         const now = Date.now()
-        const sessions = (await listSessions()).filter((s) => !s.parentID && !s.archived && M.inScope(s.directory, options.scope))
-        for (const s of sessions) if (!gitCache.has(s.directory)) gitCache.set(s.directory, await gitInfo(s.directory))
-        const owners = M.buildMap(sessions, (d) => gitCache.get(d) ?? undefined, options.scope)
-        const live = new Set(owners.map((o) => o.top))
-        for (const top of tracked.keys()) if (!live.has(top)) tracked.delete(top)
-
-        for (const owner of owners) {
-          const held = tracked.get(owner.top)
-          if (held && held.branch === owner.branch && !dirty.has(owner.sessionID)) {
-            held.owner = owner
-            continue
-          }
-          dirty.delete(owner.sessionID)
-          const kept = held?.branch === owner.branch ? [...held.numbers] : []
-          tracked.set(owner.top, { owner, branch: owner.branch, numbers: new Set([...kept, ...(await stackNumbers(owner))]), lookup: true })
-        }
-
-        const targets = new Map<string, M.Target>()
-        const target = (repo: M.Repo) => {
-          const key = M.repoKey(repo)
-          if (!targets.has(key)) targets.set(key, { repo, numbers: [], branches: [] })
-          return targets.get(key)!
-        }
-        for (const t of tracked.values()) {
-          if (t.lookup) target(t.owner.repo).branches.push(t.branch)
-          for (const n of t.numbers) if (M.isDue(due.get(M.prKey(t.owner.repo, n)), now)) target(t.owner.repo).numbers.push(n)
-        }
-        if (!targets.size) return
-
-        const list = [...targets.values()].map((t) => ({ ...t, numbers: [...new Set(t.numbers)], branches: [...new Set(t.branches)] }))
-        log("gh", { args: "api graphql", prs: list.flatMap((t) => t.numbers), branches: list.flatMap((t) => t.branches) })
-        const response = await run(gh, ["api", "graphql", "-f", `query=${M.buildQuery(list)}`])
-        let data: any
-        try {
-          data = JSON.parse(response.stdout).data
-        } catch {}
-        if (!data) {
-          log("gh failed", { error: response.stderr.slice(0, 500) })
-          return
-        }
-        const result = M.parseResult(list, data)
-
-        const updates = new Map<string, { pr: M.PrState; changes: M.Change[] }[]>()
-        for (const t of tracked.values()) {
-          if (t.lookup) {
-            const found = result.branches.get(M.branchKey(t.owner.repo, t.branch))
-            if (found) t.numbers.add(found)
-            t.lookup = false
-          }
-          for (const n of [...t.numbers]) {
-            const key = M.prKey(t.owner.repo, n)
-            const fetched = result.prs.get(key)
-            if (!fetched) continue
-            const prev = (await ctx.storage.get(`pr/${key}`)) as M.PrState | undefined
-            const next = fetched.state
-            const changes = M.diff(prev, next, fetched.activity, ignoreFor(t.owner.sessionID, result.viewer))
-            if (JSON.stringify(prev) !== JSON.stringify(next)) await ctx.storage.set(`pr/${key}`, next)
-            due.set(key, { checks: next.checks, checkedAt: now, fastUntil: due.get(key)?.fastUntil ?? 0 })
-            latest.set(key, next)
-            if (next.state !== "OPEN") t.numbers.delete(n)
-            if (changes.length) updates.set(t.owner.sessionID, [...(updates.get(t.owner.sessionID) ?? []), { pr: next, changes }])
-          }
-        }
-
-        for (const [sessionID, list] of updates) {
-          const text = M.wakeText(list)
-          await ctx.session.prompt({ sessionID, text, delivery: "queue", metadata: { jteam: { kind: "github" } } })
-          log("wake", { sessionID, text })
-        }
-
+        await refresh()
+        const list = dueTargets(now)
+        if (list.length) await poll(list, now)
         for (const t of tracked.values()) {
           const prs = [...t.numbers].flatMap((n) => latest.get(M.prKey(t.owner.repo, n)) ?? [])
           if (prs.length) await syncTitle(t.owner, prs).catch((error) => log("title failed", { sessionID: t.owner.sessionID, error: String(error) }))

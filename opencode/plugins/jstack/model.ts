@@ -279,5 +279,5 @@ export const SLOW_MS = 5 * 60_000
 export function isDue(due: Due | undefined, now: number) {
   if (!due) return true
   const every = due.checks === "pending" || now < due.fastUntil ? FAST_MS : SLOW_MS
-  return now - due.checkedAt >= every - 1_000
+  return now - due.checkedAt >= every - FAST_MS / 2
 }
