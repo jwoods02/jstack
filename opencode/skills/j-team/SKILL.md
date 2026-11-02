@@ -41,7 +41,7 @@ A session does the job its first message gives it. An architect, an investigator
 1. **Pick up.** Read the board, check `jteam ls` and the open rows for anyone on the same area, and write your row.
 2. **Plan.** Work out the plan yourself or with architect subagents. A plan of three or more PRs gets a fresh plan reviewer. End with j-mode's decision list and stop for James.
 3. **Run the stack.** Once James says go, work through the stack one PR at a time, with every builder and reviewer as a subagent. For each PR:
-   1. Start a fresh `j-agent` builder on the `builder` model, in the stream's worktree, on the next stack branch.
+   1. Start a fresh `j-agent` builder on the `builder` model, in the stream's worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
    2. The builder builds, opens the draft PR in the stack, pushes, reports the head commit and ends. It doesn't wait on CI or start reviewers.
    3. Wait for CI. With the jstack plugin installed, its `[github]` message (`metadata.jteam.kind = "github"`) wakes you when CI ends. Without the plugin, run one background `gh pr checks <n> --watch`. Send a red run back to the builder. When the repo has no CI, skip the wait. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so. Once CI is green or skipped, post the PR link in your session. Start one fresh `j-agent` reviewer on the `reviewer` model, or an `/interrogate` pass for a big change. You judge the findings.
    4. Send fixes back to the same builder or a fresh one. Round 2 is one fresh reviewer on the fix commits only.
@@ -69,8 +69,8 @@ While you wait, keep building later PRs that don't depend on the answer. When Ja
 
 ### Other top-level sessions
 
-- New, unrelated work gets its own stream. If the board or `jteam ls` shows one already on it, tell James which. Otherwise spawn one with `jteam spawn`, or tell James it's there to pick up.
-- Independent work that would go faster in parallel is its own stream, with its own lead and worktree. Before starting one, check the board's open rows for a shared branch, files, a migration number, or a local resource the repo's instructions name, such as a dev stack or test database.
+- Fan-out inside a stream uses subagents: builders, reviewers, explorers and helpers. Work that would go faster in parallel stays in the stream, and its builders take turns in the stream's worktree. It never becomes a new top-level session.
+- `jteam spawn` is only for genuinely new or different work, and only once James agrees to it. If the board or `jteam ls` shows a stream already on it, tell James which. Before spawning, check the board's open rows for a shared branch, files, a migration number, or a local resource the repo's instructions name, such as a dev stack or test database.
 - When your own context gets heavy, write a handoff note, spawn a fresh lead on the same worktree with `jteam spawn --continue`, say so, and stop.
 
 ### One worktree per stream
