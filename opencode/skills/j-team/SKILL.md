@@ -21,7 +21,7 @@ j-mode was written for Cursor. On OpenCode, read it with the substitutions below
 | The Project chat, the coordinator | The stream's lead, which starts its own builders and reviewers (see Streams and leads). Leads share the board, and James makes cross-stream calls. |
 | The Project's task tracker | The repo's issue tracker for work the team should see. The repo's board for the agents' own streams (see The board). |
 | The Project's shared context | The docs folder your instructions name, and the repo's own docs |
-| `/loop`, timers, CI subscriptions | Start the wait (for example `gh pr checks <n> --watch`) as a background shell command. OpenCode wakes the session when it ends. |
+| `/loop`, timers, CI subscriptions | A top-level session starts the wait (for example `gh pr checks <n> --watch`) as a background shell command. OpenCode wakes the session when it ends. A subagent runs its waits in the foreground (see Waits). |
 | `.cursor/skills/` | `.opencode/skills/` |
 | Chat history in `~/.cursor/projects/*/agent-transcripts` | OpenCode sessions, read with `jteam ls` and `jteam peek` |
 | A skill's file under `~/.cursor/plugins/` | Load it with the skill tool by its ID |
@@ -49,6 +49,11 @@ A session does the job its first message gives it. An architect, an investigator
 4. **Finish.** For a big change, run the milestone reviewer once on the top of the stack. Then set your row to "Ready for James" with the whole stack and each PR's reviewed head. James merges.
 
 Only summaries and verdicts land in a lead's context. j-mode's resume rule applies to builder subagents.
+
+### Waits
+
+- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. Builders and reviewers run their waits in the foreground. Leads still start subagents in the background.
+- A session that ends a turn on a wait says so in its last line. The line names what it waits on, the head commit, when the wait started and what the session does next. For example: "Waiting on CI for #946 at `50c0fe7`, started 14:05. I start PR 2 once it and round 2 pass."
 
 ### Ask James
 
