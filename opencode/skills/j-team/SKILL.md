@@ -36,7 +36,8 @@ These rules replace j-mode's rows for the coordinator, builder, reviewer and par
 
 - Every builder is its own top-level session, in its own git worktree, started with `jteam spawn`. James can open any of them and type into it. Use a subagent only for work that reports back to the agent that started it: reviewers, lens reviewers, explorers and helpers.
 - A builder starts the reviewers for its own PR. Once CI is green, it starts a fresh `j-agent` on the `reviewer` model (or the lens reviewers for a big change), runs the rounds, and applies the fixes.
-- A builder reports to the coordinator at four points: draft PR opened (with its link), review passed and ready for James, blocked on a call only James can make, and done. Each report is one or two lines, sent with the `jteam send` command at the end of the brief. If James started the session himself, there's no brief. Tell the coordinator `jteam coordinator` prints, if there is one, when the session opens a PR or hits a blocker. Otherwise report in your own session.
+- A builder reports to the coordinator at four points: draft PR opened (with its link), review passed and ready for James, blocked on a call only James can make, and done. Each report is one or two lines, sent with the `jteam send` command at the end of the brief. If James started the session himself, there's no brief. Tell the coordinator `jteam coordinator` prints, if there is one, when the session opens a PR or hits a blocker. Otherwise report in your own session. When James makes a call inside the session, such as approving a PR, pausing reviewers or changing scope, the next report names it, for example "James approved the PR in-session".
+- James talks to builder sessions directly, so calls inside a stream belong in that stream's session. A builder puts its own calls to James there, in place of j-mode's coordinator relay, and the coordinator doesn't pass his notes back. The coordinator puts cross-stream calls to James, and calls no session owns, and still sends him each draft PR link. Before it asks James a call or flags a stream's work as a surprise, it reads that session's recent human turns with `jteam peek`.
 - A builder changes only its own worktree and branch. If its setup fails, or a tool, credential or anything shared outside the worktree is broken (global toolchains, `~/.config/opencode`, the main checkout), it reports blocked and waits. The coordinator fixes it once and tells every affected builder. Parallel builders repairing the same shared thing clobber each other.
 - Before fanning out, the coordinator checks that no two builders share a branch, files, a migration number, or a local resource the repo's instructions name, such as a dev stack or test database.
 
@@ -48,7 +49,7 @@ The script is `scripts/jteam` in this skill's directory. It needs the OpenCode V
 jteam self                                   this session's ID
 jteam coordinator                            open Orchestrator sessions, most recently active first
 jteam ls [limit]                             top-level sessions: id, state, idle time, agent, title, directory
-jteam peek <session> [n]                     last n assistant replies (default 2), each cut to 1500 chars
+jteam peek <session> [n]                     last n messages from both sides (default 4), oldest first, each labelled and cut to 1500 chars
 jteam send [--now] <session> <text...>       queue a message; --now delivers it mid-turn
 jteam spawn <repo> <branch|-> <title> <brief-file|-> [model] [agent]
 jteam prune [repo]                           remove clean worktrees whose PR is merged, with their branches, and archive their sessions
@@ -60,6 +61,8 @@ jteam rm <worktree> [--force]                remove one worktree and archive its
 A spawn brief carries what j-mode's kickoff needs: the job, the scope and what is out of scope, the finish check, and James's standing orders that apply. Name branches the way the repo's instructions ask.
 
 A plain `send` waits until the receiver's current turn ends. Use `--now` only when the message changes what the receiver is doing right now, such as a stop or a fix that unblocks it.
+
+`send` and `spawn` tag their messages in the message metadata, so `peek` can tell James's own turns from agent traffic. It labels each message `[james]`, `[assistant]`, `[send from <session>]` or `[brief from <session>]`. Messages sent before the tag existed, or by other API clients, show as `[sent]`.
 
 Don't poll. Builders report when something changes. Use `ls` and `peek` when James asks for status, or before you write a brief about a stream.
 
