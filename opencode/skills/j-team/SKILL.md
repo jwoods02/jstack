@@ -34,7 +34,7 @@ The model map is `jstack-models.md` in the OpenCode config directory (`~/.config
 
 These rules replace j-mode's rows for the coordinator, builder, reviewer and parallel builders. A **stream** is a piece of work, one row on the board. Its **lead** is the top-level session that owns it end to end.
 
-A session does the job its first message gives it. An architect, an investigator or a one-off builder does that job and stops. When James agrees a plan and says go, the session becomes the stream's lead. James talks to sessions directly, so a lead puts its calls to James in its own session, in place of j-mode's coordinator relay.
+A session does the job its first message gives it. An architect, an investigator or a one-off builder does that job and stops. A one-off builder starts and judges its own reviewers as in step 3 below, and stops once the review passes. When James agrees a plan and says go, the session becomes the stream's lead. James talks to sessions directly, so a lead puts its calls to James in its own session, in place of j-mode's coordinator relay.
 
 ### How a lead runs a stream
 
@@ -45,7 +45,7 @@ A session does the job its first message gives it. An architect, an investigator
    2. The builder builds, opens the draft PR in the stack, gets CI green and reports back. It doesn't start reviewers.
    3. Post the PR link in your session. Start one fresh `j-agent` reviewer on the `reviewer` model, or an `/interrogate` pass for a big change. You judge the findings.
    4. Send fixes back to the same builder or a fresh one. Round 2 is one fresh reviewer on the fix commits only.
-   5. Move on once CI is green and the verdict's head commit equals `gh pr view <n> --json headRefOid`. A verdict for an older head is stale.
+   5. Move on once the review passes, CI is green, and the passing verdict's head commit equals `gh pr view <n> --json headRefOid`. A verdict for an older head is stale.
 4. **Finish.** For a big change, run the milestone reviewer once on the top of the stack. Then set your row to "Ready for James" with the whole stack and each PR's reviewed head. James merges.
 
 Only summaries and verdicts land in a lead's context. j-mode's resume rule applies to builder subagents.
@@ -132,4 +132,4 @@ A plain `send` waits until the receiver's current turn ends. Use `--now` only wh
 
 Don't poll. Use the board, `status`, `ls` and `peek` when James asks for status, or before you write a brief about a stream. `status` is a read-only report and changes nothing. A flagged board row is yours to fix with the edit tool, and a worktree it lists is cleared by `prune`.
 
-Worktrees clean up after themselves. `prune` removes one once its PR is merged, the worktree is clean, and its commits are all in the merged PR. It runs on every `spawn`. Run it yourself when James says PRs have merged, or `prune --dry-run` to see what it would remove. When a stream ends without a merge (abandoned, superseded, or a test), run `rm` on its worktree from outside it. The branch is kept. A stack's worktree goes once the PR of its checked-out branch is merged and nothing local is left. `gh stack sync --prune` deletes the stack's other merged branches.
+Worktrees clean up after themselves. `prune` removes one once its PR is merged, the worktree is clean, and its commits are all in the merged PR. It runs on every `spawn` that makes a worktree. Run it yourself when James says PRs have merged, or `prune --dry-run` to see what it would remove. When a stream ends without a merge (abandoned, superseded, or a test), run `rm` on its worktree from outside it. The branch is kept. A stack's worktree goes once the PR of its checked-out branch is merged and nothing local is left. `gh stack sync --prune` deletes the stack's other merged branches.
