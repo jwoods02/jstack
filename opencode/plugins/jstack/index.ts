@@ -5,20 +5,23 @@ import { basename, dirname, join } from "node:path"
 import * as M from "./model"
 
 type Options = { scope?: string; gh?: string; log?: string }
-type Lease = { owner: string; until: number }
 type TitleRecord = { set?: string; task?: string; james?: string }
 type Tracked = { owner: M.Owner; branch: string; numbers: Set<number>; lookup: boolean }
 type ShellRun = { sessionID: string; kind: "push" | "post"; start: number }
 type RunResult = { ok: boolean; stdout: string; stderr: string }
-export type Deps = { run: (command: string, args: string[], cwd?: string) => Promise<RunResult>; now?: () => number }
+type Polled = { tracked: Tracked; key: string; number: number; prev?: M.PrState; next: M.PrState; changes: M.Change[] }
+export type Deps = {
+  run: (command: string, args: string[], cwd?: string, signal?: AbortSignal) => Promise<RunResult>
+  now?: () => number
+}
 
-const LEASE_MS = 90_000
+const DRAIN_MS = 10_000
 const PUSH_FAST_MS = 2 * 60_000
 const SELF_POST_SLACK_MS = 30_000
 
-function run(command: string, args: string[], cwd?: string) {
+function run(command: string, args: string[], cwd?: string, signal?: AbortSignal) {
   return new Promise<RunResult>((resolve) =>
-    execFile(command, args, { cwd, maxBuffer: 32 * 1024 * 1024, timeout: 60_000 }, (error, stdout, stderr) =>
+    execFile(command, args, { cwd, signal, maxBuffer: 32 * 1024 * 1024, timeout: 60_000 }, (error, stdout, stderr) =>
       resolve({ ok: !error, stdout: String(stdout), stderr: String(stderr || error?.message || "") }),
     ),
   )
@@ -50,6 +53,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
   const gh = options.gh ?? "gh"
   const me = `${process.pid}-${Math.random().toString(36).slice(2, 10)}`
   const shared: { leader?: string } = ((globalThis as any).__jstackGithub ??= {})
+  const abort = new AbortController()
   const log = (msg: string, extra: Record<string, unknown> = {}) => {
     if (options.log) appendFileSync(options.log, JSON.stringify({ at: new Date().toISOString(), me, msg, ...extra }) + "\n")
   }
@@ -61,23 +65,11 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
   const shells = new Map<string, ShellRun>()
   const selfPosts: { sessionID: string; start: number; end: number }[] = []
   const dirty = new Set<string>()
-  let running = false
+  let current: Promise<void> | undefined
+  let stopped = false
   let soon: ReturnType<typeof setTimeout> | undefined
 
-  async function lead() {
-    if (shared.leader && shared.leader !== me) return false
-    shared.leader = me
-    const at = now()
-    const held = (await ctx.storage.get("lease")) as Lease | undefined
-    if (held && held.owner !== me && held.until > at) {
-      shared.leader = undefined
-      return false
-    }
-    await ctx.storage.set("lease", { owner: me, until: at + LEASE_MS })
-    const confirmed = ((await ctx.storage.get("lease")) as Lease | undefined)?.owner === me
-    if (!confirmed) shared.leader = undefined
-    return confirmed
-  }
+  const fence = () => !stopped && (shared.leader ??= me) === me
 
   async function gitInfo(directory: string): Promise<M.GitInfo | null> {
     const paths = await run("git", ["-C", directory, "rev-parse", "--path-format=absolute", "--show-toplevel", "--git-common-dir"])
@@ -117,7 +109,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
   async function stackNumbers(owner: M.Owner) {
     if (!existsSync(join(owner.main, ".git", "gh-stack"))) return []
     log("gh", { args: "stack view --json", dir: owner.top })
-    const view = await run(gh, ["stack", "view", "--json"], owner.top)
+    const view = await run(gh, ["stack", "view", "--json"], owner.top, abort.signal)
     if (!view.ok) return []
     try {
       return M.stackPrs(JSON.parse(view.stdout), owner.branch)
@@ -158,7 +150,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
       task = current
     }
     const want = M.sessionTitle(prs, task, await waitingOnJames(owner, recent))
-    if (!want || want === current) return
+    if (!want || want === current || !fence()) return
     await ctx.session.update({ sessionID: owner.sessionID, title: want })
     await ctx.storage.set(key, { set: want, task })
     log("title", { sessionID: owner.sessionID, title: want })
@@ -198,7 +190,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
 
   async function graphql(query: string, extra: Record<string, unknown>) {
     log("gh", { args: "api graphql", ...extra })
-    const response = await run(gh, ["api", "graphql", "-f", `query=${query}`])
+    const response = await run(gh, ["api", "graphql", "-f", `query=${query}`], undefined, abort.signal)
     try {
       const data = JSON.parse(response.stdout).data
       if (data) return data
@@ -220,7 +212,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     if (!data) return
     const result = M.parseResult(list, data)
 
-    const updates = new Map<string, { pr: M.PrState; changes: M.Change[] }[]>()
+    const bySession = new Map<string, Polled[]>()
     for (const t of tracked.values()) {
       if (t.lookup && result.branches.has(M.branchKey(t.owner.repo, t.branch))) {
         const found = result.branches.get(M.branchKey(t.owner.repo, t.branch))
@@ -236,28 +228,38 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
         if (!complete) continue
         const fetched = M.parsePr(complete)
         if (fetched.manyChecks) log("checks past 100, counts decide pending", { pr: key })
-        const next = fetched.state
-        const changes = M.diff(prev, next, fetched.activity, ignoreFor(t.owner.sessionID, result.viewer))
-        if (JSON.stringify(prev) !== JSON.stringify(next)) await ctx.storage.set(`pr/${key}`, next)
-        due.set(key, { checks: next.checks, checkedAt: at, fastUntil: due.get(key)?.fastUntil ?? 0 })
-        latest.set(key, next)
-        if (next.state !== "OPEN") t.numbers.delete(n)
-        if (changes.length) updates.set(t.owner.sessionID, [...(updates.get(t.owner.sessionID) ?? []), { pr: next, changes }])
+        const changes = M.diff(prev, fetched.state, fetched.activity, ignoreFor(t.owner.sessionID, result.viewer))
+        const polled = { tracked: t, key, number: n, prev, next: fetched.state, changes }
+        bySession.set(t.owner.sessionID, [...(bySession.get(t.owner.sessionID) ?? []), polled])
       }
     }
 
-    for (const [sessionID, prs] of updates) {
-      const text = M.wakeText(prs)
+    for (const [sessionID, polled] of bySession) {
+      if (!fence()) return
+      for (const p of polled) if (JSON.stringify(p.prev) !== JSON.stringify(p.next)) await ctx.storage.set(`pr/${p.key}`, p.next)
+      for (const p of polled) {
+        due.set(p.key, { checks: p.next.checks, checkedAt: at, fastUntil: due.get(p.key)?.fastUntil ?? 0 })
+        latest.set(p.key, p.next)
+        if (p.next.state !== "OPEN") p.tracked.numbers.delete(p.number)
+      }
+      const changed = polled.filter((p) => p.changes.length).map((p) => ({ pr: p.next, changes: p.changes }))
+      if (!changed.length) continue
+      const text = M.wakeText(changed)
+      if (!fence()) return log("wake dropped", { sessionID, text })
       await ctx.session.prompt({ sessionID, text, delivery: "queue", metadata: { jteam: { kind: "github" } } })
       log("wake", { sessionID, text })
     }
   }
 
   async function tick() {
-    if (running) return
-    running = true
+    if (current || stopped) return
+    current = work().finally(() => (current = undefined))
+    await current
+  }
+
+  async function work() {
     try {
-      if (!(await lead())) return
+      if (!fence()) return
       const at = now()
       await refresh()
       const list = dueTargets(at)
@@ -268,8 +270,6 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
       }
     } catch (error) {
       log("tick failed", { error: String((error as Error)?.stack ?? error) })
-    } finally {
-      running = false
     }
   }
 
@@ -311,10 +311,13 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
   }
 
   async function stop() {
+    stopped = true
     clearTimeout(soon)
-    if (shared.leader !== me) return
-    shared.leader = undefined
-    if (((await ctx.storage.get("lease")) as Lease | undefined)?.owner === me) await ctx.storage.remove("lease")
+    abort.abort()
+    let timer: ReturnType<typeof setTimeout> | undefined
+    await Promise.race([current, new Promise((resolve) => (timer = setTimeout(resolve, DRAIN_MS)))])
+    clearTimeout(timer)
+    if (shared.leader === me) shared.leader = undefined
   }
 
   return { tick, onEvent, stop, log, options }

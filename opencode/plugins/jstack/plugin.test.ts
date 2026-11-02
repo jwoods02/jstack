@@ -1,11 +1,21 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { comment, fixturePr, review, rollup, storage, world } from "./harness"
+import * as M from "./model"
+import { comment, fixturePr, github, review, rollup, storage, world } from "./harness"
 
 const stops: (() => Promise<void>)[] = []
 afterEach(async () => {
   while (stops.length) await stops.pop()!()
   delete (globalThis as any).__jstackGithub
 })
+
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((r) => (resolve = r))
+  return { promise, resolve }
+}
+
+const baseline = (w: ReturnType<typeof world>) => w.store.map.set("pr/jwoods02/jstack#13", M.parsePr({ ...fixtureNode(), number: 13 }).state)
+const fixtureNode = () => ({ number: 13, title: "feat: Test PR", url: "u", state: "OPEN", isDraft: true, headRefOid: "a".repeat(40), commits: { nodes: [] } })
 
 function start(w: ReturnType<typeof world>, deps: Record<string, unknown> = {}) {
   const runner = w.runner(deps)
@@ -140,5 +150,42 @@ describe("plugin", () => {
     await start(w).tick()
     expect(w.calls.prompts).toHaveLength(0)
     expect(w.store.map.get("pr/jwoods02/jstack#13").state).toBe("MERGED")
+  })
+
+  test("instances in one process: one polls, and a clean stop hands over", async () => {
+    const gh = github()
+    gh.set(fixturePr())
+    const a = start(world({ gh }))
+    const b = start(world({ gh }))
+    await Promise.all([a.tick(), b.tick()])
+    expect(gh.calls).toHaveLength(1)
+    await a.stop()
+    await b.tick()
+    expect(gh.calls).toHaveLength(2)
+  })
+
+  test("stopping during a tick drains it, and it sends nothing", async () => {
+    const w = world()
+    baseline(w)
+    w.gh.set(fixturePr({ comments: [comment("bot", "2026-11-02T10:00:00Z")] }))
+    const gate = deferred<void>()
+    const entered = deferred<void>()
+    const list = w.ctx.session.list
+    w.ctx.session.list = async () => {
+      entered.resolve()
+      await gate.promise
+      return list()
+    }
+    const runner = start(w)
+    const tick = runner.tick()
+    await entered.promise
+    let stopped = false
+    const stopping = runner.stop().then(() => (stopped = true))
+    await Bun.sleep(5)
+    expect(stopped).toBe(false)
+    gate.resolve()
+    await Promise.all([tick, stopping])
+    expect(w.calls.prompts).toHaveLength(0)
+    expect(w.store.map.get("pr/jwoods02/jstack#13").activityAt).toBe("")
   })
 })
