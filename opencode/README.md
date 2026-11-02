@@ -79,7 +79,7 @@ Options:
 
 ## Use it
 
-Open a session with `JMode`, the default agent, and give it a job, exactly as with `/j-mode` in Cursor. Agree its plan and say go, and it leads the stream through every PR. To start a stream from a brief file, name its branch `<type>/<ticket>-<slug>`, or `<type>/<slug>` with no ticket:
+Open a session with `JMode`, the default agent, and give it a job, exactly as with `/j-mode` in Cursor. Agree its plan and say go, and it leads the stream through every PR, fanning out to subagents within the stream. `jteam spawn` starts a separate stream for genuinely new or different work, once you've agreed to it. Name its branch `<type>/<ticket>-<slug>`, or `<type>/<slug>` with no ticket:
 
 ```sh
 jteam spawn my-app feat/res-391-chat-prompt "Chat prompt" brief.md
