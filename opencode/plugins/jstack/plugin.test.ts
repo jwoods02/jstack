@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test"
+import { mkdirSync, mkdtempSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import * as M from "./model"
 import { comment, fixturePr, github, renameCall, review, rollup, storage, world } from "./harness"
 
@@ -370,5 +373,103 @@ describe("plugin", () => {
       await runner.tick()
       expect(w.calls.prompts.map((p) => p.text)).toEqual([expect.stringContaining("comment from jwoods02")])
     })
+  })
+
+  describe("races with side effects", () => {
+    const stack = JSON.stringify({ branches: [{ name: "feat/x", pr: { number: 13, state: "OPEN" } }, { name: "feat/y", pr: { number: 14, state: "OPEN" } }] })
+    function stacked(w: ReturnType<typeof world>, main = join(mkdtempSync(join(tmpdir(), "jstack-main-")), "main")) {
+      mkdirSync(join(main, ".git", "gh-stack"), { recursive: true })
+      w.worktrees.get("/scratch/wt")!.main = main
+      const run = async (command: string, args: string[]) => (args[0] === "stack" ? { ok: true, stdout: stack, stderr: "" } : w.run(command, args))
+      return { main, run }
+    }
+
+    test("a session moved during the state write gets no wake, and the change stays pending", async () => {
+      const w = world()
+      let clock = 1_000_000
+      w.gh.set(fixturePr())
+      const runner = start(w, { now: () => clock })
+      await runner.tick()
+      const before = structuredClone(w.store.map.get("pr/jwoods02/jstack#13"))
+      const set = w.store.set
+      w.store.set = async (key, value) => {
+        if (key === "pr/jwoods02/jstack#13") w.sessions.get("ses_owner")!.location.directory = "/outside/wt"
+        await set(key, value)
+      }
+      w.gh.set(fixturePr({ comments: [comment("new", "2026-11-02T10:00:00Z")] }))
+      clock += 300_000
+      await runner.tick()
+      expect(w.calls.prompts).toEqual([])
+      expect(w.store.map.get("pr/jwoods02/jstack#13")).toEqual(before)
+    })
+
+    test("stopping during the first PR's state write fences the second", async () => {
+      const w = world()
+      const { run } = stacked(w)
+      w.gh.set(fixturePr())
+      w.gh.set(fixturePr({ number: 14, branch: "feat/y" }))
+      let clock = 1_000_000
+      const runner = start(w, { run, now: () => clock })
+      await runner.tick()
+      let stopping: Promise<void> | undefined
+      const afterStop: string[] = []
+      const set = w.store.set
+      w.store.set = async (key, value) => {
+        if (stopping) afterStop.push(key)
+        if (key === "pr/jwoods02/jstack#13") stopping = runner.stop()
+        await set(key, value)
+      }
+      w.gh.set(fixturePr({ comments: [comment("c13", "2026-11-02T10:00:00Z")] }))
+      w.gh.set(fixturePr({ number: 14, branch: "feat/y", comments: [comment("c14", "2026-11-02T10:00:00Z")] }))
+      clock += 300_000
+      await runner.tick()
+      await stopping
+      expect(afterStop).toEqual([])
+      expect(w.calls.prompts).toEqual([])
+    })
+
+    test("a tick still running after the drain timeout keeps the claim, so it can't overwrite a successor", async () => {
+      const gh = github()
+      const w = world({ gh })
+      const { main, run } = stacked(w)
+      gh.set(fixturePr())
+      gh.set(fixturePr({ number: 14, branch: "feat/y" }))
+      let clock = 1_000_000
+      const runner = start(w, { run, now: () => clock })
+      await runner.tick()
+      const gate = deferred<void>()
+      const entered = deferred<void>()
+      const set = w.store.set
+      let gated = false
+      w.store.set = async (key, value) => {
+        if (key === "pr/jwoods02/jstack#13" && !gated) {
+          gated = true
+          entered.resolve()
+          await gate.promise
+        }
+        await set(key, value)
+      }
+      gh.set(fixturePr({ comments: [comment("old-c13", "2026-11-02T10:00:00Z")] }))
+      gh.set(fixturePr({ number: 14, branch: "feat/y", comments: [comment("old-c14", "2026-11-02T10:00:00Z")] }))
+      clock += 300_000
+      const tick = runner.tick()
+      await entered.promise
+      await runner.stop()
+
+      const successor = world({ gh, store: w.store })
+      const next = start(successor, { run: stacked(successor, main).run, now: () => clock })
+      const head = "b".repeat(40)
+      gh.set(fixturePr({ headRefOid: head, comments: [comment("new-c13", "2026-11-02T11:00:00Z")] }))
+      gh.set(fixturePr({ number: 14, branch: "feat/y", headRefOid: head, comments: [comment("new-c14", "2026-11-02T11:00:00Z")] }))
+      await next.tick()
+      expect(gh.calls).toHaveLength(2)
+
+      gate.resolve()
+      await tick
+      expect(w.store.map.get("pr/jwoods02/jstack#14").head).toBe("a".repeat(40))
+      await next.tick()
+      expect(w.store.map.get("pr/jwoods02/jstack#13").head).toBe(head)
+      expect(w.store.map.get("pr/jwoods02/jstack#14").head).toBe(head)
+    }, 30_000)
   })
 })

@@ -181,6 +181,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     const live = await ownedNow(owner)
     if (!live || (live.title ?? "") !== current || !fence()) return
     await ctx.session.update({ sessionID: owner.sessionID, title: want })
+    if (!fence()) return
     await ctx.storage.set(key, { set: want, setAt: now(), task })
     log("title", { sessionID: owner.sessionID, title: want })
   }
@@ -267,8 +268,18 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     for (const [sessionID, polled] of bySession) {
       const changed = polled.filter((p) => p.changes.length).map((p) => ({ pr: p.next, changes: p.changes }))
       if (changed.length && !(await ownedNow(polled[0].tracked.owner))) continue
-      if (!fence()) return
-      for (const p of polled) if (JSON.stringify(p.prev) !== JSON.stringify(p.next)) await ctx.storage.set(`pr/${p.key}`, p.next)
+      for (const p of polled) {
+        if (JSON.stringify(p.prev) === JSON.stringify(p.next)) continue
+        if (!fence()) return
+        await ctx.storage.set(`pr/${p.key}`, p.next)
+      }
+      if (changed.length && !(await ownedNow(polled[0].tracked.owner))) {
+        for (const p of polled.filter((p) => p.changes.length)) {
+          if (!fence()) return
+          await ctx.storage.set(`pr/${p.key}`, p.prev!)
+        }
+        continue
+      }
       for (const p of polled) {
         due.set(p.key, { checks: p.next.checks, checkedAt: at, fastUntil: due.get(p.key)?.fastUntil ?? 0 })
         latest.set(p.key, p.next)
@@ -351,10 +362,12 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     stopped = true
     clearTimeout(soon)
     abort.abort()
+    const drained = (current ?? Promise.resolve()).then(() => {
+      if (shared.leader === me) shared.leader = undefined
+    })
     let timer: ReturnType<typeof setTimeout> | undefined
-    await Promise.race([current, new Promise((resolve) => (timer = setTimeout(resolve, DRAIN_MS)))])
+    await Promise.race([drained, new Promise((resolve) => (timer = setTimeout(resolve, DRAIN_MS)))])
     clearTimeout(timer)
-    if (shared.leader === me) shared.leader = undefined
   }
 
   return { tick, onEvent, stop, log, options }
