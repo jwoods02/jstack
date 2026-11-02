@@ -183,9 +183,9 @@ watch_pr() { # PR number, URL or branch -> report on its checks and on reviews a
   local pr="$1" view n since watch_err watch_rc=0 checks checks_err rc=0 verdict status=0
   watch_err="$(mktemp)" checks_err="$(mktemp)"
   gh pr checks "$pr" --watch --interval 30 >/dev/null 2>"$watch_err" || watch_rc=$?
-  view="$(gh pr view "$pr" --json number,title,headRefOid,commits)" || return 2
+  view="$(gh pr view "$pr" --json number,title,headRefOid)" || return 2
   n="$(jq -r .number <<<"$view")"
-  since="$(jq -r '.commits[-1].committedDate' <<<"$view")"
+  since="$(gh api "repos/{owner}/{repo}/commits/$(jq -r .headRefOid <<<"$view")" --jq .commit.committer.date)" || return 2
   jq -r '"#\(.number) \(.title) (head \(.headRefOid[0:7]))"' <<<"$view"
   checks="$(gh pr checks "$n" --json name,bucket 2>"$checks_err")" || rc=$?
   if grep -q '^no checks reported' "$checks_err"; then

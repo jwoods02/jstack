@@ -15,7 +15,8 @@ case "$1 $2" in
     [ -z "${CHECKS_ERR:-}" ] || { echo "$CHECKS_ERR" >&2; exit 1; }
     echo "$CHECKS"; exit "${CHECKS_RC:-0}";;
   "pr view") echo '{"number": 7, "title": "Fixture PR", "headRefOid": "abcdef1234567890",
-    "commits": [{"committedDate": "2026-11-01T09:00:00Z"}, {"committedDate": "2026-11-02T12:00:00Z"}]}';;
+    "commits": [{"committedDate": "2026-11-01T09:00:00Z"}]}';;
+  "api repos/{owner}/{repo}/commits/abcdef1234567890") echo 2026-11-02T12:00:00Z;;
   "api --paginate")
     case "$3" in
       */pulls/7/reviews) echo '[
