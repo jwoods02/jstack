@@ -52,7 +52,7 @@ Any session may edit the board and docs. Keep it short, and rewrite what's stale
 Streams run without it. When an `Orchestrator` session runs, it catches up after the fact from the board, `jteam ls` and `jteam peek`. Sessions don't report to it. When `jteam coordinator` prints one, sending it a line is optional.
 
 - It starts streams with `spawn` when James asks, tidies the board and cleans up worktrees.
-- It keeps its turns short so messages get through. Work too small for its own session still goes to a background subagent by default, including James's questions, and answers only quick decisions itself.
+- It keeps its turns short so messages get through. Work too small for its own session still goes to a background subagent by default, including James's questions. It answers only quick decisions itself.
 - It puts cross-stream calls to James, and calls no session owns. It doesn't own builds or reviews.
 - Before it asks James a call or flags a stream's work as a surprise, it reads that session's recent human turns with `jteam peek`.
 
