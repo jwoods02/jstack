@@ -18,6 +18,9 @@ jteam spawn <repo> <branch|-> <title> <brief-file|-> [model] [agent]
                                              new OpenCode worktree and branch off origin's default branch,
                                              set up by the project's start command, with a session given the brief;
                                              branch - runs the session in the main checkout with no worktree
+jteam spawn --continue <worktree> <title> <brief-file|-> [model] [agent]
+                                             a session in an existing worktree on its current branch, for handoffs;
+                                             makes no worktree or branch and doesn't prune
 jteam status [board]                         stale board rows, sessions with no row, your draft PRs with CI, and the
                                              worktrees prune would remove; the board defaults to the repo's mapping line
 jteam prune [--dry-run] [repo]               remove clean worktrees whose PR is merged, with their branches,
@@ -118,15 +121,17 @@ pr_cell_refs() { # PR cell, repo's owner/name -> "owner/name number" per PR, wit
 }
 
 stale_row() { # board row, active sessions JSON, repo's owner/name -> the reason the row is stale, if any
-  local row="$1" active="$2" nwo="$3" id ref n state all_archived=false
+  local row="$1" active="$2" nwo="$3" id ref n state done_prs="" all_done=false all_archived=false
   [ -z "${PR_COLUMN:-}" ] || while read -r ref n; do
     [ -n "$n" ] || continue
     state="$(gh pr view "$n" -R "$ref" --json state -q .state 2>/dev/null || true)"
     case "$state" in
-      MERGED|CLOSED) echo "PR $ref#$n is $state"; return;;
-      "") echo "  could not read PR $ref#$n" >&2;;
+      MERGED|CLOSED) done_prs="${done_prs:+$done_prs, }PR $ref#$n is $state"; all_done=true;;
+      "") echo "  could not read PR $ref#$n" >&2; all_done=false; break;;
+      *) all_done=false; break;;
     esac
   done < <(pr_cell_refs "$(awk -F'|' -v c="$PR_COLUMN" '{ print $c }' <<<"$row")" "$nwo")
+  if [ "$all_done" = true ]; then echo "$done_prs"; return; fi
   for id in $(grep -oE 'ses_[A-Za-z0-9]+' <<<"$row" | sort -u || true); do
     all_archived=true
     jq -e --arg id "$id" 'any(.[]; .id == $id)' <<<"$active" >/dev/null && { all_archived=false; break; }
@@ -214,12 +219,28 @@ case "$cmd" in
     echo "sent to $id ($delivery)"
     ;;
   spawn)
-    [ $# -ge 4 ] || { usage >&2; exit 1; }
-    repo="$(main_checkout "$1")"
+    if [ "${1:-}" = --continue ]; then
+      [ $# -ge 4 ] || { usage >&2; exit 1; }
+      dir="$(cd "$(git -C "$2" rev-parse --show-toplevel)" && pwd -P)"
+      repo="$(main_checkout "$dir")"
+      [ "$dir" != "$repo" ] || { echo "--continue needs a worktree, not the main checkout" >&2; exit 1; }
+      branch="$(git -C "$dir" branch --show-current)"
+      [ -n "$branch" ] || { echo "$dir has no branch checked out" >&2; exit 1; }
+      shift 2
+      set -- "$repo" "$branch" "$@"
+      continuing=true
+    else
+      [ $# -ge 4 ] || { usage >&2; exit 1; }
+      repo="$(main_checkout "$1")"
+      continuing=false
+    fi
     branch="$2" title="$3" brief_src="$4" model="${5:-}" agent="${6:-JMode}"
     brief="$(if [ "$brief_src" = - ]; then cat; else cat "$brief_src"; fi)"
     pid="$(project_id "$repo")"
-    if [ "$branch" = - ]; then
+    if [ "$continuing" = true ]; then
+      setup_note="Existing worktree."
+      footer="Worktree: $dir (branch $branch, continued from an earlier session, no new branch)."
+    elif [ "$branch" = - ]; then
       dir="$repo"
       setup_note="No worktree."
       footer="Directory: $repo, the main checkout. This session has no worktree, so change no files here."
