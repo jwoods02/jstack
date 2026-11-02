@@ -9,7 +9,6 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 usage() {
   cat <<EOF
 jteam self                                   this session's ID
-jteam coordinator                            open Orchestrator sessions, most recently active first
 jteam ls [limit]                             top-level sessions: id, state, idle time, agent, title, directory
 jteam peek <session> [n]                     last n messages (default 4), oldest first, each cut to 1500 chars
                                              and labelled [james], [assistant], [send from <id>],
@@ -19,8 +18,10 @@ jteam spawn <repo> <branch|-> <title> <brief-file|-> [model] [agent]
                                              new OpenCode worktree and branch off origin's default branch,
                                              set up by the project's start command, with a session given the brief;
                                              branch - runs the session in the main checkout with no worktree
-jteam prune [repo]                           remove clean worktrees whose PR is merged, with their branches,
-                                             and archive their sessions
+jteam status [board]                         stale board rows, sessions with no row, your draft PRs with CI, and the
+                                             worktrees prune would remove; the board defaults to the repo's mapping line
+jteam prune [--dry-run] [repo]               remove clean worktrees whose PR is merged, with their branches,
+                                             and archive their sessions; --dry-run only lists them
 jteam rm <worktree> [--force]                remove one worktree and archive its sessions; the branch is kept
 EOF
 }
@@ -77,30 +78,16 @@ remove_worktree() { # project ID, main checkout, worktree directory, force
     || if [ "$4" = true ]; then git -C "$2" worktree remove --force "$3"; else git -C "$2" worktree remove "$3"; fi
 }
 
-orchestrators() { # session ID to leave out -> open Orchestrator sessions, most recently active first
-  api get "/api/session?parentID=null&archived=false&limit=50" | data \
-    | jq -r --arg skip "$1" '[.[] | select(.agent == "Orchestrator" and .id != $skip)]
-      | sort_by(-.time.updated) | .[] | "\(.id)\t\(.title // "-")"'
+board_for() { # main checkout -> board named by the `JStack boards: <repo> -> <path>` line in the global AGENTS.md, else the repo's own
+  local path
+  path="$(sed -nE "s/^JStack boards:[[:space:]]*$(basename "$1")[[:space:]]*->[[:space:]]*//p" "$CONFIG_DIR/AGENTS.md" 2>/dev/null | head -n 1)"
+  path="${path%"${path##*[![:space:]]}"}"
+  [ -n "$path" ] || path="$1/.opencode/jstack-board.md"
+  echo "${path/#\~/$HOME}"
 }
 
-board_path() { # brief text, main checkout -> the first existing board file named in the brief, the repo's or the global AGENTS.md, else the repo's own
-  local candidate
-  while read -r candidate; do
-    candidate="${candidate/#\~/$HOME}"
-    [ -f "$candidate" ] && { echo "$candidate"; return; }
-  done < <({ echo "$1"; cat "$2/AGENTS.md" "$CONFIG_DIR/AGENTS.md" 2>/dev/null; } | grep -oE '~?/[^[:space:]`"'"'"'<>]*board\.md' || true)
-  [ -f "$2/.opencode/jstack-board.md" ] && echo "$2/.opencode/jstack-board.md" || true
-}
-
-board_excerpt() { # table rows and the shared-resources section, each line cut to 400 chars
-  awk '
-    /^## / { shared = tolower($0) ~ /shared resources/; next }
-    /^\|[ :-]*\|/ && !/[A-Za-z0-9]/ { next }
-    /^\|/ || (shared && NF) { print substr($0, 1, 400) }' "$1"
-}
-
-prune() { # main checkout, project ID
-  local repo="$1" pid="$2" merged dir head branch pr pr_head
+prune() { # main checkout, project ID, dry run (true or false)
+  local repo="$1" pid="$2" dry="${3:-false}" merged dir head branch pr pr_head
   merged="$(cd "$repo" && gh pr list --state merged --limit 200 --json number,headRefName,headRefOid 2>/dev/null || echo '[]')"
   while IFS=$'\t' read -r -u 3 dir head branch; do
       [ "$dir" = "$repo" ] && continue
@@ -110,6 +97,7 @@ prune() { # main checkout, project ID
       git -C "$repo" merge-base --is-ancestor "$head" "$pr_head" 2>/dev/null \
         || { echo "kept $dir: PR #$pr is merged but the worktree has commits it doesn't"; continue; }
       [ -z "$(git -C "$dir" status --porcelain)" ] || { echo "kept $dir: PR #$pr is merged but the worktree has changes"; continue; }
+      [ "$dry" = true ] && { echo "would remove $dir and branch $branch (PR #$pr merged)"; continue; }
       archive_sessions_in "$dir"
       remove_worktree "$pid" "$repo" "$dir" false
       git -C "$repo" branch -D -q "$branch"
@@ -120,14 +108,61 @@ prune() { # main checkout, project ID
       /^branch / { print dir "\t" head "\t" substr($2, 12) }')
 }
 
+stale_row() { # board row, active sessions JSON, repo's owner/name -> the reason the row is stale, if any
+  local row="$1" active="$2" nwo="$3" id ref n state all_archived=false
+  while read -r ref n; do
+    [ -n "$n" ] || continue
+    state="$(gh pr view "$n" -R "$ref" --json state -q .state 2>/dev/null || true)"
+    case "$state" in MERGED|CLOSED) echo "PR $ref#$n is $state"; return;; esac
+  done < <(awk -F'|' -v c="${PR_COLUMN:-0}" '{ print $c }' <<<"$row" \
+    | grep -oE '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+|#[0-9]+' \
+    | sed -E "s|^#|$nwo/pull/|; s|/pull/| |" | sort -u || true)
+  for id in $(grep -oE 'ses_[A-Za-z0-9]+' <<<"$row" | sort -u || true); do
+    all_archived=true
+    jq -e --arg id "$id" 'any(.[]; .id == $id)' <<<"$active" >/dev/null && { all_archived=false; break; }
+    api get "/api/session/$id" 2>/dev/null | data | jq -e '.time.archived' >/dev/null 2>&1 || { all_archived=false; break; }
+  done
+  if [ "$all_archived" = true ]; then echo "every session in the row is archived"; fi
+}
+
+status() { # [board file]
+  local repo board nwo row reason active dirs
+  repo="$(main_checkout .)"
+  board="${1:-$(board_for "$repo")}"
+  [ -f "$board" ] || { echo "no board at $board" >&2; return 1; }
+  nwo="$(cd "$repo" && gh repo view --json nameWithOwner -q .nameWithOwner)"
+  PR_COLUMN="$(awk -F'|' '/^\| *Stream/ { for (i = 1; i <= NF; i++) if ($i ~ /^ *PR *$/) print i; exit }' "$board")"
+  active="$(api get "/api/session?parentID=null&archived=false&limit=100" | data)"
+
+  echo "Stale board rows ($board)"
+  while IFS= read -r row; do
+    reason="$(stale_row "$row" "$active" "$nwo")"
+    [ -z "$reason" ] || echo "  $(cut -d'|' -f2 <<<"$row" | cut -c1-70): $reason"
+  done < <(grep -E '^\|.*[A-Za-z0-9]' "$board" | awk -F'|' 'tolower($2) !~ /^ *stream *$/')
+
+  echo "Active sessions with no row"
+  dirs="$(git -C "$repo" worktree list --porcelain | awk '/^worktree / { print substr($0, 10) }' | jq -R . | jq -sc .)"
+  jq -r --argjson dirs "$dirs" '.[] | select(.location.directory as $d | $dirs | index($d)) | "\(.id)\t\(.title // "-")"' <<<"$active" \
+    | while IFS=$'\t' read -r id title; do grep -qF "$id" "$board" || echo "  $id  $title"; done
+
+  echo "Your open draft PRs"
+  (cd "$repo" && gh pr list --author @me --draft --state open --json number,title,statusCheckRollup) | jq -r '
+    def ci: [.statusCheckRollup[]? | (.conclusion // .state // .status)] as $c
+      | if ($c | length) == 0 then "no checks"
+        elif any($c[]; . == "FAILURE" or . == "ERROR" or . == "TIMED_OUT" or . == "CANCELLED") then "CI failing"
+        elif any($c[]; . == "" or . == "IN_PROGRESS" or . == "QUEUED" or . == "PENDING" or . == "WAITING") then "CI pending"
+        else "CI passing" end;
+    .[] | "  #\(.number) \(.title) (\(ci))"'
+
+  echo "Worktrees prune would remove"
+  prune "$repo" "" true | grep '^would remove' | sed 's/^would remove /  /' || true
+}
+
 cmd="${1:-}"
 [ $# -gt 0 ] && shift
 case "$cmd" in
   self)
     echo "${OPENCODE_SESSION_ID:?not running inside an OpenCode session}"
-    ;;
-  coordinator)
-    orchestrators "${OPENCODE_SESSION_ID:-}"
     ;;
   ls)
     active="$(api get /api/session/active | data)"
@@ -205,30 +240,23 @@ case "$cmd" in
     footer="Your session: $sid.
 $footer"
     parent="${OPENCODE_SESSION_ID:-}"
-    orchestrator="$(orchestrators "" | awk 'NR == 1 { print $1 }' || true)"
     if [ -n "$parent" ]; then
-      [ "$parent" = "$orchestrator" ] && parent_note=", the Orchestrator" || parent_note=""
       footer="$footer
-Started from session $parent$parent_note. To send it a line (optional): $SELF send $parent \"<one or two lines>\""
-    fi
-    if [ -n "$orchestrator" ] && [ "$orchestrator" != "$parent" ]; then
-      footer="$footer
-Orchestrator: $orchestrator. To send it a line (optional): $SELF send $orchestrator \"<one or two lines>\""
-    fi
-    board="$(board_path "$brief" "$repo")"
-    if [ -n "$board" ]; then
-      footer="$footer
-Board: $board. Its rows and shared resources now:
-$(board_excerpt "$board")"
+Started from session $parent. To send it a line (optional): $SELF send $parent \"<one or two lines>\""
     fi
     api post "/api/session/$sid/prompt" -d "$(jq -cn --arg t "$brief
 
 $footer" --arg f "$parent" '{text: $t, metadata: {jteam: ({kind: "brief"} + if $f == "" then {} else {from: $f} end)}}')" >/dev/null
     printf '%s\t%s\t%s\t%s\n' "$sid" "$branch" "$dir" "$setup_note"
     ;;
+  status)
+    status "${1:-}"
+    ;;
   prune)
+    dry=false
+    if [ "${1:-}" = --dry-run ]; then dry=true; shift; fi
     repo="$(main_checkout "${1:-.}")"
-    prune "$repo" "$(project_id "$repo")"
+    prune "$repo" "$([ "$dry" = true ] || project_id "$repo")" "$dry"
     ;;
   rm)
     dir="$(cd "${1:?worktree directory}" && pwd -P)"
