@@ -7,7 +7,7 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 - Upstream: `cursor/plugins`, path `pstack/`.
 - Commit: `99743e9c151c8537cbbf1f98bb38f34ef3368453`, merged 15 Oct 2026.
 - Version: 0.15.25.
-- JStack's own version is 3.0.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
+- JStack's own version is 3.2.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
 - Upstream `pstack/` tree hash at import: `0d5fd349cbc77d054eed60f0e8cdfbea86321ff9`.
 
 ## Path mapping
@@ -60,7 +60,6 @@ The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rena
 - `jstack/assets/logo.svg` (v2). A plain, hand-made JStack logo: a white "J" on a slate-grey rounded square. `.cursor-plugin/plugin.json` points at it, and both READMEs and the guide show it.
 - `.cursor-plugin/marketplace.json`. Lets Cursor install the plugin from this repo.
 - `scripts/rename-upstream.py`, `README.md` and `UPSTREAM.md` at the repo root.
-- `jstack/skills/interrogate/references/lenses.md` (v3). The architecture, correctness and evidence lenses for big changes, with each lens's scope, checks, handoff wording and verdict format.
 
 ## Changed
 
@@ -108,15 +107,14 @@ All paths are inside `jstack/`.
   - Draft-only PRs stay, with `draft: true` on the built-in PR tool and a rule that the coordinator sends James the link once a draft PR has green CI.
   - A generic one-ticket-per-PR rule that follows the repo's `AGENTS.md`.
   - No builder cap. One builder per PR or task, a check for shared branches, files and migration numbers, and a resume limit for builders and reviewers (about an hour and about 400k tokens).
-  - A new big-change definition built on one-way doors and load-bearing code. It is a change that is hard to reverse, or a large change to load-bearing machinery on a live production system. The list is an irreversible move, more than about 1,000 production lines, a chain of three or more PRs, and the last PR of a milestone. File count is not a signal. "Replay-sensitive workflow code" is dropped, and prototypes and projects not yet live always get one reviewer. The milestone review and the correctness lens no longer say "replays".
-  - A Reviews section with one reviewer by default, three lens reviewers for big changes, rounds, verdicts that name head, base and patch id, stacks, and a milestone review.
+  - A new big-change definition built on one-way doors and load-bearing code. It is a change that is hard to reverse, or a large change to load-bearing machinery on a live production system. The list is an irreversible move, more than about 1,000 production lines, a chain of three or more PRs, and the last PR of a milestone. File count is not a signal. "Replay-sensitive workflow code" is dropped, and prototypes and projects not yet live always get one reviewer. The milestone review no longer says "replays".
+  - A Reviews section with one reviewer by default, rounds, verdicts that name head, base and patch id, stacks, and a milestone review. Its big-change tier is v3.2's.
   - Project context by role (the Project's task tracker and shared context) instead of `notes.md`, with the chat's own todo list outside a Project.
   - Builder reminders for upfront calls, narrow local tests before review, root-cause fixes, one blocking command per wait with a timer or CI subscription for long waits, and a handoff note.
   - Reviewers re-run only what CI does not. The Watcher row carries the no-polling and subscribe rules (merged, ready for review and CI conclusion, not every push). Workers end with a summary of 10 lines or fewer.
   - Autonomy additions (no production releases, a question is not an edit request), a tie-break that makes JStack the default for every Project, and a `generalPurpose` fallback when `j-agent` is missing.
-  - The big-change skill trigger now names the correctness lens, and the correctness lens has no model line of its own.
-- `rules/jstack-models.mdc`: adds `lens reviewers` and `milestone reviewer`. No other line changes.
-- `skills/interrogate/SKILL.md`: one line on the correctness lens, and the `readonly` fallback.
+- `rules/jstack-models.mdc`: adds `milestone reviewer`.
+- `skills/interrogate/SKILL.md`: the `readonly` fallback.
 - `skills/how/SKILL.md` and `skills/arena/SKILL.md`: the `readonly` fallback.
 - `skills/recall/SKILL.md`: says "task tracker" instead of `notes.md`.
 - `skills/j-help/SKILL.md`, `docs/guide.md`, `README.md` and the root `README.md`: synced with the changes above, with "up to three" removed.
@@ -125,6 +123,22 @@ All paths are inside `jstack/`.
 **Optional voice skill (v3.1).**
 
 - `skills/j-mode/SKILL.md` and `skills/technical-writing/SKILL.md`: text written as James also loads his `james-voice` skill when it's installed. JStack doesn't bundle it.
+
+**One `/interrogate` pass for big changes (v3.2).** v3 gave a big change three review lenses, from a reference file in `skills/interrogate/references/` that v3.2 deletes. One big PR started five agents, counting the two `/interrogate` reviewers inside one lens. It now starts two.
+
+- `skills/j-mode/SKILL.md`, Reviews:
+  - Small and medium PRs keep one reviewer on the `reviewer` line.
+  - A big change gets one `/interrogate` pass. Its builder runs it and is the lead judge, per `/interrogate`'s Step 5.
+  - Round 2 in every tier is one fresh reviewer on the `reviewer` line that reads only the fix commits and never re-runs `/interrogate`. Round 3 converges.
+  - Verdicts name head, base and patch id, with the `git patch-id` command written out.
+  - The milestone review moves here in full, from the deleted file.
+  - An opt-in verifier, from upstream's Shipping playbook. Where the repo has a harness that drives the app, a fresh agent runs the change as a user would, base against head, and reports PASS, PASS+NOTES or FAIL.
+  - The builder row lets a builder run `/interrogate` on its own big change. The skill trigger and Subagents section drop the lens wording.
+- `skills/interrogate/references/reviewer-prompt.md`: an Evidence section kept from the deleted lenses. Reviewers re-run every claim and number in the PR description and say which ran. They back each claimed bug with a failing test or script, or label it "reasoned, not tested". Each finding gains a Test field.
+- `skills/interrogate/SKILL.md`: the PR description joins the packaged context. Act on takes a "reasoned, not tested" finding only when its reasoning is a proof. Reviewer A's default is `claude-opus-5-5-high`.
+- `rules/jstack-models.mdc`: drops the lens seats' line. `interrogate reviewers` becomes `claude-opus-5-5-high, gemini-4-argon-high`.
+- `skills/j-help/SKILL.md`, `docs/guide.md`, `README.md`, the root `README.md` and the OpenCode files (`agents/j-agent.md`, `skills/j-team/SKILL.md`, `jstack-models.example.md`): synced with the above. The example map drops the lens seats' line too, and runs both `interrogate reviewers` entries on high.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 3.2.0.
 
 ## How to merge a new release
 

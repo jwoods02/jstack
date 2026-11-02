@@ -1,5 +1,5 @@
 ---
-description: JStack delegate for reviewers, lens reviewers and helpers started during a j-mode run. Loads j-mode before any work. Start a fresh one for each task, with the role's model from the JStack model map.
+description: JStack delegate for reviewers and helpers started during a j-mode run. Loads j-mode before any work. Start a fresh one for each task, with the role's model from the JStack model map.
 mode: subagent
 ---
 

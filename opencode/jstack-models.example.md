@@ -16,7 +16,6 @@ reviewer: openai/gpt-6.1-sol#high
 investigator: anthropic/claude-sonnet-5-5#high
 watcher: anthropic/claude-sonnet-5-5#medium
 judgment and prose: anthropic/claude-opus-5-5#high
-lens reviewers: openai/gpt-6.1-sol#high
 milestone reviewer: openai/gpt-6-astra#high
 
 how explorer: anthropic/claude-sonnet-5-5#xhigh
@@ -29,7 +28,7 @@ arena runners: anthropic/claude-opus-5-5#high, openai/gpt-6.1-sol#high
 arena cross-judge pool: anthropic/claude-opus-5-5#xhigh
 swarm workers: anthropic/claude-sonnet-5-5#high
 architect runners: anthropic/claude-opus-5-5#high, openai/gpt-6.1-sol#high
-interrogate reviewers: anthropic/claude-opus-5-5#xhigh, openai/gpt-6.1-sol#xhigh
+interrogate reviewers: anthropic/claude-opus-5-5#high, openai/gpt-6.1-sol#high
 trail reviewer: anthropic/claude-opus-5-5#high
 comment sicko: anthropic/claude-sonnet-5-5#high
 other helpers: anthropic/claude-sonnet-5-5#high
