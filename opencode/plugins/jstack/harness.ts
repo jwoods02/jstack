@@ -172,6 +172,7 @@ export function world(options: { gh?: ReturnType<typeof github>; store?: ReturnT
         const s = sessions.get(input.sessionID)!
         calls.titles.push({ ...input, directory: s.location.directory, previous: s.title })
         s.title = input.title
+        s.time.updated++
       },
       async prompt(input: any) {
         const s = sessions.get(input.sessionID)!

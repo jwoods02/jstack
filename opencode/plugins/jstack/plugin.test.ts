@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import * as M from "./model"
-import { comment, fixturePr, github, review, rollup, storage, world } from "./harness"
+import { comment, fixturePr, github, renameCall, review, rollup, storage, world } from "./harness"
 
 const stops: (() => Promise<void>)[] = []
 afterEach(async () => {
@@ -212,4 +212,82 @@ describe("plugin", () => {
       expect(w.calls.prompts.map((p) => p.text)).toEqual([expect.stringContaining("comment from cursor")])
     })
   }
+
+  describe("titles", () => {
+    function titled(title: string, renamedAt?: number) {
+      const w = world()
+      const owner = w.sessions.get("ses_owner")!
+      owner.title = title
+      if (renamedAt !== undefined) w.context.set("ses_owner", [renameCall(title, renamedAt)])
+      w.gh.set(fixturePr())
+      return { w, owner }
+    }
+    const james = (owner: any, title: string) => {
+      owner.title = title
+      owner.time.updated++
+    }
+
+    test("a task name the session gave itself becomes the PR title", async () => {
+      const { w, owner } = titled("Task", 100)
+      await start(w, { now: () => 1_000 }).tick()
+      expect(owner.title).toBe("#13 Test PR")
+    })
+
+    test("James restoring the old task name keeps it", async () => {
+      const { w, owner } = titled("Task", 100)
+      let clock = 1_000
+      const runner = start(w, { now: () => clock })
+      await runner.tick()
+      expect(owner.title).toBe("#13 Test PR")
+      james(owner, "Task")
+      clock += 30_000
+      await runner.tick()
+      clock += 30_000
+      await runner.tick()
+      expect(owner.title).toBe("Task")
+    })
+
+    test("James typing while the plugin reads the session keeps his title", async () => {
+      const { w, owner } = titled("")
+      w.hooks.context = () => james(owner, "Typed during poll")
+      let clock = 1_000
+      const runner = start(w, { now: () => clock })
+      await runner.tick()
+      w.hooks.context = undefined
+      clock += 30_000
+      await runner.tick()
+      expect(owner.title).toBe("Typed during poll")
+      expect(w.calls.titles).toEqual([])
+    })
+
+    test("a self-rename after James's title hands it back to the plugin", async () => {
+      const { w, owner } = titled("Task", 100)
+      let clock = 1_000
+      const runner = start(w, { now: () => clock })
+      await runner.tick()
+      james(owner, "James's name")
+      clock += 30_000
+      await runner.tick()
+      expect(owner.title).toBe("James's name")
+      w.context.set("ses_owner", [renameCall("Next task", clock + 1)])
+      james(owner, "Next task")
+      clock += 30_000
+      await runner.tick()
+      expect(owner.title).toBe("#13 Test PR")
+    })
+
+    test("an unchanged session's context isn't read again", async () => {
+      const { w, owner } = titled("Task", 100)
+      let clock = 1_000
+      const runner = start(w, { now: () => clock })
+      for (let i = 0; i < 4; i++) {
+        await runner.tick()
+        clock += 30_000
+      }
+      expect(w.calls.context).toBe(2)
+      owner.time.updated++
+      await runner.tick()
+      expect(w.calls.context).toBe(3)
+    })
+  })
 })

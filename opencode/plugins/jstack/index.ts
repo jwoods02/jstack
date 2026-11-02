@@ -5,7 +5,7 @@ import { basename, dirname, join } from "node:path"
 import * as M from "./model"
 
 type Options = { scope?: string; gh?: string; log?: string }
-type TitleRecord = { set?: string; task?: string; james?: string }
+type TitleRecord = { set?: string; setAt?: number; task?: string; james?: string }
 type Tracked = { owner: M.Owner; branch: string; numbers: Set<number>; lookup: boolean }
 type ShellRun = { sessionID: string; kind: "push" | "post"; start: number }
 type RunResult = { ok: boolean; stdout: string; stderr: string }
@@ -65,6 +65,7 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
   const shells = new Map<string, ShellRun>()
   const selfPosts: { sessionID: string; start: number; end: number }[] = []
   const dirty = new Set<string>()
+  const contexts = new Map<string, { updated: number; recent: any[] }>()
   let current: Promise<void> | undefined
   let stopped = false
   let soon: ReturnType<typeof setTimeout> | undefined
@@ -108,9 +109,13 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     log("not owned now", { sessionID: owner.sessionID, directory })
   }
 
-  async function messages(sessionID: string): Promise<any[]> {
-    const context: any[] = (await ctx.session.context({ sessionID })) ?? []
-    return context.slice(-40).reverse()
+  async function messages(owner: M.Owner): Promise<any[]> {
+    const cached = contexts.get(owner.sessionID)
+    if (cached?.updated === owner.updated) return cached.recent
+    const context: any[] = (await ctx.session.context({ sessionID: owner.sessionID })) ?? []
+    const recent = context.slice(-40).reverse()
+    contexts.set(owner.sessionID, { updated: owner.updated, recent })
+    return recent
   }
 
   async function stackNumbers(owner: M.Owner) {
@@ -144,22 +149,23 @@ export function createRunner(ctx: any, { run, now = Date.now }: Deps) {
     const key = `title/${owner.sessionID}`
     const record = ((await ctx.storage.get(key)) as TitleRecord | undefined) ?? {}
     const current = owner.title
-    if (current === record.james) return
-    const recent = await messages(owner.sessionID)
+    if (current && current === record.james) return
+    const recent = await messages(owner)
     let task = record.task
-    if (current && current !== record.set && current !== task) {
-      const inputs = recent.flatMap((m) => (m.content ?? []).filter((p: any) => p.type === "tool").map((p: any) => p.state?.input))
-      if (!M.selfRenamed(inputs, current)) {
-        await ctx.storage.set(key, { ...record, james: current })
+    if (current && current !== record.set) {
+      if (!M.selfRenamed(recent, current, record.setAt)) {
+        if (fence()) await ctx.storage.set(key, { ...record, james: current })
         log("title kept", { sessionID: owner.sessionID, title: current })
         return
       }
       task = current
     }
     const want = M.sessionTitle(prs, task, await waitingOnJames(owner, recent))
-    if (!want || want === current || !(await ownedNow(owner)) || !fence()) return
+    if (!want || want === current) return
+    const live = await ownedNow(owner)
+    if (!live || (live.title ?? "") !== current || !fence()) return
     await ctx.session.update({ sessionID: owner.sessionID, title: want })
-    await ctx.storage.set(key, { set: want, task })
+    await ctx.storage.set(key, { set: want, setAt: now(), task })
     log("title", { sessionID: owner.sessionID, title: want })
   }
 

@@ -317,12 +317,17 @@ export function askedJames(lastAssistantText: string | undefined) {
   return !!last && last.trim().endsWith("?")
 }
 
-export function selfRenamed(toolInputs: unknown[], title: string) {
+export function selfRenamed(messages: any[], title: string, after = 0) {
   const needle = JSON.stringify(title).slice(1, -1)
-  return toolInputs.some((input) => {
-    const text = JSON.stringify(input)
-    return text.includes("session_rename") && (text.includes(needle) || text.includes(JSON.stringify(needle).slice(1, -1)))
-  })
+  const escaped = JSON.stringify(needle).slice(1, -1)
+  return messages.some((message) =>
+    (message.content ?? []).some((part: any) => {
+      if (part.type !== "tool") return false
+      const at = part.time?.completed ?? part.time?.created ?? message.time?.created ?? 0
+      const text = JSON.stringify({ name: part.name, input: part.state?.input })
+      return at > after && text.includes("session_rename") && (text.includes(needle) || text.includes(escaped))
+    }),
+  )
 }
 
 export const isPushCommand = (command: string) => /\bgit\s+push\b|\bgh\s+pr\s+create\b|\bgh\s+stack\s+(submit|push)\b/.test(command)

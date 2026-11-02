@@ -64,11 +64,15 @@ describe("titles", () => {
     expect(M.askedJames(undefined)).toBe(false)
   })
 
-  test("a self rename shows in the session's own session_rename call", () => {
-    const codeMode = { code: 'await tools.opencode.session_rename({ title: "Chat context sweep" })' }
+  test("a self rename shows in the session's own session_rename call, after a given time", () => {
+    const call = (name: string, input: unknown, at = 10) => ({ type: "assistant", content: [{ type: "tool", name, time: { created: at, completed: at }, state: { input } }] })
+    const codeMode = call("execute", { code: 'await tools.opencode.session_rename({ title: "Chat context sweep" })' })
     expect(M.selfRenamed([codeMode], "Chat context sweep")).toBe(true)
-    expect(M.selfRenamed([{ title: "Chat context sweep" }], "Chat context sweep")).toBe(false)
+    expect(M.selfRenamed([call("opencode_session_rename", { title: "Chat context sweep" })], "Chat context sweep")).toBe(true)
+    expect(M.selfRenamed([call("bash", { title: "Chat context sweep" })], "Chat context sweep")).toBe(false)
     expect(M.selfRenamed([codeMode], "James typed this")).toBe(false)
+    expect(M.selfRenamed([codeMode], "Chat context sweep", 10)).toBe(false)
+    expect(M.selfRenamed([codeMode], "Chat context sweep", 9)).toBe(true)
   })
 })
 
