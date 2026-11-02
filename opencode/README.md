@@ -55,11 +55,11 @@ Skills load from the clone, so `git pull` updates them. Copy the agents again wh
 
 The [`jstack`](plugins/jstack/) server plugin wakes the session that owns a PR when something happens on GitHub, and names sessions after their PRs. A session owns the open PR, or the open PRs of the `gh stack`, on the branch checked out in its worktree. Sessions in a main checkout and child sessions own nothing.
 
-It queues a `[github]` message into the owning session when CI finishes or a check fails on the head, when anyone (bots included) leaves a review, review comment or PR comment, and when the PR is merged, closed or marked ready. Comments the session posted itself with `gh` don't wake it. The last state of each PR is kept in plugin storage, so a restart doesn't resend anything.
+It queues a `[github]` message into the owning session when CI finishes or a check fails on the head, when anyone (bots included) leaves a review, review comment or PR comment, and when the PR is merged, closed or marked ready. Comments the session posted itself with `gh` don't wake it. The last state of each PR is kept in plugin storage, so a restart doesn't resend anything, and a merge, close or ready that happened while the service was down still wakes the session once.
 
 It renames a session to `#934 PR title`, or `#946→#952 Task name` for a stack, with `● ` in front while the session's board row says ready for or waiting on James, or its last turn ended on a question. It only replaces an empty title, a title it set, or a task name the session gave itself with `session_rename`. A title you type stays.
 
-`gh` runs only while some session owns an open PR. PRs with checks running are checked every 30 seconds and others every five minutes, all in one GraphQL query. A session running `git push`, `gh pr create`, `gh stack submit` or `gh stack push` gets its branch checked at once, which is how a new PR is found.
+`gh` runs only while some session owns an open PR, except that a branch with no PR costs one discovery call at startup and again after each push from its session. PRs with checks running are checked every 30 seconds and others every five minutes, all in one GraphQL query. A session running `git push`, `gh pr create`, `gh stack submit` or `gh stack push` gets its branch checked at once, which is how a new PR is found.
 
 To enable it, add it to `plugins` in `~/.config/opencode/opencode.json` with an absolute path, since `~` doesn't expand in plugin paths:
 
