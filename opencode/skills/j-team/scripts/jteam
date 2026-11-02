@@ -80,8 +80,10 @@ remove_worktree() { # project ID, main checkout, worktree directory, force
 
 board_for() { # main checkout -> board named by the `JStack boards: <repo> -> <path>` line in the global AGENTS.md, else the repo's own
   local path
-  path="$(sed -nE "s/^JStack boards:[[:space:]]*$(basename "$1")[[:space:]]*->[[:space:]]*//p" "$CONFIG_DIR/AGENTS.md" 2>/dev/null | head -n 1)"
-  path="${path%"${path##*[![:space:]]}"}"
+  path="$(awk -v r="$(basename "$1")" '/^JStack boards:/ {
+      line = $0; sub(/^JStack boards:[ \t]*/, "", line); i = index(line, "->")
+      name = substr(line, 1, i - 1); gsub(/[ \t]+$/, "", name)
+      if (i && name == r) { line = substr(line, i + 2); gsub(/^[ \t]+|[ \t]+$/, "", line); print line; exit } }' "$CONFIG_DIR/AGENTS.md" 2>/dev/null)"
   [ -n "$path" ] || path="$1/.opencode/jstack-board.md"
   echo "${path/#\~/$HOME}"
 }
@@ -93,7 +95,7 @@ prune() { # main checkout, project ID, dry run (true or false)
       [ "$dir" = "$repo" ] && continue
       read -r pr pr_head < <(jq -r --arg b "$branch" 'map(select(.headRefName == $b)) | .[0] // empty | "\(.number) \(.headRefOid)"' <<<"$merged") || true
       [ -n "${pr:-}" ] || continue
-      git -C "$repo" fetch -q origin "pull/$pr/head" 2>/dev/null || true
+      [ "$dry" = true ] || git -C "$repo" fetch -q origin "pull/$pr/head" 2>/dev/null || true
       git -C "$repo" merge-base --is-ancestor "$head" "$pr_head" 2>/dev/null \
         || { echo "kept $dir: PR #$pr is merged but the worktree has commits it doesn't"; continue; }
       [ -z "$(git -C "$dir" status --porcelain)" ] || { echo "kept $dir: PR #$pr is merged but the worktree has changes"; continue; }
@@ -108,15 +110,23 @@ prune() { # main checkout, project ID, dry run (true or false)
       /^branch / { print dir "\t" head "\t" substr($2, 12) }')
 }
 
+pr_cell_refs() { # PR cell, repo's owner/name -> "owner/name number" per PR, with link labels not read as bare numbers
+  {
+    grep -oE '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+' <<<"$1" || true
+    sed -E 's/\[[^]]*\]\([^)]*\)//g' <<<"$1" | grep -oE '#[0-9]+' | sed -E "s|^#|$2/pull/|" || true
+  } | sed -E 's|/pull/| |' | sort -u
+}
+
 stale_row() { # board row, active sessions JSON, repo's owner/name -> the reason the row is stale, if any
   local row="$1" active="$2" nwo="$3" id ref n state all_archived=false
-  while read -r ref n; do
+  [ -z "${PR_COLUMN:-}" ] || while read -r ref n; do
     [ -n "$n" ] || continue
     state="$(gh pr view "$n" -R "$ref" --json state -q .state 2>/dev/null || true)"
-    case "$state" in MERGED|CLOSED) echo "PR $ref#$n is $state"; return;; esac
-  done < <(awk -F'|' -v c="${PR_COLUMN:-0}" '{ print $c }' <<<"$row" \
-    | grep -oE '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+|#[0-9]+' \
-    | sed -E "s|^#|$nwo/pull/|; s|/pull/| |" | sort -u || true)
+    case "$state" in
+      MERGED|CLOSED) echo "PR $ref#$n is $state"; return;;
+      "") echo "  could not read PR $ref#$n" >&2;;
+    esac
+  done < <(pr_cell_refs "$(awk -F'|' -v c="$PR_COLUMN" '{ print $c }' <<<"$row")" "$nwo")
   for id in $(grep -oE 'ses_[A-Za-z0-9]+' <<<"$row" | sort -u || true); do
     all_archived=true
     jq -e --arg id "$id" 'any(.[]; .id == $id)' <<<"$active" >/dev/null && { all_archived=false; break; }
@@ -149,9 +159,10 @@ status() { # [board file]
   (cd "$repo" && gh pr list --author @me --draft --state open --json number,title,statusCheckRollup) | jq -r '
     def ci: [.statusCheckRollup[]? | (.conclusion // .state // .status)] as $c
       | if ($c | length) == 0 then "no checks"
-        elif any($c[]; . == "FAILURE" or . == "ERROR" or . == "TIMED_OUT" or . == "CANCELLED") then "CI failing"
+        elif any($c[]; . == "FAILURE" or . == "ERROR" or . == "TIMED_OUT" or . == "CANCELLED" or . == "ACTION_REQUIRED" or . == "STARTUP_FAILURE") then "CI failing"
         elif any($c[]; . == "" or . == "IN_PROGRESS" or . == "QUEUED" or . == "PENDING" or . == "WAITING") then "CI pending"
-        else "CI passing" end;
+        elif all($c[]; . == "SUCCESS" or . == "SKIPPED" or . == "NEUTRAL") then "CI passing"
+        else "CI unknown" end;
     .[] | "  #\(.number) \(.title) (\(ci))"'
 
   echo "Worktrees prune would remove"
