@@ -4,7 +4,7 @@ The skills and principles in [`../jstack/skills/`](../jstack/skills/) run unchan
 
 ## How it works
 
-Parallel work runs as separate sessions, not subagents. Each stream gets its own top-level session in its own git worktree, so you can open any thread and talk to it. Each session owns its stream: it designs when the design is unclear, builds, runs its own reviewers as subagents, and keeps its row on a shared board file. An optional coordinator session catches up on them, tidies the board and puts cross-stream calls to you.
+Parallel work runs as separate sessions, not subagents. Each stream gets its own top-level session in its own git worktree, so you can open any thread and talk to it. Each session does one job (an architect, an investigator, or a builder for one PR), runs its own reviewers as subagents, keeps its row on a shared board file, and spawns the next session when the work hands on. An optional coordinator session catches up on them, tidies the board and puts cross-stream calls to you.
 
 | Agent | Mode | Job |
 |---|---|---|

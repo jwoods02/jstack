@@ -77,6 +77,12 @@ remove_worktree() { # project ID, main checkout, worktree directory, force
     || if [ "$4" = true ]; then git -C "$2" worktree remove --force "$3"; else git -C "$2" worktree remove "$3"; fi
 }
 
+orchestrators() { # session ID to leave out -> open Orchestrator sessions, most recently active first
+  api get "/api/session?parentID=null&archived=false&limit=50" | data \
+    | jq -r --arg skip "$1" '[.[] | select(.agent == "Orchestrator" and .id != $skip)]
+      | sort_by(-.time.updated) | .[] | "\(.id)\t\(.title // "-")"'
+}
+
 board_path() { # brief text, main checkout -> the first existing board file named in the brief or the repo's AGENTS.md, else the repo's own
   local candidate
   while read -r candidate; do
@@ -121,9 +127,7 @@ case "$cmd" in
     echo "${OPENCODE_SESSION_ID:?not running inside an OpenCode session}"
     ;;
   coordinator)
-    api get "/api/session?parentID=null&archived=false&limit=50" | data \
-      | jq -r --arg self "${OPENCODE_SESSION_ID:-}" '[.[] | select(.agent == "Orchestrator" and .id != $self)]
-        | sort_by(-.time.updated) | .[] | "\(.id)\t\(.title // "-")"'
+    orchestrators "${OPENCODE_SESSION_ID:-}"
     ;;
   ls)
     active="$(api get /api/session/active | data)"
@@ -201,9 +205,15 @@ case "$cmd" in
     footer="Your session: $sid.
 $footer"
     parent="${OPENCODE_SESSION_ID:-}"
+    orchestrator="$(orchestrators "" | awk 'NR == 1 { print $1 }' || true)"
     if [ -n "$parent" ]; then
+      [ "$parent" = "$orchestrator" ] && parent_note=", the Orchestrator" || parent_note=""
       footer="$footer
-Started from session $parent. To send it a line (optional): $SELF send $parent \"<one or two lines>\""
+Started from session $parent$parent_note. To send it a line (optional): $SELF send $parent \"<one or two lines>\""
+    fi
+    if [ -n "$orchestrator" ] && [ "$orchestrator" != "$parent" ]; then
+      footer="$footer
+Orchestrator: $orchestrator. To send it a line (optional): $SELF send $orchestrator \"<one or two lines>\""
     fi
     board="$(board_path "$brief" "$repo")"
     if [ -n "$board" ]; then
