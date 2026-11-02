@@ -13,7 +13,7 @@ jteam coordinator                            open Orchestrator sessions, most re
 jteam ls [limit]                             top-level sessions: id, state, idle time, agent, title, directory
 jteam peek <session> [n]                     last n messages (default 4), oldest first, each cut to 1500 chars
                                              and labelled [james], [assistant], [send from <id>],
-                                             [brief from <id>], or [sent] for older unmarked API messages
+                                             [brief from <id>], or [sent] for untagged API messages
 jteam send [--now] <session> <text...>       queue a message; --now delivers it mid-turn
 jteam spawn <repo> <branch|-> <title> <brief-file|-> [model] [agent]
                                              new OpenCode worktree and branch off origin's default branch,
@@ -125,12 +125,13 @@ case "$cmd" in
     ;;
   peek)
     id="${1:?session id}"
-    api get "/api/session/$id/message?limit=40&order=desc" | data | jq -r --argjson n "${2:-4}" '
+    n="${2:-4}"
+    api get "/api/session/$id/message?limit=$(( n * 4 > 40 ? n * 4 : 40 ))&order=desc" | data | jq -r --argjson n "$n" '
       def who:
         if .type == "assistant" then "assistant"
         elif .metadata.jteam then "\(.metadata.jteam.kind // "send") from \(.metadata.jteam.from // "jteam")"
-        elif .metadata == null then "sent"
-        else "james" end;
+        elif .metadata.displayText then "james"
+        else "sent" end;
       [ .[] | select(.type == "assistant" or .type == "user")
         | { who: who,
             text: (if .type == "user" then (.metadata.displayText // .text // "")
