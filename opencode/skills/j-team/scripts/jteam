@@ -11,7 +11,9 @@ usage() {
 jteam self                                   this session's ID
 jteam coordinator                            open Orchestrator sessions, most recently active first
 jteam ls [limit]                             top-level sessions: id, state, idle time, agent, title, directory
-jteam peek <session> [n]                     last n assistant replies (default 2), each cut to 1500 chars
+jteam peek <session> [n]                     last n messages (default 4), oldest first, each cut to 1500 chars
+                                             and labelled [james], [assistant], [send from <id>],
+                                             [brief from <id>], or [sent] for older unmarked API messages
 jteam send [--now] <session> <text...>       queue a message; --now delivers it mid-turn
 jteam spawn <repo> <branch|-> <title> <brief-file|-> [model] [agent]
                                              new OpenCode worktree and branch off origin's default branch,
@@ -123,17 +125,25 @@ case "$cmd" in
     ;;
   peek)
     id="${1:?session id}"
-    api get "/api/session/$id/message?limit=40&order=desc" | data | jq -r --argjson n "${2:-2}" '
-      [ .[] | select(.type == "assistant")
-        | [ .content[]? | select(.type == "text") | .text ] | join("\n")
-        | select(length > 0) ][:$n] | reverse | .[] | .[0:1500] + "\n---"'
+    api get "/api/session/$id/message?limit=40&order=desc" | data | jq -r --argjson n "${2:-4}" '
+      def who:
+        if .type == "assistant" then "assistant"
+        elif .metadata.jteam then "\(.metadata.jteam.kind // "send") from \(.metadata.jteam.from // "jteam")"
+        elif .metadata == null then "sent"
+        else "james" end;
+      [ .[] | select(.type == "assistant" or .type == "user")
+        | { who: who,
+            text: (if .type == "user" then (.metadata.displayText // .text // "")
+                   else [ .content[]? | select(.type == "text") | .text ] | join("\n") end) }
+        | select(.text | length > 0) ][:$n] | reverse | .[] | "[\(.who)] \(.text[0:1500])\n---"'
     ;;
   send)
     delivery=queue
     if [ "${1:-}" = --now ]; then delivery=steer; shift; fi
     id="${1:?session id}"; shift
     [ $# -gt 0 ] || { echo "nothing to send" >&2; exit 1; }
-    api post "/api/session/$id/prompt" -d "$(jq -cn --arg t "$*" --arg d "$delivery" '{text: $t, delivery: $d}')" >/dev/null
+    api post "/api/session/$id/prompt" -d "$(jq -cn --arg t "$*" --arg d "$delivery" --arg f "${OPENCODE_SESSION_ID:-}" \
+      '{text: $t, delivery: $d, metadata: {jteam: ({kind: "send"} + if $f == "" then {} else {from: $f} end)}}')" >/dev/null
     echo "sent to $id ($delivery)"
     ;;
   spawn)
@@ -178,7 +188,7 @@ Coordinator session: $coordinator. Report to it with: $SELF send $coordinator \"
     fi
     api post "/api/session/$sid/prompt" -d "$(jq -cn --arg t "$brief
 
-$footer" '{text: $t}')" >/dev/null
+$footer" --arg f "$coordinator" '{text: $t, metadata: {jteam: ({kind: "brief"} + if $f == "" then {} else {from: $f} end)}}')" >/dev/null
     printf '%s\t%s\t%s\t%s\n' "$sid" "$branch" "$dir" "$setup_note"
     ;;
   prune)
