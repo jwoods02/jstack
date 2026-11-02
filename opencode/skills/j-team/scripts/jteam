@@ -118,15 +118,17 @@ pr_cell_refs() { # PR cell, repo's owner/name -> "owner/name number" per PR, wit
 }
 
 stale_row() { # board row, active sessions JSON, repo's owner/name -> the reason the row is stale, if any
-  local row="$1" active="$2" nwo="$3" id ref n state all_archived=false
+  local row="$1" active="$2" nwo="$3" id ref n state done_prs="" all_done=false all_archived=false
   [ -z "${PR_COLUMN:-}" ] || while read -r ref n; do
     [ -n "$n" ] || continue
     state="$(gh pr view "$n" -R "$ref" --json state -q .state 2>/dev/null || true)"
     case "$state" in
-      MERGED|CLOSED) echo "PR $ref#$n is $state"; return;;
-      "") echo "  could not read PR $ref#$n" >&2;;
+      MERGED|CLOSED) done_prs="${done_prs:+$done_prs, }PR $ref#$n is $state"; all_done=true;;
+      "") echo "  could not read PR $ref#$n" >&2; all_done=false; break;;
+      *) all_done=false; break;;
     esac
   done < <(pr_cell_refs "$(awk -F'|' -v c="$PR_COLUMN" '{ print $c }' <<<"$row")" "$nwo")
+  if [ "$all_done" = true ]; then echo "$done_prs"; return; fi
   for id in $(grep -oE 'ses_[A-Za-z0-9]+' <<<"$row" | sort -u || true); do
     all_archived=true
     jq -e --arg id "$id" 'any(.[]; .id == $id)' <<<"$active" >/dev/null && { all_archived=false; break; }
