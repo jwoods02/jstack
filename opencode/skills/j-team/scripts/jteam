@@ -221,7 +221,7 @@ case "$cmd" in
   spawn)
     if [ "${1:-}" = --continue ]; then
       [ $# -ge 4 ] || { usage >&2; exit 1; }
-      dir="$(cd "$2" && pwd -P)"
+      dir="$(cd "$(git -C "$2" rev-parse --show-toplevel)" && pwd -P)"
       repo="$(main_checkout "$dir")"
       [ "$dir" != "$repo" ] || { echo "--continue needs a worktree, not the main checkout" >&2; exit 1; }
       branch="$(git -C "$dir" branch --show-current)"
