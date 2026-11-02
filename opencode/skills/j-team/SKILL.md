@@ -43,9 +43,9 @@ A session does the job its first message gives it. An architect, an investigator
 3. **Run the stack.** Once James says go, work through the stack one PR at a time, with every builder and reviewer as a subagent. For each PR:
    1. Start a fresh `j-agent` builder on the `builder` model, in the stream's worktree, on the next stack branch.
    2. The builder builds, opens the draft PR in the stack, pushes, reports the head commit and ends. It doesn't wait on CI or start reviewers.
-   3. Wait for CI. With the jstack plugin installed, its `[github]` message (`metadata.jteam.kind = "github"`) wakes you when CI ends. Without the plugin, run one background `gh pr checks <n> --watch`. Send a red run back to the builder. Once CI is green, post the PR link in your session. Start one fresh `j-agent` reviewer on the `reviewer` model, or an `/interrogate` pass for a big change. You judge the findings.
+   3. Wait for CI. With the jstack plugin installed, its `[github]` message (`metadata.jteam.kind = "github"`) wakes you when CI ends. Without the plugin, run one background `gh pr checks <n> --watch`. Send a red run back to the builder. When the repo has no CI, skip the wait. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so. Once CI is green or skipped, post the PR link in your session. Start one fresh `j-agent` reviewer on the `reviewer` model, or an `/interrogate` pass for a big change. You judge the findings.
    4. Send fixes back to the same builder or a fresh one. Round 2 is one fresh reviewer on the fix commits only.
-   5. Move on once the review passes, CI is green, and the passing verdict's head commit equals `gh pr view <n> --json headRefOid`. A verdict for an older head is stale.
+   5. Move on once the review passes, CI is green where the repo has it, and the passing verdict's head commit equals `gh pr view <n> --json headRefOid`. A verdict for an older head is stale.
 4. **Finish.** For a big change, run the milestone reviewer once on the top of the stack. Then set your row to "Ready for James" with the whole stack and each PR's reviewed head. James merges.
 
 Only summaries and verdicts land in a lead's context. j-mode's resume rule applies to builder subagents.
