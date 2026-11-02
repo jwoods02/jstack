@@ -4,11 +4,11 @@ The skills and principles in [`../jstack/skills/`](../jstack/skills/) run unchan
 
 ## How it works
 
-Parallel work runs as separate sessions, not subagents. Each builder gets its own top-level session in its own git worktree, so you can open any thread and talk to it. One coordinator session starts the builders, tracks them on a board file, and passes you PR links and decisions. Builders start their own reviewers as subagents and report back to the coordinator.
+Parallel work runs as separate sessions, not subagents. Each stream gets its own top-level session in its own git worktree, so you can open any thread and talk to it. Each session does one job (an architect, an investigator, or a builder for one PR), runs its own reviewers as subagents, keeps its row on a shared board file, and spawns the next session when the work hands on. An optional coordinator session catches up on them, tidies the board and puts cross-stream calls to you.
 
 | Agent | Mode | Job |
 |---|---|---|
-| [`Orchestrator`](agents/Orchestrator.md) | primary | The coordinator. Starts builder sessions with `jteam spawn` and keeps the board. Writes no code. |
+| [`Orchestrator`](agents/Orchestrator.md) | primary | The optional coordinator. Starts sessions with `jteam spawn`, catches up on them and tidies the board. Writes no code. |
 | [`JMode`](agents/JMode.md) | primary | j-mode for a single thread: architect, builder, reviewer or investigator. Spawned builders run as `JMode`. |
 | [`j-agent`](agents/j-agent.md) | subagent | Reviewers and helpers started during a j-mode run |
 
@@ -34,7 +34,7 @@ You need OpenCode V2 with its `opencode` CLI on your PATH, plus `git`, `jq` and 
    ```
 
    With depth 2, a reviewer that a builder starts can run `/interrogate`'s own reviewers. `worktree.directory` puts worktrees beside each repo instead of in OpenCode's data folder.
-5. Optional: tell your agents where the board lives in `~/.config/opencode/AGENTS.md`, for example `JStack boards live at ~/docs/<project>/board.md`. Without one, the board is `.opencode/jstack-board.md` in the repo.
+5. Optional: tell your agents where the board lives in `~/.config/opencode/AGENTS.md`, for example `JStack boards live at ~/docs/<project>/board.md`. `jteam spawn` can't fill in `<project>`, so name the concrete board path in each brief. Without one, the board is `.opencode/jstack-board.md` in the repo.
 6. Optional: for each repo that needs setup in a fresh worktree (env files, dependency install), add an executable `~/.config/opencode/worktree-setup/<repo-name>.sh`. `jteam spawn` makes it the project's start command, so OpenCode runs it inside every new worktree, including ones you create in the app. Have it write its output to `$(git rev-parse --git-dir)/worktree-setup.log` and end with the line `worktree setup ok`, which is how `jteam` knows it worked. `git worktree list --porcelain | awk 'NR == 1 { print $2 }'` gives it the main checkout.
 
 Skills load from the clone, so `git pull` updates them. Copy the agents again when they change.
@@ -51,4 +51,4 @@ Or work in one thread with `JMode`, the default agent, exactly as with `/j-mode`
 
 ## Worktrees and local resources
 
-Builders run in OpenCode worktrees, so their sessions belong to the repo's project. `jteam prune`, which runs on every spawn, removes a worktree and its branch once the PR is merged and nothing local is left. Each worktree needs its own env files and dependencies, which the setup script handles. Ten worktrees can't all run the same local stack. Ports clash, and so can test databases and job queues. Keep one stack for the repo, and have the coordinator hand it to whichever builder needs it. The others rely on typecheck, unit tests and CI.
+Builders run in OpenCode worktrees, so their sessions belong to the repo's project. `jteam prune`, which runs on every spawn, removes a worktree and its branch once the PR is merged and nothing local is left. Each worktree needs its own env files and dependencies, which the setup script handles. Ten worktrees can't all run the same local stack. Ports clash, and so can test databases and job queues. Keep one stack for the repo. Its line on the board names the session holding it, and a session asks before taking it. The others rely on typecheck, unit tests and CI.

@@ -16,7 +16,7 @@ To install it, open Cursor's Customize, choose From GitHub Repository, and add t
 
 ## OpenCode
 
-[`opencode/`](opencode/) runs the same skills on OpenCode V2, with nothing copied out of `jstack/`. It adds three agents, a model map template and one skill, `j-team`, which maps j-mode's Cursor terms to OpenCode. Builders run as separate sessions in their own git worktrees, and a coordinator session tracks them. See [its README](opencode/README.md).
+[`opencode/`](opencode/) runs the same skills on OpenCode V2, with nothing copied out of `jstack/`. It adds three agents, a model map template and one skill, `j-team`, which maps j-mode's Cursor terms to OpenCode. Each stream runs as its own session in its own git worktree, and an optional coordinator session catches up on them. See [its README](opencode/README.md).
 
 ## Jobs and models
 
