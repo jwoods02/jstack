@@ -27,8 +27,8 @@ To resume earlier work, start from the Project's task tracker, the open PRs and 
 | Coordinator | The Project chat. It picks jobs, starts builders and reviewers, keeps the Project's task tracker current and briefs James. It doesn't write code itself. In a chat outside a Project, the chat does the job itself. | `coordinator` |
 | Architect | Before a big change, or when the design is unclear. Run `/how` and `/why`, then `/architect` with checkpoint, so it stops before implementing. Settle a question you can answer by building a quick throwaway by building one. End with a short decision list (numbered questions, each with a recommended answer) and stop for James. | `architect`, or `architect for load-bearing designs` |
 | Plan reviewer | A fresh agent for any plan of three or more PRs, before a builder starts. | `plan reviewer`, or `plan reviewer for load-bearing plans` |
-| Builder | One per PR, on its own branch. Builds, opens a draft PR, gets CI green, then replies "ready for review" to the coordinator. A builder never starts its own reviewer. | `builder` by default. Use `builder for a very complex change`, `builder for very well-planned work` or `builder for a simple change with some ambiguity` when one fits, and `hardest tasks` for the gnarliest piece. |
-| Reviewer | One fresh agent per PR, never the builder, started by the coordinator once CI is green. Small and medium PRs get one reviewer. Big changes get lens reviewers. See Reviews. | `reviewer`, or `lens reviewers`, `interrogate reviewers` and `milestone reviewer` for big changes |
+| Builder | One per PR, on its own branch. Builds, opens a draft PR, gets CI green, then replies "ready for review" to the coordinator. A builder never starts its own reviewer, except that on a big change it runs `/interrogate` itself (see Reviews). | `builder` by default. Use `builder for a very complex change`, `builder for very well-planned work` or `builder for a simple change with some ambiguity` when one fits, and `hardest tasks` for the gnarliest piece. |
+| Reviewer | One fresh agent per PR, never the builder, started by the coordinator once CI is green. Small and medium PRs get one reviewer. A big change gets one `/interrogate` pass that its builder runs and judges instead. See Reviews. | `reviewer`, or `interrogate reviewers` and `milestone reviewer` for big changes |
 | Parallel builders | As many builder and reviewer pairs as there are independent tasks. One builder per PR or task, each on its own branch. Before fanning out, check that no two tasks touch the same branch, files or migration number (**principle-separate-before-serializing-shared-state**). Run the ones that do one after another. The coordinator tracks every pair in the Project's task tracker. | Same as builder and reviewer |
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. | `investigator` |
 | Watcher | Only when waiting on something long, such as a deploy. Usually the coordinator just runs one blocking `gh pr checks --watch`. For waits over about 20 minutes, end the turn and subscribe to a timer, or subscribe to merged, ready for review and CI conclusion, not every push. Never poll with repeated sleeps. End every watch with a clear stand-down. | `watcher` |
@@ -40,7 +40,7 @@ A **big change** is one that is hard to reverse (a one-way door), or a large cha
 - A chain of three or more PRs.
 - The last PR of a milestone.
 
-Tests, docs, fixtures and generated files don't count toward the 1,000. File count is not a signal. Prototypes, and projects not yet live in production, always get one reviewer, never lens reviews.
+Tests, docs, fixtures and generated files don't count toward the 1,000. File count is not a signal. Prototypes, and projects not yet live in production, always get one reviewer, never `/interrogate`.
 
 Builder reminders:
 
@@ -58,12 +58,13 @@ When James steps away, state the finish check, keep going under `/loop`, and kee
 
 ## Reviews
 
-- **One reviewer.** This is the default. It uses the rubric and code-quality checklist from `/interrogate` (`../interrogate/references/rubric.md` and `code-quality-review.md`).
-- **Lens reviewers, for big changes only.** Three fresh reviewers start together (architecture and proportionality, correctness, evidence and docs). Each reads its lens in `../interrogate/references/lenses.md`. Each writes its own verdict, and the coordinator merges them into one list for the builder.
-- **Rounds, in every tier.** Round 1 is a full review. Round 2 checks only the fixes, with no new nits. Round 3 converges. Reviewers re-run only what CI does not, and do not reinstall for delta checks.
-- **Verdicts.** Every verdict names the head commit, the base commit and the `git patch-id` of the diff, so a stale verdict is visible. Findings sort into Act on, Consider, Noted and Dismissed.
+- **One reviewer.** This is the default for small and medium PRs. One fresh agent on the `reviewer` line uses the rubric and code-quality checklist from `/interrogate` (`../interrogate/references/rubric.md` and `code-quality-review.md`).
+- **One `/interrogate` pass, for big changes only.** Once CI is green, the builder runs `/interrogate` once, with the two models on the `interrogate reviewers` line. The builder is the lead judge and sorts the findings itself, as `/interrogate`'s Step 5 describes. Its reviewer brief asks each reviewer to re-run the PR body's claims and numbers, and to back each claimed bug with a failing test or script.
+- **Rounds, in every tier.** Round 1 is the full review. Round 2 is one fresh reviewer on the `reviewer` line that reads only the fix commits, with no new nits. It never re-runs `/interrogate`. Round 3 converges. Reviewers re-run only what CI does not, and do not reinstall for delta checks.
+- **Verdicts.** Every verdict names the head commit, the base commit and the patch id of the diff (`git diff <base>...<head> | git patch-id --stable`), so a stale verdict is visible. Findings sort into Act on, Consider, Noted and Dismissed.
 - **Stacks.** Start each PR's review as soon as its CI is green. Don't wait for the series.
-- **Milestone review.** It runs after the last PR of a milestone or big chain has passed its own reviews, and before James merges. One fresh agent reviews the whole change on the final head. It re-runs the load-bearing evidence (tests and measurements) with at least one negative control each, and checks rollback.
+- **Milestone review.** It runs once, after every PR of a milestone or big chain has passed its own reviews, and before James merges. One fresh agent on the `milestone reviewer` line reviews the whole change on the final head. It re-runs the load-bearing evidence (tests and measurements), each with at least one negative control that should fail, and checks the rollback path. Its verdict uses the verdict format above and gates the merge.
+- **Verifier, optional.** Where the repo has a harness that drives the app, a fresh agent can run the change as a user would, on the base and then on the head, and report PASS, PASS+NOTES or FAIL.
 
 ## PR rules
 
@@ -86,7 +87,7 @@ When James steps away, state the finish check, keep going under `/loop`, and kee
 - Any code → name the data shape first, and choose its organizing structure per **principle-model-the-domain**.
 - Code crossing a function boundary → the **architect** skill.
 - Parallel fan-out → the **swarm** skill for coverage, races and checks. Use **arena** for design or code bakeoffs.
-- Big change → the **interrogate** skill, run by the correctness lens reviewer.
+- Big change → the **interrogate** skill, run once by the builder, who judges the findings.
 - Any prose, your reply included → the **unslop** skill, and docs, PR text and commit messages also use **technical-writing**.
 - Text written as James (PR descriptions, Slack messages, emails, docs he signs) → also load his **james-voice** skill if it's installed. JStack doesn't ship it. It sets the voice; unslop and technical-writing still apply. Skip it for replies to James.
 - Before review → the **no-comments** skill.
@@ -165,7 +166,7 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 - File pointers, not pasted context.
 - An explicit `model` from the role's line in the `jstack-models.mdc` rule this plugin ships.
 
-Every role has a line, and a spawn with no role of its own uses `other helpers`. The correctness lens has no line of its own, because it runs `/interrogate` and uses `interrogate reviewers`.
+Every role has a line, and a spawn with no role of its own uses `other helpers`.
 
 **Match the model to the job.**
 

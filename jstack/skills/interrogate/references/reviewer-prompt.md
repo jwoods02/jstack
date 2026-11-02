@@ -30,6 +30,12 @@ Review whether the code achieves this intent well. Do NOT question the intent it
 
 Review the code through every lens in the rubric and the code-quality lens above that you find relevant. Do not force lenses that don't apply. A simple bug fix does not need paragraphs about architectural integrity.
 
+## Evidence
+
+- If the code comes with a PR description, re-run every claim and number in it that you can. Say which ran and which couldn't.
+- Back each bug you claim with a failing test or script that you ran, pasted into the finding so the author can rerun it. Don't commit it or change the repo.
+- Label a finding with no failing test "reasoned, not tested". The lead won't put it in Act on unless the reasoning is a proof.
+
 For each finding, provide:
 
 1. **Severity**: `critical` | `warning` | `nit`
@@ -38,7 +44,8 @@ For each finding, provide:
    - `nit`: Style, naming, minor improvement.
 2. **Finding**: What the problem is, in concrete terms. Reference specific lines/functions.
 3. **Evidence**: Why you believe this is a problem. Show your reasoning. Don't just assert.
-4. **Suggestion** (optional): What you'd do instead, only if you have a concrete alternative.
+4. **Test**: The failing test or script and its output, or "reasoned, not tested".
+5. **Suggestion** (optional): What you'd do instead, only if you have a concrete alternative.
 
 A good finding references specific code, not vague concerns ("this could be better"). It distinguishes between "this is broken" and "I would have done this differently". It considers the stated intent. A finding that ignores the context of what's being built is a bad finding.
 
@@ -55,6 +62,7 @@ Return your findings as a structured list:
 **Location**: file:line or function name
 **Finding**: What's wrong
 **Evidence**: Why this matters
+**Test**: The failing test or script, or "reasoned, not tested"
 **Suggestion**: (optional) What to do instead
 
 ### 2. [Severity] Short title

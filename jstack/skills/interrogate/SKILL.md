@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Spawn one reviewer per configured model to adversarially review code changes. The adversarial signal comes from model diversity, not assigned personas. The deliverable is a synthesized verdict. Do NOT auto-apply changes.
 
-When j-mode runs lens reviews, the correctness lens runs this skill. `references/lenses.md` describes the other lenses.
+On a big change, j-mode's builder runs this skill once and acts as the lead judge.
 
 ## Step 1, Scope
 
@@ -17,6 +17,7 @@ Identify what to review from context:
 - If the user points at specific files or a diff, use that.
 - If on a feature branch, run `git diff main...HEAD` (or the appropriate base branch) for the full changeset.
 - If the user's message references recent work, gather the relevant files.
+- If the change has a PR, include its description.
 
 Package the diff or file contents with any surrounding context files the reviewers need to understand the code.
 
@@ -30,7 +31,7 @@ Launch all reviewers in a single message with the Task tool, one per entry on th
 
 | Subagent | Default model |
 |----------|---------------|
-| Reviewer A | `claude-opus-5-5-xhigh` |
+| Reviewer A | `claude-opus-5-5-high` |
 | Reviewer B | `gemini-4-argon-high` |
 
 Each reviewer gets `subagent_type: generalPurpose` and `model` set to its configured entry, or its table default when there is no configured line. It also gets `readonly: true` when the Task tool offers it. Otherwise, tell the subagent in its prompt not to write files, push or comment. Omit `model` for an `auto` or `inherit-parent` entry, so that reviewer runs on the parent model.
@@ -47,7 +48,7 @@ As results come back, build a unified picture. Parse every reviewer's findings. 
 
 You are the lead reviewer, a pragmatic senior engineer, not a neutral aggregator. Read `references/lead-judgment.md` for the full framework. Put every finding in one of four buckets, with the model(s) that raised it and a one-line rationale.
 
-- **Act on**. Real issues affecting correctness, security, or maintainability given the actual goals. They would block a real PR.
+- **Act on**. Real issues affecting correctness, security, or maintainability given the actual goals. They would block a real PR. A finding labeled "reasoned, not tested" belongs here only when its reasoning is a proof.
 - **Consider**. Legitimate, but you're not sure they outweigh the cost of addressing them now. Worth the user's attention.
 - **Noted**. Technically valid but not actionable. Context-dependent, premature optimization, or low-impact at this stage.
 - **Dismissed**. Wrong, nitpicky, or missing context, with a brief reason.

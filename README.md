@@ -30,8 +30,7 @@ The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) an
 | Builder | Opus 5.5 Medium by default; Opus 5.5 High for a very complex change; Sonnet 5.5 High for very well-planned work; Sonnet 5.5 Extra High for a simple change with some ambiguity | James's builder rule (27 Oct) |
 | Hardest tasks | Opus 5.5 Extra High | Subtle concurrency, tricky algorithms and repeat-failure bugs are where depth pays |
 | Reviewer (small and medium PRs) | Opus 5.5 High | High ties Extra High on CursorBench at about half the cost |
-| Lens reviewers (architecture and evidence lenses, big changes) | Opus 5.5 High | Three fresh lenses read a big change from different angles |
-| `/interrogate` (the correctness lens, big changes) | Opus 5.5 Extra High + Gemini 4 Argon High | A missed bug in a big change is costly. The Opus lead weighs Gemini's findings. |
+| `/interrogate` (big changes) | Opus 5.5 High + Gemini 4 Argon High | Two model families try to break a big change, and the builder judges their findings |
 | Milestone reviewer | Opus 5.5 Extra High | Its verdict gates merging a milestone |
 | Investigator | Sonnet 5.5 High | Read-only questions |
 | Watcher | Sonnet 5.5 Medium | Only when waiting on something long |
