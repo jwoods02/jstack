@@ -21,7 +21,7 @@ j-mode was written for Cursor. On OpenCode, read it with the substitutions below
 | The Project chat, the coordinator | The stream's lead, which starts its own builders and reviewers (see Streams and leads). Leads share the board, and James makes cross-stream calls. |
 | The Project's task tracker | The repo's issue tracker for work the team should see. The repo's board for the agents' own streams (see The board). |
 | The Project's shared context | The docs folder your instructions name, and the repo's own docs |
-| `/loop`, timers, CI subscriptions | A top-level session starts the wait (`jteam watch <n>` for a PR's CI and reviews) as a background shell command. OpenCode wakes the session when it ends. A subagent runs its waits in the foreground (see Waits). |
+| `/loop`, timers, CI subscriptions | A top-level session watching a PR on its own runs `jteam watch <n>` as a background shell command, and OpenCode wakes the session when it ends. A subagent runs `jteam watch` and its other waits in the foreground (see Waits). |
 | `.cursor/skills/` | `.opencode/skills/` |
 | Chat history in `~/.cursor/projects/*/agent-transcripts` | OpenCode sessions, read with `jteam ls` and `jteam peek` |
 | A skill's file under `~/.cursor/plugins/` | Load it with the skill tool by its ID |
@@ -42,8 +42,8 @@ A session does the job its first message gives it. An architect, an investigator
 2. **Plan.** Work out the plan yourself or with architect subagents. A plan of three or more PRs gets a fresh plan reviewer. End with j-mode's decision list and stop for James.
 3. **Run the stack.** Once James says go, work through the stack one PR at a time, with every builder and reviewer as a subagent. For each PR:
    1. Start a fresh `j-agent` builder on the `builder` model, in the stream's worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
-   2. The builder builds, opens the draft PR in the stack, pushes, reports the head commit and ends. It doesn't wait on CI or start reviewers.
-   3. Wait for CI. Run `jteam watch <n>` as one background shell command, and end your turn with the wait line (see Waits). When it wakes you, triage the findings from Bugbot and other bots in its report. Send a red run back to the builder. When the repo has no CI, skip the wait. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so. Once CI is green or skipped, post the PR link in your session. Start one fresh `j-agent` reviewer on the `reviewer` model, or an `/interrogate` pass for a big change. You judge the findings.
+   2. The builder builds, opens or pushes the draft PR in the stack, then runs `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes. Foreground commands time out after 2 minutes by default. On a red run it fixes, pushes and watches again. It retries a failure that looks flaky once, as a fresh run, and an identical second failure is real. A failure in code the PR didn't touch means a rebase, or a report that it's blocked. On a green run, including one with no checks, it triages the Bugbot and other bot findings in the report per j-mode's `references/bugbot-triage.md`. A fix means a push, so it watches again. Once a head is green with its findings triaged, it reports "ready for review" with that head commit. When the repo has no CI, the builder still runs `jteam watch` to collect bot findings. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so. The builder doesn't start reviewers.
+   3. You don't watch CI. Once the builder reports, post the PR link in your session. Start one fresh `j-agent` reviewer on the `reviewer` model, or an `/interrogate` pass for a big change. You judge the findings.
    4. Send fixes back to the same builder or a fresh one. Round 2 is one fresh reviewer on the fix commits only.
    5. Move on once the review passes, CI is green where the repo has it, and the passing verdict's head commit equals `gh pr view <n> --json headRefOid`. A verdict for an older head is stale.
 4. **Finish.** For a big change, run the milestone reviewer once on the top of the stack. Then set your row to "Ready for James" with the whole stack and each PR's reviewed head. James merges.
@@ -52,8 +52,8 @@ Only summaries and verdicts land in a lead's context. j-mode's resume rule appli
 
 ### Waits
 
-- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. Builders and reviewers run their waits in the foreground. Leads still start subagents in the background.
-- A session that ends a turn on a wait says so in its last line. The line names what it waits on, the head commit, when the wait started and what the session does next. For example: "Waiting on CI for #946 at `50c0fe7`, started 14:05. I start PR 2 once it and round 2 pass."
+- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. Builders and reviewers run their waits in the foreground, and a builder runs `jteam watch` with a timeout of about 45 minutes. Leads still start subagents in the background.
+- A session that ends a turn on a wait says so in its last line. The line names what it waits on, the head commit, when the wait started and what the session does next. For example: "Waiting on the reviewer for #946 at `50c0fe7`, started 14:05. I start PR 2 once it and round 2 pass."
 
 ### Ask James
 
@@ -130,7 +130,7 @@ jteam rm <worktree> [--force]                remove one worktree and archive its
 
 `status` reads a row as stale once every PR in its PR cell is merged or closed, or once every session it names is archived.
 
-`watch` exits 0 when CI passes and 1 when it fails. It waits on every check, Cursor Bugbot's included. Bugbot's check passes even when it finds bugs. Its findings are reviews and review comments, so they show in the report.
+`watch` exits 0 when CI passes or the PR has no checks, 1 when a check fails, and 2 when checks are still pending or `gh` errors. The report then says which, with `gh`'s error. It waits on every check, Cursor Bugbot's included. Bugbot's check passes even when it finds bugs. Its findings are reviews and review comments, so they show in the report.
 
 A spawn brief carries what j-mode's kickoff needs: the job, the scope and what is out of scope, the finish check, and James's standing orders that apply. Name branches `<type>/<ticket>-<slug>`, with `<type>` the PR title's conventional-commit type, for example `feat/res-391-chat-prompt`. With no ticket, use `<type>/<slug>`.
 
