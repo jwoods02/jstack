@@ -51,32 +51,6 @@ You need OpenCode V2 with its `opencode` CLI on your PATH, plus `git`, `jq` and 
 
 Skills load from the clone, so `git pull` updates them. Copy the agents again when they change.
 
-## GitHub wake-ups
-
-The [`jstack`](plugins/jstack/) server plugin wakes the session that owns a PR when something happens on GitHub, and names sessions after their PRs. A session owns the open PR, or the open PRs of the `gh stack`, on the branch checked out in its worktree. Sessions in a main checkout and child sessions own nothing.
-
-It queues a `[github]` message into the owning session when CI finishes or a check fails on the head, when anyone (bots included) leaves a review, review comment or PR comment, and when the PR is merged, closed or marked ready. Comments the session posted itself with `gh` don't wake it. The last state of each PR is kept in plugin storage, so a restart doesn't resend anything.
-
-It renames a session to `#934 PR title`, or `#946→#952 Task name` for a stack, with `● ` in front while the session's board row says ready for or waiting on James, or its last turn ended on a question. It only replaces an empty title, a title it set, or a task name the session gave itself with `session_rename`. A title you type stays.
-
-`gh` runs only while some session owns an open PR. PRs with checks running are checked every 30 seconds and others every five minutes, all in one GraphQL query. A session running `git push`, `gh pr create`, `gh stack submit` or `gh stack push` gets its branch checked at once, which is how a new PR is found.
-
-To enable it, add it to `plugins` in `~/.config/opencode/opencode.json` with an absolute path, since `~` doesn't expand in plugin paths:
-
-```jsonc
-{
-  "plugins": [{ "package": "/Users/you/src/jstack/opencode/plugins/jstack", "options": {} }],
-}
-```
-
-Options:
-
-| Option | Default | Effect |
-|---|---|---|
-| `scope` | none | Only sessions whose directory is under this path |
-| `gh` | `gh` | The `gh` binary, for when the service's `PATH` lacks it |
-| `log` | none | A file to append one JSON line per `gh` call, wake-up and title change |
-
 ## Use it
 
 Open a session with `JMode`, the default agent, and give it a job, exactly as with `/j-mode` in Cursor. Agree its plan and say go, and it leads the stream through every PR, fanning out to subagents within the stream. `jteam spawn` starts a separate stream for genuinely new or different work, once you've agreed to it. Name its branch `<type>/<ticket>-<slug>`, or `<type>/<slug>` with no ticket:

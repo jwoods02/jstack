@@ -24,6 +24,8 @@ jteam spawn --continue <worktree> <title> <brief-file|-> [model] [agent]
                                              makes no worktree or branch and doesn't prune
 jteam status [board]                         stale board rows, sessions with no row, your draft PRs with CI, and the
                                              worktrees prune would remove; the board defaults to the repo's mapping line
+jteam watch <pr> [repo-dir]                  wait on the PR's checks, then print CI passed or the failing checks,
+                                             and each review and comment since the head commit; exits 1 on a red run
 jteam prune [--dry-run] [repo]               remove clean worktrees whose PR is merged, with their branches,
                                              and archive their sessions; --dry-run only lists them
 jteam rm <worktree> [--force]                remove one worktree and archive its sessions; the branch is kept
@@ -175,6 +177,50 @@ status() { # [board file]
   prune "$repo" "" true | grep '^would remove' | sed 's/^would remove /  /' || true
 }
 
+oneline() { tr '\n' ' ' <"$1" | sed 's/ *$//'; }
+
+watch_pr() { # PR number, URL or branch -> report on its checks and on reviews and comments since the head commit
+  local pr="$1" view n since watch_err watch_rc=0 checks checks_err rc=0 verdict status=0 spec page findings=""
+  watch_err="$(mktemp)" checks_err="$(mktemp)"
+  gh pr checks "$pr" --watch --interval 30 >/dev/null 2>"$watch_err" || watch_rc=$?
+  view="$(gh pr view "$pr" --json number,title,headRefOid)" || return 2
+  n="$(jq -r .number <<<"$view")"
+  since="$(gh api "repos/{owner}/{repo}/commits/$(jq -r .headRefOid <<<"$view")" --jq .commit.committer.date)" || return 2
+  jq -r '"#\(.number) \(.title) (head \(.headRefOid[0:7]))"' <<<"$view"
+  checks="$(gh pr checks "$n" --json name,bucket 2>"$checks_err")" || rc=$?
+  if grep -q '^no checks reported' "$checks_err"; then
+    verdict="CI passed (no checks)"
+  elif ! jq -e 'type == "array"' <<<"$checks" >/dev/null 2>&1; then
+    verdict="CI unreadable (gh pr checks exited $rc): $(oneline "$checks_err")" status=2
+  else
+    verdict="$(jq -r '
+      def names(b): [.[] | select(.bucket as $x | b | index($x)) | .name] | join(", ");
+      if names(["fail", "cancel"]) != "" then "CI failed: \(names(["fail", "cancel"]))"
+      elif names(["pending"]) != "" then "CI pending: \(names(["pending"]))"
+      else "CI passed" end' <<<"$checks")"
+    case "$verdict" in
+      "CI failed"*) status=1;;
+      "CI pending"*) status=2;;
+    esac
+    if [ "$watch_rc" != 0 ] && [ "$status" != 1 ]; then
+      verdict="$verdict (watch exited $watch_rc: $(oneline "$watch_err"))" status=2
+    fi
+  fi
+  rm -f "$watch_err" "$checks_err"
+  echo "$verdict"
+  for spec in "review:pulls/$n/reviews" "review comment:pulls/$n/comments" "comment:issues/$n/comments"; do
+    if page="$(gh api --paginate "repos/{owner}/{repo}/${spec#*:}")" && page="$(jq -c --arg k "${spec%%:*}" '.[]
+      | {kind: $k, at: (.submitted_at // .created_at), state, who: .user.login, body, url: .html_url}' <<<"$page")"; then
+      findings+="$page"$'\n'
+    else
+      echo "Findings unreadable: ${spec#*:}"; status=2
+    fi
+  done
+  jq -rs --arg since "$since" 'sort_by(.at)[] | select(.at > $since)
+    | "\(.kind) by \(.who)\(if .state then " \(.state)" else "" end): \((.body // "") | split("\n") | map(select(test("\\S") and (test("^\\s*<!--") | not))) | (.[0] // "") | .[0:160]) \(.url)"' <<<"$findings" || status=2
+  return "$status"
+}
+
 cmd="${1:-}"
 [ $# -gt 0 ] && shift
 case "$cmd" in
@@ -284,6 +330,10 @@ $footer" --arg f "$parent" '{text: $t, metadata: {jteam: ({kind: "brief"} + if $
     ;;
   status)
     status "${1:-}"
+    ;;
+  watch)
+    cd "${2:-.}"
+    watch_pr "${1:?PR number}"
     ;;
   prune)
     dry=false
