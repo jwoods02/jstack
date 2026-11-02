@@ -177,25 +177,44 @@ status() { # [board file]
   prune "$repo" "" true | grep '^would remove' | sed 's/^would remove /  /' || true
 }
 
-watch_pr() { # PR number, URL or branch -> report on its checks and on reviews and comments since the head commit; fails when CI does
-  local pr="$1" view n since checks failed
-  gh pr checks "$pr" --watch --interval 30 >/dev/null 2>&1 || true
-  view="$(gh pr view "$pr" --json number,title,headRefOid,commits)"
+oneline() { tr '\n' ' ' <"$1" | sed 's/ *$//'; }
+
+watch_pr() { # PR number, URL or branch -> report on its checks and on reviews and comments since the head commit
+  local pr="$1" view n since watch_err watch_rc=0 checks checks_err rc=0 verdict status=0
+  watch_err="$(mktemp)" checks_err="$(mktemp)"
+  gh pr checks "$pr" --watch --interval 30 >/dev/null 2>"$watch_err" || watch_rc=$?
+  view="$(gh pr view "$pr" --json number,title,headRefOid,commits)" || return 2
   n="$(jq -r .number <<<"$view")"
   since="$(jq -r '.commits[-1].committedDate' <<<"$view")"
   jq -r '"#\(.number) \(.title) (head \(.headRefOid[0:7]))"' <<<"$view"
-  checks="$(gh pr checks "$n" --json name,bucket 2>/dev/null || true)"
-  failed="$(jq -r '[.[] | select(.bucket == "fail" or .bucket == "cancel") | .name] | join(", ")' <<<"${checks:-[]}")"
-  if [ -n "$failed" ]; then echo "CI failed: $failed"
-  elif [ "$(jq length <<<"${checks:-[]}")" = 0 ]; then echo "CI passed (no checks)"
-  else echo "CI passed"; fi
+  checks="$(gh pr checks "$n" --json name,bucket 2>"$checks_err")" || rc=$?
+  if grep -q '^no checks reported' "$checks_err"; then
+    verdict="CI passed (no checks)"
+  elif ! jq -e 'type == "array"' <<<"$checks" >/dev/null 2>&1; then
+    verdict="CI unreadable (gh pr checks exited $rc): $(oneline "$checks_err")" status=2
+  else
+    verdict="$(jq -r '
+      def names(b): [.[] | select(.bucket as $x | b | index($x)) | .name] | join(", ");
+      if names(["fail", "cancel"]) != "" then "CI failed: \(names(["fail", "cancel"]))"
+      elif names(["pending"]) != "" then "CI pending: \(names(["pending"]))"
+      else "CI passed" end' <<<"$checks")"
+    case "$verdict" in
+      "CI failed"*) status=1;;
+      "CI pending"*) status=2;;
+    esac
+    if [ "$watch_rc" != 0 ] && [ "$status" != 1 ]; then
+      verdict="$verdict (watch exited $watch_rc: $(oneline "$watch_err"))" status=2
+    fi
+  fi
+  rm -f "$watch_err" "$checks_err"
+  echo "$verdict"
   {
     gh api --paginate "repos/{owner}/{repo}/pulls/$n/reviews" | jq -c '.[] | {kind: "review", at: .submitted_at, state, who: .user.login, body, url: .html_url}'
     gh api --paginate "repos/{owner}/{repo}/pulls/$n/comments" | jq -c '.[] | {kind: "review comment", at: .created_at, who: .user.login, body, url: .html_url}'
     gh api --paginate "repos/{owner}/{repo}/issues/$n/comments" | jq -c '.[] | {kind: "comment", at: .created_at, who: .user.login, body, url: .html_url}'
   } | jq -rs --arg since "$since" 'sort_by(.at)[] | select(.at > $since)
-    | "\(.kind) by \(.who)\(if .state then " \(.state)" else "" end): \((.body // "") | split("\n") | map(select(test("\\S") and (test("^\\s*<!--") | not))) | (.[0] // "") | .[0:160]) \(.url)"'
-  [ -z "$failed" ]
+    | "\(.kind) by \(.who)\(if .state then " \(.state)" else "" end): \((.body // "") | split("\n") | map(select(test("\\S") and (test("^\\s*<!--") | not))) | (.[0] // "") | .[0:160]) \(.url)"' || status=2
+  return "$status"
 }
 
 cmd="${1:-}"
