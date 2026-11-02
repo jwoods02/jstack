@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+# jteam: run and track JStack worker sessions on OpenCode. See ../SKILL.md.
+set -euo pipefail
+
+OC="${OPENCODE_BIN:-$(command -v opencode || echo /Applications/OpenCode.app/Contents/Resources/opencode-cli)}"
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+
+usage() {
+  cat <<EOF
+jteam self                                   this session's ID
+jteam coordinator                            open Orchestrator sessions, most recently active first
+jteam ls [limit]                             top-level sessions: id, state, idle time, agent, title, directory
+jteam peek <session> [n]                     last n assistant replies (default 2), each cut to 1500 chars
+jteam send [--now] <session> <text...>       queue a message; --now delivers it mid-turn
+jteam spawn <repo> <branch|-> <title> <brief-file|-> [model] [agent]
+                                             new OpenCode worktree and branch off origin's default branch,
+                                             set up by the project's start command, with a session given the brief;
+                                             branch - runs the session in the main checkout with no worktree
+jteam prune [repo]                           remove clean worktrees whose PR is merged, with their branches,
+                                             and archive their sessions
+jteam rm <worktree> [--force]                remove one worktree and archive its sessions; the branch is kept
+EOF
+}
+
+# `opencode api` cuts off large responses written to a pipe, so go through a file.
+api() {
+  local out
+  out="$(mktemp)"
+  "$OC" api "$@" >"$out" || { cat "$out" >&2; rm -f "$out"; return 1; }
+  cat "$out"
+  rm -f "$out"
+}
+data() { jq 'if type == "object" and has("data") then .data else . end'; }
+
+model_ref() { # provider/model[#variant] -> Model.Ref JSON
+  jq -cn --arg m "$1" '$m | capture("^(?<p>[^/]+)/(?<id>[^#]+)(#(?<v>.+))?$")
+    | {providerID: .p, id: .id} + (if .v then {variant: .v} else {} end)'
+}
+
+main_checkout() { # any path in a repo or one of its worktrees -> the main checkout
+  local common
+  common="$(git -C "$1" rev-parse --path-format=absolute --git-common-dir)"
+  dirname "$common"
+}
+
+project_id() { # main checkout -> OpenCode project ID, registering the project if needed
+  local repo="$1" pid sid
+  pid="$(api get /api/project | data | jq -r --arg r "$repo" 'map(select(.canonical == $r)) | .[0].id // empty')"
+  if [ -z "$pid" ]; then
+    sid="$(api post /api/session -d "$(jq -cn --arg d "$repo" '{title: "jteam: register project", location: {directory: $d}}')" | data | jq -r .id)"
+    pid="$(api get "/api/session/$sid" | data | jq -r .projectID)"
+    api delete "/api/session/$sid" >/dev/null
+  fi
+  api post /api/worktree/refresh -d "$(jq -cn --arg p "$pid" '{projectID: $p}')" >/dev/null
+  echo "$pid"
+}
+
+ensure_start_command() { # use ~/.config/opencode/worktree-setup/<repo>.sh as the project's start command
+  local pid="$1" setup="$CONFIG_DIR/worktree-setup/$(basename "$2").sh" current
+  [ -x "$setup" ] || return 0
+  current="$(api get /api/project | data | jq -r --arg p "$pid" 'map(select(.id == $p)) | .[0].commands.start // empty')"
+  [ "$current" = "$setup" ] && return 0
+  api patch "/api/project/$pid" -d "$(jq -cn --arg s "$setup" '{commands: {start: $s}}')" >/dev/null
+}
+
+archive_sessions_in() { # worktree directory
+  api get "/api/session?parentID=null&archived=false&limit=100" | data \
+    | jq -r --arg d "$1" '.[] | select(.location.directory == $d) | .id' \
+    | while read -r sid; do api patch "/api/session/$sid" -d '{"archived": true}' >/dev/null; done
+}
+
+remove_worktree() { # project ID, main checkout, worktree directory, force
+  api delete /api/worktree -d "$(jq -cn --arg p "$1" --arg d "$3" --argjson f "$4" '{projectID: $p, directory: $d, force: $f}')" >/dev/null \
+    || if [ "$4" = true ]; then git -C "$2" worktree remove --force "$3"; else git -C "$2" worktree remove "$3"; fi
+}
+
+prune() { # main checkout, project ID
+  local repo="$1" pid="$2" merged dir head branch pr pr_head
+  merged="$(cd "$repo" && gh pr list --state merged --limit 200 --json number,headRefName,headRefOid 2>/dev/null || echo '[]')"
+  while IFS=$'\t' read -r -u 3 dir head branch; do
+      [ "$dir" = "$repo" ] && continue
+      read -r pr pr_head < <(jq -r --arg b "$branch" 'map(select(.headRefName == $b)) | .[0] // empty | "\(.number) \(.headRefOid)"' <<<"$merged") || true
+      [ -n "${pr:-}" ] || continue
+      git -C "$repo" fetch -q origin "pull/$pr/head" 2>/dev/null || true
+      git -C "$repo" merge-base --is-ancestor "$head" "$pr_head" 2>/dev/null \
+        || { echo "kept $dir: PR #$pr is merged but the worktree has commits it doesn't"; continue; }
+      [ -z "$(git -C "$dir" status --porcelain)" ] || { echo "kept $dir: PR #$pr is merged but the worktree has changes"; continue; }
+      archive_sessions_in "$dir"
+      remove_worktree "$pid" "$repo" "$dir" false
+      git -C "$repo" branch -D -q "$branch"
+      echo "removed $dir and branch $branch (PR #$pr merged)"
+    done 3< <(git -C "$repo" worktree list --porcelain | awk '
+      /^worktree / { dir = substr($0, 10) }
+      /^HEAD / { head = $2 }
+      /^branch / { print dir "\t" head "\t" substr($2, 12) }')
+}
+
+cmd="${1:-}"
+[ $# -gt 0 ] && shift
+case "$cmd" in
+  self)
+    echo "${OPENCODE_SESSION_ID:?not running inside an OpenCode session}"
+    ;;
+  coordinator)
+    api get "/api/session?parentID=null&archived=false&limit=50" | data \
+      | jq -r --arg self "${OPENCODE_SESSION_ID:-}" '[.[] | select(.agent == "Orchestrator" and .id != $self)]
+        | sort_by(-.time.updated) | .[] | "\(.id)\t\(.title // "-")"'
+    ;;
+  ls)
+    active="$(api get /api/session/active | data)"
+    api get "/api/session?parentID=null&archived=false&limit=${1:-25}" | data | jq -r --argjson active "$active" '
+      def ago: (now * 1000 - .) / 60000 | floor
+        | if . >= 1440 then "\(. / 1440 | floor)d" elif . >= 60 then "\(. / 60 | floor)h" else "\(.)m" end;
+      .[] | [
+        .id,
+        ($active[.id].type // "idle"),
+        (.time.updated | ago),
+        (.agent // "-"),
+        (.title // "-"),
+        .location.directory
+      ] | @tsv'
+    ;;
+  peek)
+    id="${1:?session id}"
+    api get "/api/session/$id/message?limit=40&order=desc" | data | jq -r --argjson n "${2:-2}" '
+      [ .[] | select(.type == "assistant")
+        | [ .content[]? | select(.type == "text") | .text ] | join("\n")
+        | select(length > 0) ][:$n] | reverse | .[] | .[0:1500] + "\n---"'
+    ;;
+  send)
+    delivery=queue
+    if [ "${1:-}" = --now ]; then delivery=steer; shift; fi
+    id="${1:?session id}"; shift
+    [ $# -gt 0 ] || { echo "nothing to send" >&2; exit 1; }
+    api post "/api/session/$id/prompt" -d "$(jq -cn --arg t "$*" --arg d "$delivery" '{text: $t, delivery: $d}')" >/dev/null
+    echo "sent to $id ($delivery)"
+    ;;
+  spawn)
+    [ $# -ge 4 ] || { usage >&2; exit 1; }
+    repo="$(main_checkout "$1")"
+    branch="$2" title="$3" brief_src="$4" model="${5:-}" agent="${6:-JMode}"
+    brief="$(if [ "$brief_src" = - ]; then cat; else cat "$brief_src"; fi)"
+    pid="$(project_id "$repo")"
+    if [ "$branch" = - ]; then
+      dir="$repo"
+      setup_note="No worktree."
+      footer="Directory: $repo, the main checkout. This session has no worktree, so change no files here."
+    else
+      ensure_start_command "$pid" "$repo"
+      prune "$repo" "$pid"
+
+      git -C "$repo" fetch -q origin
+      base="$(git -C "$repo" symbolic-ref -q --short refs/remotes/origin/HEAD || echo origin/main)"
+      dir="$(api post /api/worktree -d "$(jq -cn --arg p "$pid" --arg n "$(basename "$repo")-${branch//\//-}" --arg b "$base" \
+        '{projectID: $p, name: $n, branch: $b}')" | data | jq -r .directory)"
+      git -C "$dir" switch -q -c "$branch"
+
+      log="$(git -C "$dir" rev-parse --path-format=absolute --git-dir)/worktree-setup.log"
+      if [ ! -x "$CONFIG_DIR/worktree-setup/$(basename "$repo").sh" ]; then
+        setup_note="No setup script for this repo."
+      elif [ ! -f "$log" ] || [ "$(tail -n 1 "$log")" = "worktree setup ok" ]; then
+        setup_note="Setup ran."
+      else
+        setup_note="Setup did not finish. Read $log, then report blocked to the coordinator."
+      fi
+      footer="Worktree: $dir (branch $branch off $base). $setup_note"
+    fi
+
+    body="$(jq -cn --arg t "$title" --arg a "$agent" --arg d "$dir" '{title: $t, agent: $a, location: {directory: $d}}')"
+    [ -n "$model" ] && body="$(jq -c --argjson m "$(model_ref "$model")" '. + {model: $m}' <<<"$body")"
+    sid="$(api post /api/session -d "$body" | data | jq -r .id)"
+
+    coordinator="${OPENCODE_SESSION_ID:-}"
+    if [ -n "$coordinator" ]; then
+      footer="$footer
+Coordinator session: $coordinator. Report to it with: $SELF send $coordinator \"<one or two lines>\""
+    fi
+    api post "/api/session/$sid/prompt" -d "$(jq -cn --arg t "$brief
+
+$footer" '{text: $t}')" >/dev/null
+    printf '%s\t%s\t%s\t%s\n' "$sid" "$branch" "$dir" "$setup_note"
+    ;;
+  prune)
+    repo="$(main_checkout "${1:-.}")"
+    prune "$repo" "$(project_id "$repo")"
+    ;;
+  rm)
+    dir="$(cd "${1:?worktree directory}" && pwd -P)"
+    force=false
+    [ "${2:-}" = --force ] && force=true
+    repo="$(main_checkout "$dir")"
+    [ "$dir" != "$repo" ] || { echo "refusing to remove the main checkout" >&2; exit 1; }
+    branch="$(git -C "$dir" branch --show-current)"
+    archive_sessions_in "$dir"
+    remove_worktree "$(project_id "$repo")" "$repo" "$dir" "$force"
+    echo "removed $dir; branch ${branch:-(detached)} kept"
+    ;;
+  ""|-h|--help|help)
+    usage
+    ;;
+  *)
+    usage >&2; exit 1
+    ;;
+esac

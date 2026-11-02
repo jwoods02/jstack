@@ -2,7 +2,7 @@
 
 <img src="jstack/assets/logo.svg" alt="JStack logo" width="96" />
 
-JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). It is Cursor-only. It keeps pstack's skills and principles and runs James's own Cursor Project workflow through `/j-mode`.
+JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). It keeps pstack's skills and principles and runs James's own Cursor Project workflow through `/j-mode`. The plugin is for Cursor, and the same skills run on OpenCode through [`opencode/`](opencode/).
 
 ## v3 scope
 
@@ -13,6 +13,10 @@ JStack is James Woods's personal adaptation of [pstack](https://github.com/curso
 - The guide is [one page](jstack/docs/guide.md). [UPSTREAM.md](UPSTREAM.md) lists every removal and change.
 
 To install it, open Cursor's Customize, choose From GitHub Repository, and add this repo. Don't install the upstream plugin alongside it, because both ship the same skill names. To change a model, edit the rule file.
+
+## OpenCode
+
+[`opencode/`](opencode/) runs the same skills on OpenCode V2, with nothing copied out of `jstack/`. It adds three agents, a model map template and one skill, `j-team`, which maps j-mode's Cursor terms to OpenCode. Builders run as separate sessions in their own git worktrees, and a coordinator session tracks them. See [its README](opencode/README.md).
 
 ## Jobs and models
 
