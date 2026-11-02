@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Runs `jteam status` against a fixture board with stub gh and opencode binaries.
 set -euo pipefail
 
 JTEAM="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/opencode/skills/j-team/scripts/jteam"
@@ -27,12 +26,12 @@ cat >"$tmp/board.md" <<'EOF'
 EOF
 
 fail=0
-check() { # expectation, PR_1 PR_2 PR_3 states
-  local want="$1" out
-  out="$(cd "$tmp/repo" && PATH="$tmp/bin:$PATH" OPENCODE_BIN="$tmp/bin/opencode" PR_1="$2" PR_2="$3" PR_3="$4" PR_4=OPEN \
+check() {
+  local want="$1" pr1="$2" pr2="$3" pr3="$4" out got
+  out="$(cd "$tmp/repo" && PATH="$tmp/bin:$PATH" OPENCODE_BIN="$tmp/bin/opencode" PR_1="$pr1" PR_2="$pr2" PR_3="$pr3" PR_4=OPEN \
     "$JTEAM" status "$tmp/board.md" 2>&1)"
   if grep -q '^ *Stacked stream' <<<"$out"; then got=stale; else got=fresh; fi
-  if [ "$got" = "$want" ]; then echo "ok   $2 $3 $4 -> $got"; else echo "FAIL $2 $3 $4 -> $got, want $want"; fail=1; fi
+  if [ "$got" = "$want" ]; then echo "ok   $pr1 $pr2 $pr3 -> $got"; else echo "FAIL $pr1 $pr2 $pr3 -> $got, want $want"; fail=1; fi
 }
 
 check fresh OPEN OPEN OPEN
