@@ -75,7 +75,7 @@ While you wait, keep building later PRs that don't depend on the answer. When Ja
 
 ### One worktree per stream
 
-A stream has one worktree, made when the lead starts building. Every branch in its stack lives there, because `gh stack add` makes and checks out each next branch in place. Builders and reviewers take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. While you wait on James about one PR, you can check out a later branch and build there.
+A stream has one worktree, made when the lead starts building. The lead that makes it moves its own session there with `session_move` (`tools.opencode.session_move` in code mode), so the jstack plugin and `jteam` map the session to its branch. A session started by `jteam spawn` already runs there. Every branch in its stack lives there, because `gh stack add` makes and checks out each next branch in place. Builders and reviewers take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. While you wait on James about one PR, you can check out a later branch and build there.
 
 A session changes only its own worktree and branches, plus the board and docs. If its setup fails, or a tool, credential or anything shared outside the worktree is broken (global toolchains, `~/.config/opencode`, the main checkout), it marks its board row blocked, says so in its session, and waits. James fixes it once. Parallel sessions repairing the same shared thing clobber each other.
 
