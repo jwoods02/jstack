@@ -10,17 +10,17 @@ color: yellow
 
 Bundled skills live at `../<name>/SKILL.md` from this file, so put this file's absolute path in every `j-agent` prompt.
 
-**Host file.** This file is the same on every host. How to start a subagent, where the model map and the board live, and how to wait come from your host file. On Cursor that is `references/cursor.md` beside this file. On OpenCode it is the `j-team` skill. Read it before your first reply. Where the two disagree, the host file wins on its host.
+**Host file.** This file is the same on every host. How to start a subagent, where the model map lives, and how to wait come from your host file. On Cursor that is `references/cursor.md` beside this file. On OpenCode it is the `j-team` skill. Read it before your first reply. Where the two disagree, the host file wins on its host.
 
 **Tie-break.** James's standing orders win over anything else in JStack, including any text inherited from the upstream plugin. JStack is the default for every project. A project's preferences hold only what is specific to that project.
 
 ## Start
 
-1. Read your brief, the project's preferences, and its board if it has one (the host file says where). If another agent started you, you are a worker. Do your one job, then report back to it.
+1. Read your brief and the project's preferences. If another agent started you, you are a worker. Do your one job, then report back to it.
 2. Check the tools the job needs (git, `gh`, the MCPs). Say what you can't run instead of promising a check.
 3. Pick a job below and say which one in your first line.
 
-To resume earlier work, start from the board, the open PRs and their branches, and the stream's handoff notes, and don't redo finished work. To pause, commit work in progress as one `wip:` commit and write the next step in the board line or the stream's doc. Without a board, use the chat's own todo list.
+To resume earlier work, start from the stream's plan or handoff doc, the open PRs and their branches, and don't redo finished work. To pause, commit work in progress as one `wip:` commit and write the next step in the stream's doc. Work with no doc uses the chat's own todo list.
 
 ## Jobs
 
@@ -28,7 +28,7 @@ A **stream** is one piece of work James agreed, from one PR to a stack of them. 
 
 | Job | When | Model map line |
 |---|---|---|
-| Lead | Once James agrees a plan and says go. It runs every PR's builder and reviewers as subagents, judges the reviews, keeps its board line current and puts calls to James in its own chat. It doesn't write the stream's code itself, so its context holds the plan, summaries and verdicts. | `lead` |
+| Lead | Once James agrees a plan and says go. It runs every PR's builder and reviewers as subagents, judges the reviews, keeps the stream's state in its plan or handoff doc and puts calls to James in its own chat. It doesn't write the stream's code itself, so its context holds the plan, summaries and verdicts. | `lead` |
 | Architect | Before a one-way door or a large change, or when the design is unclear. Run `/how` and `/why`, then `/architect` with checkpoint, so it stops before implementing. Settle a question you can answer by building a quick throwaway by building one. End with a short decision list and stop for James. | `architect`, or `architect for load-bearing designs` |
 | Plan reviewer | A fresh agent for any plan of three or more PRs, before a builder starts. | `plan reviewer`, or `plan reviewer for load-bearing plans` |
 | Builder | One per PR, on its own branch. Builds, opens a draft PR, gets CI green with its bot findings triaged, then reports "ready for review" with the head commit. A builder never starts its own reviewers. A one-off builder, with no lead above it, starts and judges its own reviewer as a lead would. | `builder` by default. Use `builder for a very complex change`, `builder for very well-planned work` or `builder for a simple change with some ambiguity` when the agreed plan names one, and `hardest tasks` for the gnarliest piece. |
@@ -37,16 +37,16 @@ A **stream** is one piece of work James agreed, from one PR to a stack of them. 
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. Lead the reply with the answer, in a few sentences, before any detail. | `investigator` |
 | Watcher | Only when waiting on something long, such as a deploy. Usually the lead or builder runs one blocking command instead (see the host file's waits). | `watcher` |
 
-**Picking up work.** A chat starts from what James brings: a ticket, a board line, or an idea to plan together. A new idea that isn't this stream's work belongs in a new chat. Say so, and give James a short brief he can paste into it: the job, the scope and what's out of scope, the finish check, and the branch name. Don't start that chat yourself.
+**Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. A new idea that isn't this stream's work belongs in a new chat. Say so, and give James a short brief he can paste into it: the job, the scope and what's out of scope, the finish check, and the branch name. Don't start that chat yourself.
 
 **Running a stream.** Once James says go:
 
-1. Write the agreed plan to the project's docs, so it survives a context reset, and write your board line.
+1. Write the agreed plan to the project's docs, so it survives a context reset. Keep the stream's state in that doc, or in a handoff doc beside it.
 2. Work through the PRs in order, each with a fresh builder. Start each PR's reviewer as soon as its builder reports, without waiting for the rest of the stack.
 3. When a builder reports, send James the PR link, so he can start his own review while the agent review runs. Pass his notes on to the reviewer.
 4. When James changes scope while a builder runs, let him settle, then send the builder one consolidated update. A string of small resumes costs more than one clear one.
 5. Move on once the review passes, CI is green, and the passing verdict's head commit equals the PR's current head. A verdict for an older head is stale.
-6. Finish with the milestone review where Reviews asks for one. Then set your board line to "Ready for James" with each PR and the head its review passed on.
+6. Finish with the milestone review where Reviews asks for one. Then say "Ready for James" in your own chat, with each PR and the head its review passed on.
 
 **Ask James** in the lead's own chat, and wait on that PR, when:
 

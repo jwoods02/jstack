@@ -5,48 +5,53 @@ JTEAM="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/opencode/skills/j-team/s
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-mkdir -p "$tmp/bin" "$tmp/repo"
-git -C "$tmp/repo" init -q
-cat >"$tmp/bin/gh" <<'EOF'
+mkdir -p "$tmp/bin" "$tmp/repo" "$tmp/elsewhere"
+git -C "$tmp/repo" init -q -b main
+git -C "$tmp/repo" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
+git -C "$tmp/repo" worktree add -q -b feat/done "$tmp/done"
+git -C "$tmp/repo" worktree add -q -b feat/open "$tmp/open"
+done_head="$(git -C "$tmp/done" rev-parse HEAD)"
+
+cat >"$tmp/bin/gh" <<EOF
 #!/usr/bin/env bash
-case "$1 $2" in
-  "repo view") echo fixture/repo;;
-  "pr view") n="$3"; eval "echo \${PR_$n:-}";;
-  "pr list") echo '[]';;
+case "\$*" in
+  *--draft*) cat <<'JSON'
+[{"number":1,"title":"green","statusCheckRollup":[{"conclusion":"SUCCESS"},{"conclusion":"SKIPPED"}]},
+ {"number":2,"title":"red","statusCheckRollup":[{"conclusion":"SUCCESS"},{"conclusion":"FAILURE"}]},
+ {"number":3,"title":"running","statusCheckRollup":[{"conclusion":"","status":"IN_PROGRESS"}]},
+ {"number":4,"title":"bare","statusCheckRollup":[]}]
+JSON
+  ;;
+  *"--state merged"*) echo '[{"number":9,"headRefName":"feat/done","headRefOid":"$done_head"}]';;
+  *) echo "unexpected gh \$*" >&2; exit 1;;
 esac
 EOF
-printf '#!/usr/bin/env bash\necho "[]"\n' >"$tmp/bin/opencode"
-chmod +x "$tmp/bin/gh" "$tmp/bin/opencode"
-
-cat >"$tmp/board.md" <<'EOF'
-# Board
-
-## Running
-- **Stacked stream** · lead `ses_fixtureA` · #1 → #2 → #3 · building
-- **Single stream** · lead `ses_fixtureB` · #4 · building
-
-## Calls worth remembering
-- 2 Nov: #1 shipped first.
-EOF
+chmod +x "$tmp/bin/gh"
 
 fail=0
-check() {
-  local want="$1" pr1="$2" pr2="$3" pr3="$4" out got
-  out="$(cd "$tmp/repo" && PATH="$tmp/bin:$PATH" OPENCODE_BIN="$tmp/bin/opencode" PR_1="$pr1" PR_2="$pr2" PR_3="$pr3" PR_4=OPEN \
-    "$JTEAM" status "$tmp/board.md" 2>&1)"
-  if grep -q '^ *\*\*Stacked stream' <<<"$out"; then got=stale; else got=fresh; fi
-  if [ "$got" = "$want" ]; then echo "ok   $pr1 $pr2 $pr3 -> $got"; else echo "FAIL $pr1 $pr2 $pr3 -> $got, want $want"; fail=1; fi
+expect() {
+  if grep -qF -- "$2" <<<"$3"; then echo "ok   $1"; else echo "FAIL $1: no '$2' in:"; sed 's/^/     /' <<<"$3"; fail=1; fi
+}
+reject() {
+  if grep -qiF -- "$2" <<<"$3"; then echo "FAIL $1: found '$2'"; fail=1; else echo "ok   $1"; fi
 }
 
-check fresh OPEN OPEN OPEN
-check fresh MERGED OPEN OPEN
-check fresh MERGED MERGED OPEN
-check fresh MERGED CLOSED ""
-check stale MERGED MERGED MERGED
-check stale MERGED CLOSED MERGED
+out="$(cd "$tmp/open" && PATH="$tmp/bin:$PATH" "$JTEAM" status 2>&1)"
+expect "passing PR" "#1 green (CI passing)" "$out"
+expect "failing PR" "#2 red (CI failing)" "$out"
+expect "pending PR" "#3 running (CI pending)" "$out"
+expect "PR with no checks" "#4 bare (no checks)" "$out"
+expect "merged worktree listed" "$tmp/done and branch feat/done (PR #9 merged)" "$out"
+reject "open worktree not listed" "$tmp/open " "$out"
+reject "no board output" "board" "$out"
 
-single="$(cd "$tmp/repo" && PATH="$tmp/bin:$PATH" OPENCODE_BIN="$tmp/bin/opencode" PR_1=OPEN PR_2=OPEN PR_3=OPEN PR_4=MERGED \
-  "$JTEAM" status "$tmp/board.md" 2>&1)"
-if grep -q '^ *\*\*Single stream.*#4 is MERGED' <<<"$single"; then echo "ok   single merged PR -> stale"; else echo "FAIL single merged PR not stale"; fail=1; fi
+rc=0
+outside="$(cd "$tmp/elsewhere" && PATH="$tmp/bin:$PATH" GIT_CEILING_DIRECTORIES="$tmp" "$JTEAM" status 2>&1)" || rc=$?
+expect "outside a repo explains itself" "run it inside a repo" "$outside"
+if [ "$rc" = 1 ]; then echo "ok   outside a repo exits 1"; else echo "FAIL outside a repo exited $rc"; fail=1; fi
+
+rc=0
+(cd "$tmp/open" && PATH="$tmp/bin:$PATH" "$JTEAM" status board.md >/dev/null 2>&1) || rc=$?
+if [ "$rc" = 1 ]; then echo "ok   a board argument is refused"; else echo "FAIL a board argument exited $rc"; fail=1; fi
 
 exit "$fail"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# jteam: worktrees, PR watches and board status for JStack on OpenCode. See ../SKILL.md.
+# jteam: worktrees, PR watches and status for JStack on OpenCode. See ../SKILL.md.
 set -euo pipefail
 
 OC="${OPENCODE_BIN:-$(command -v opencode || echo /Applications/OpenCode.app/Contents/Resources/opencode-cli)}"
@@ -11,8 +11,7 @@ jteam self                          this session's ID
 jteam ls [limit]                    top-level sessions: id, state, idle time, agent, title, directory
 jteam worktree <repo> <branch>      prune, then a new OpenCode worktree and branch off origin's default branch,
                                     set up by the project's start command; prints the path and the setup result
-jteam status [board]                stale board lines, sessions with no line, your draft PRs with CI, and the
-                                    worktrees prune would remove; the board defaults to the repo's mapping line
+jteam status                        your open draft PRs in this repo with CI, and the worktrees prune would remove
 jteam watch <pr> [repo-dir]         wait on the PR's checks, then print CI passed or the failing checks,
                                     and each review and comment since the head commit; exits 1 on a red run
 jteam prune [--dry-run] [repo]      remove clean worktrees whose PR is merged, with their branches,
@@ -33,7 +32,7 @@ data() { jq 'if type == "object" and has("data") then .data else . end'; }
 
 main_checkout() { # any path in a repo or one of its worktrees -> the main checkout
   local common
-  common="$(git -C "$1" rev-parse --path-format=absolute --git-common-dir)"
+  common="$(git -C "$1" rev-parse --path-format=absolute --git-common-dir)" || return 1
   dirname "$common"
 }
 
@@ -68,15 +67,6 @@ remove_worktree() { # project ID, main checkout, worktree directory, force
     || if [ "$4" = true ]; then git -C "$2" worktree remove --force "$3"; else git -C "$2" worktree remove "$3"; fi
 }
 
-board_for() { # main checkout -> board named by the `JStack boards: <repo> -> <path>` line in the global AGENTS.md, else nothing
-  local path
-  path="$(awk -v r="$(basename "$1")" '/^JStack boards:/ {
-      line = $0; sub(/^JStack boards:[ \t]*/, "", line); i = index(line, "->")
-      name = substr(line, 1, i - 1); gsub(/[ \t]+$/, "", name)
-      if (i && name == r) { line = substr(line, i + 2); gsub(/^[ \t]+|[ \t]+$/, "", line); print line; exit } }' "$CONFIG_DIR/AGENTS.md" 2>/dev/null)"
-  [ -z "$path" ] || echo "${path/#\~/$HOME}"
-}
-
 prune() { # main checkout, project ID, dry run (true or false)
   local repo="$1" pid="$2" dry="${3:-false}" merged dir head branch pr pr_head
   merged="$(cd "$repo" && gh pr list --state merged --limit 200 --json number,headRefName,headRefOid 2>/dev/null || echo '[]')"
@@ -99,54 +89,11 @@ prune() { # main checkout, project ID, dry run (true or false)
       /^branch / { print dir "\t" head "\t" substr($2, 12) }')
 }
 
-pr_refs() { # board line, repo's owner/name -> "owner/name number" per PR, with link labels not read as bare numbers
-  {
-    grep -oE '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+' <<<"$1" || true
-    sed -E 's/\[[^]]*\]\([^)]*\)//g' <<<"$1" | grep -oE '#[0-9]+' | sed -E "s|^#|$2/pull/|" || true
-  } | sed -E 's|/pull/| |' | sort -u
-}
+status() {
+  local repo
+  repo="$(main_checkout . 2>/dev/null)" || { echo "jteam status: run it inside a repo or one of its worktrees" >&2; return 1; }
 
-stale_line() { # board line, active sessions JSON, repo's owner/name -> the reason the line is stale, if any
-  local line="$1" active="$2" nwo="$3" id ref n state done_prs="" all_done=false all_archived=false
-  while read -r ref n; do
-    [ -n "$n" ] || continue
-    state="$(gh pr view "$n" -R "$ref" --json state -q .state 2>/dev/null || true)"
-    case "$state" in
-      MERGED|CLOSED) done_prs="${done_prs:+$done_prs, }PR $ref#$n is $state"; all_done=true;;
-      "") echo "  could not read PR $ref#$n" >&2; all_done=false; break;;
-      *) all_done=false; break;;
-    esac
-  done < <(pr_refs "$line" "$nwo")
-  if [ "$all_done" = true ]; then echo "$done_prs"; return; fi
-  for id in $(grep -oE 'ses_[A-Za-z0-9]+' <<<"$line" | sort -u || true); do
-    all_archived=true
-    jq -e --arg id "$id" 'any(.[]; .id == $id)' <<<"$active" >/dev/null && { all_archived=false; break; }
-    api get "/api/session/$id" 2>/dev/null | data | jq -e '.time.archived' >/dev/null 2>&1 || { all_archived=false; break; }
-  done
-  if [ "$all_archived" = true ]; then echo "every session in the line is archived"; fi
-}
-
-status() { # [board file]
-  local repo board nwo line reason active dirs
-  repo="$(main_checkout .)"
-  board="${1:-$(board_for "$repo")}"
-  [ -n "$board" ] || { echo "no board for $(basename "$repo"): add a JStack boards line to $CONFIG_DIR/AGENTS.md" >&2; return 1; }
-  [ -f "$board" ] || { echo "no board at $board" >&2; return 1; }
-  nwo="$(cd "$repo" && gh repo view --json nameWithOwner -q .nameWithOwner)"
-  active="$(api get "/api/session?parentID=null&archived=false&limit=100" | data)"
-
-  echo "Stale board lines ($board)"
-  while IFS= read -r line; do
-    reason="$(stale_line "$line" "$active" "$nwo")"
-    [ -z "$reason" ] || echo "  $(sed -E "s/^[-*] +//" <<<"$line" | cut -c1-70): $reason"
-  done < <(grep -E "ses_[A-Za-z0-9]+" "$board" || true)
-
-  echo "Active sessions with no line"
-  dirs="$(git -C "$repo" worktree list --porcelain | awk '/^worktree / { print substr($0, 10) }' | jq -R . | jq -sc .)"
-  jq -r --argjson dirs "$dirs" '.[] | select(.location.directory as $d | $dirs | index($d)) | "\(.id)\t\(.title // "-")"' <<<"$active" \
-    | while IFS=$'\t' read -r id title; do grep -qF "$id" "$board" || echo "  $id  $title"; done
-
-  echo "Your open draft PRs"
+  echo "Your open draft PRs in $(basename "$repo")"
   (cd "$repo" && gh pr list --author @me --draft --state open --json number,title,statusCheckRollup) | jq -r '
     def ci: [.statusCheckRollup[]? | (.conclusion // .state // .status)] as $c
       | if ($c | length) == 0 then "no checks"
@@ -243,12 +190,13 @@ case "$cmd" in
     elif [ ! -f "$log" ] || [ "$(tail -n 1 "$log")" = "worktree setup ok" ]; then
       setup_note="setup ran"
     else
-      setup_note="setup did not finish: read $log, mark your board line blocked and wait"
+      setup_note="setup did not finish: read $log, report blocked and wait"
     fi
     printf '%s\t%s off %s\t%s\n' "$dir" "$branch" "$base" "$setup_note"
     ;;
   status)
-    status "${1:-}"
+    [ $# -eq 0 ] || { usage >&2; exit 1; }
+    status
     ;;
   watch)
     cd "${2:-.}"
