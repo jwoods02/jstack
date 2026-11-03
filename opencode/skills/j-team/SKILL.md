@@ -42,29 +42,29 @@ After any compaction, load j-mode and j-team again before you act.
 
 ## Worktrees
 
-A stream that changes files has one worktree, made at go. A one-off builder with no lead makes its own the same way before its first edit.
+A thread that changes files has one worktree, made at go. A one-off builder with no lead makes its own the same way before its first edit.
 
 1. Run `jteam worktree <repo> <branch>` with a 10-minute shell timeout. It prunes merged worktrees, makes an OpenCode worktree off origin's default branch with the branch checked out, and runs the repo's setup.
 2. Move your session there with `session_move` (`tools.opencode.session_move` in code mode), so `jteam ls` and `jteam status` see it in its worktree.
 
 Investigations and reviews of someone else's PR need no worktree. They run in the main checkout and change no files there.
 
-Every branch of the stream's stack lives in its worktree, because `gh stack add` makes and checks out each next branch in place. Builders and reviewers take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. While you wait on James about one PR, you can check out a later branch and build there.
+Every branch of the stack lives in its worktree, because `gh stack add` makes and checks out each next branch in place. Builders and reviewers take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. While you wait on James about one PR, you can check out a later branch and build there.
 
-A session changes only its own worktree and branches, plus the project's docs. If setup fails, or a tool, credential or anything shared outside the worktree is broken (global toolchains, `~/.config/opencode`, the main checkout, commit signing), say so in your session, note it in the stream's doc, and wait. James fixes it once, and parallel sessions repairing the same shared thing clobber each other.
+A session changes only its own worktree and branches, plus the project's docs. If setup fails, or a tool, credential or anything shared outside the worktree is broken (global toolchains, `~/.config/opencode`, the main checkout, commit signing), say so in your session, note it in the plan doc, and wait. James fixes it once, and parallel sessions repairing the same shared thing clobber each other.
 
 Scratch files go in a directory named for your session ID under the shared temp dir, or inside your worktree. Never use a fixed name another session could also pick.
 
 ## Each PR
 
-- **The builder.** Start a fresh `j-agent` on the `builder` model, in the stream's worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
+- **The builder.** Start a fresh `j-agent` on the `builder` model, in the worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
 - **The builder's watch.** The builder opens or pushes the draft PR, then runs `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes. Shell commands time out after 2 minutes by default. On a red run it fixes, pushes and watches again. On a green run, including one with no checks, it triages the bot findings in the report per j-mode's `references/bugbot-triage.md`. A fix means a push, so it watches again. Once a head is green with its findings triaged, it reports "ready for review" with that head commit.
 - **Repos with no CI.** The builder still runs `jteam watch` to collect bot findings. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so.
 - **The lead's part.** The lead doesn't watch CI. It posts the PR link in its session, starts the reviewer, and judges the findings. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
 
 ## Waits
 
-- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. Builders and reviewers run their waits in the foreground. A builder that once ended its turn with CI and reviewers still running cost its stream three hours, because nothing woke the lead when they finished.
+- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. Builders and reviewers run their waits in the foreground. A builder that once ended its turn with CI and reviewers still running cost three hours, because nothing woke the lead when they finished.
 - A session that ends a turn on a wait says so in its last line. The line names what it waits on, the head commit, when the wait started and what the session does next. For example: "Waiting on the reviewer for #946 at `50c0fe7`, started 14:05. I start PR 2 once it passes."
 - A top-level session watching a PR on its own runs `jteam watch <n>` as a background shell command, and OpenCode wakes the session when it ends.
 
@@ -98,6 +98,6 @@ jteam rm <worktree> [--force]       remove one worktree and archive its sessions
 - **`status`** changes nothing. Run it inside a repo or one of its worktrees. It lists only that repo's PRs.
 - **`watch`** exits 0 when CI passes or the PR has no checks, 1 when a check fails, and 2 when checks are pending or `gh` errors. Bugbot's check passes even when it finds bugs, so read its findings in the report.
 - **`prune`** keeps any worktree with changes or commits its merged PR lacks. Run it when James says PRs have merged. `gh stack sync --prune` deletes a stack's other merged branches.
-- **`rm`** is for a stream that ends without a merge. Run it from outside the worktree.
+- **`rm`** is for a thread that ends without a merge. Run it from outside the worktree.
 
-Don't poll. Use the stream's doc, `status` and `ls` when James asks for status.
+Don't poll. Use the plan doc, `status` and `ls` when James asks for status.

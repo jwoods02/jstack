@@ -6,11 +6,11 @@ The skills and principles in [`../jstack/skills/`](../jstack/skills/) run unchan
 
 You open each session yourself, usually from a ticket, a plan doc or an idea. A session does the job you give it. Sessions that only investigate, design, review or build one thing do that job and stop.
 
-A **stream** is a piece of work you agreed, and its **lead** is the session you planned it with. Once you say go, the lead writes the plan to your docs, compacts itself if its context is large, makes one git worktree, and runs the PRs. Each PR gets a builder subagent, then a reviewer the lead starts and judges, before the lead moves to the next PR. Layered work ships as a [GitHub stack](https://github.com/github/gh-stack). A new idea gets a new session, and the lead hands you a short brief to paste into it. The stream's plan doc holds its state, and `jteam status` shows your draft PRs and finished worktrees.
+A **thread** is a piece of work you agreed. It can run across several sessions, and its **lead** is the session you planned it with. Once you say go, the lead writes the plan to your docs, compacts itself if its context is large, makes one git worktree, and runs the PRs. Each PR gets a builder subagent, then a reviewer the lead starts and judges, before the lead moves to the next PR. Layered work ships as a [GitHub stack](https://github.com/github/gh-stack). A new idea gets a new session, and the lead hands you a short brief to paste into it. The plan doc holds its state, and `jteam status` shows your draft PRs and finished worktrees.
 
 | Agent | Mode | Job |
 |---|---|---|
-| [`JMode`](agents/JMode.md) | primary | j-mode for one top-level session. It does the job you give it, and becomes a stream's lead once you agree a plan. |
+| [`JMode`](agents/JMode.md) | primary | j-mode for one top-level session. It does the job you give it, and becomes a thread's lead once you agree a plan. |
 | [`j-agent`](agents/j-agent.md) | subagent | Builders, reviewers and helpers that a lead or other session starts |
 
 Both load `j-mode` and then `j-team` before their first reply, and `JMode` loads them again after a compaction.
@@ -54,8 +54,8 @@ Skills load from the clone, so `git pull` updates them. Copy the agents again wh
 
 ## Use it
 
-Open a session with `JMode`, the default agent, and give it a job, exactly as with `/j-mode` in Cursor. Agree its plan and say go, and it leads the stream through every PR, fanning out to subagents within the stream. Name branches `<type>/<ticket>-<slug>`, or `<type>/<slug>` with no ticket. Run `jteam status` in a repo any time to see your draft PRs there with CI state, and the worktrees `jteam prune` would remove.
+Open a session with `JMode`, the default agent, and give it a job, exactly as with `/j-mode` in Cursor. Agree its plan and say go, and it leads the thread through every PR, fanning out to subagents within the thread. Name branches `<type>/<ticket>-<slug>`, or `<type>/<slug>` with no ticket. Run `jteam status` in a repo any time to see your draft PRs there with CI state, and the worktrees `jteam prune` would remove.
 
 ## Worktrees and local resources
 
-Each stream has one OpenCode worktree, made by `jteam worktree`, so its session belongs to the repo's project, and every branch of its stack lives there. `jteam prune`, which `jteam worktree` runs first, removes a worktree and its branch once the checked-out branch's PR is merged and nothing local is left. `gh stack sync --prune` deletes a stack's other merged branches. Each worktree needs its own env files and dependencies, which the setup script handles. Ten worktrees can't all share one local stack. Ports clash, and so can test databases and job queues. Have each run start its own throwaway containers, such as Postgres and Redis, and put the repo's testing rule in its preferences.
+Each thread has one OpenCode worktree, made by `jteam worktree`, so its session belongs to the repo's project, and every branch of its stack lives there. `jteam prune`, which `jteam worktree` runs first, removes a worktree and its branch once the checked-out branch's PR is merged and nothing local is left. `gh stack sync --prune` deletes a stack's other merged branches. Each worktree needs its own env files and dependencies, which the setup script handles. Ten worktrees can't all share one local stack. Ports clash, and so can test databases and job queues. Have each run start its own throwaway containers, such as Postgres and Redis, and put the repo's testing rule in its preferences.
