@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# jteam: worktrees, PR watches and status for JStack on OpenCode. See ../SKILL.md.
 set -euo pipefail
 
 OC="${OPENCODE_BIN:-$(command -v opencode || echo /Applications/OpenCode.app/Contents/Resources/opencode-cli)}"
