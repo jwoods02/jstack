@@ -2,7 +2,7 @@
 # Role names match jstack/rules/jstack-models.mdc. IDs are provider/model#variant.
 # A reviewer from a different model family than the builder catches more, so reviewers use another family here.
 
-lead: anthropic/claude-opus-5-5#high
+lead: anthropic/claude-opus-5-5#medium
 architect: anthropic/claude-opus-5-5#high
 architect for load-bearing designs: anthropic/claude-opus-5-5#xhigh
 plan reviewer: anthropic/claude-opus-5-5#high

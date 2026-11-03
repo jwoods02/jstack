@@ -14,7 +14,7 @@ type [`/j-mode`](./skills/j-mode/SKILL.md) with a goal and a way to check it's d
 
 | job | when | model |
 |---|---|---|
-| lead | once James agrees a plan and says go. runs each PR's builder and reviewers as subagents and judges the reviews. in Cursor, the Project chat | opus 5.5 high |
+| lead | once James agrees a plan and says go. runs each PR's builder and reviewers as subagents and judges the reviews. in Cursor, the Project chat | opus 5.5 medium |
 | architect | before a one-way door or a large change, or when the design is unclear. ends with a short decision list | opus 5.5 high; extra high for load-bearing designs |
 | plan reviewer | plans of three or more PRs, before any builder starts | opus 5.5 high; extra high for load-bearing plans |
 | builder | one per PR. draft PR, CI green, then "ready for review" | opus 5.5 medium by default; opus 5.5 high for a very complex change; sonnet 5.5 high for very well-planned work; sonnet 5.5 extra high for a simple change with some ambiguity |

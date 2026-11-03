@@ -24,7 +24,7 @@ The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) an
 
 | Job or role | Model | Why |
 |---|---|---|
-| Lead (the Project chat on Cursor) | Opus 5.5 High | Plans, runs builders and reviewers, judges reviews; on Cursor, set in the Project's settings |
+| Lead (the Project chat on Cursor) | Opus 5.5 Medium | Plans, runs builders and reviewers, judges reviews; on Cursor, set in the Project's settings |
 | Architect | Opus 5.5 High; Extra High for load-bearing designs | A load-bearing design is hard to undo |
 | Plan reviewer (plans of three or more PRs) | Opus 5.5 High; Extra High for load-bearing plans | On a load-bearing plan, its verdict gates every builder |
 | Builder | Opus 5.5 Medium by default; Opus 5.5 High for a very complex change; Sonnet 5.5 High for very well-planned work; Sonnet 5.5 Extra High for a simple change with some ambiguity | James's builder rule (27 Oct) |

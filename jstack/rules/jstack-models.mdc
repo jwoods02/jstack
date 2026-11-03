@@ -9,8 +9,8 @@ alwaysApply: true
 # Load-bearing means hard to undo: data models and storage, public APIs, cross-service boundaries, and security.
 
 # Jobs (see j-mode).
-# Opus High: the lead (a Cursor Project chat, or an OpenCode lead session) plans, starts builders and reviewers, and judges reviews. Cursor's Project settings set it; this line records it.
-lead: claude-opus-5-5-high
+# Opus Medium: James's default lead (3 Nov). The lead (a Cursor Project chat, or an OpenCode lead session) plans, starts builders and reviewers, and judges reviews, and the architect and reviewers carry the deeper reasoning. Cursor's Project settings set it; this line records it.
+lead: claude-opus-5-5-medium
 # Opus High: an ordinary design is cheap to change later, so Extra High adds little.
 architect: claude-opus-5-5-high
 # Opus Extra High: a load-bearing design is hard to undo, so deeper reasoning changes the outcome.
