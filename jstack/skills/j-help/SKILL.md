@@ -38,7 +38,7 @@ Installing changes nothing until the user invokes a skill, apart from the always
 
 If cost is the worry, say where the tokens go and how to spend fewer. JStack spends extra tokens on subagents and review panels. Edit the role lines in `rules/jstack-models.mdc` to pick lower effort or cheaper models. A role set to `auto` or `inherit-parent` runs on the chat's model, which saves tokens when the chat runs on Auto or a cheaper model. A shorter panel list runs fewer subagents, one for each entry. Save `/j-mode` for work that needs rigor.
 
-JStack is built for Cursor. Its skills use the Agent Skills format, so other tools can read them. But most workflow skills, including `/j-mode`, `/how`, `/why`, and `/teach`, spawn Cursor subagents with per-role models, and Custom Modes and `/loop` are Cursor features, so those parts may not work there.
+JStack runs on Cursor and on OpenCode. `/j-mode` is the same on both, and a host file maps it to each one's tools: `references/cursor.md` in j-mode for Cursor, and the `j-team` skill from the repo's `opencode/` folder for OpenCode. Some skills, such as `/how`, `/why` and `/teach`, still name Cursor's Task tool, and `j-team` maps those on OpenCode. Custom Modes and `/loop` are Cursor features.
 
 ## Start a task with `/j-mode`
 
@@ -108,8 +108,9 @@ Not in JStack:
 Jobs are sections of `/j-mode`, not skills, so they have no slash command. Describing the task picks one:
 
 - "How does X work?" or "why is Y like this?" runs the investigator. No PR.
-- "Design X", or any big change, runs the architect. It ends with a short decision list and stops for the user.
-- "Fix", "build" or "change X" runs a builder. It opens a draft PR, and a fresh reviewer starts once CI is green. A big change (one that is hard to reverse, or a large change to load-bearing machinery on a live production system) gets one `/interrogate` pass with two models that its builder judges, and the last PR of a milestone gets a milestone review.
+- "Design X", or any large or hard-to-reverse change, runs the architect. It ends with a short decision list and stops for the user.
+- "Fix", "build" or "change X" runs a builder. It opens a draft PR, and a fresh reviewer starts once CI is green. A one-way door (a change that is hard to reverse, such as a data migration or a public API) gets one `/interrogate` pass with two models instead, and a stack that holds one gets a milestone review before the user merges.
+- Agreeing a plan and saying go makes the chat the stream's lead. It runs each PR's builder and reviewer as subagents and judges the reviews.
 - Several independent changes run as one builder and reviewer pair each, at once.
 
 No agent marks a PR ready or merges it. The user does both. JStack has no planning skill. Plans of three or more PRs get a plan review before any builder starts.

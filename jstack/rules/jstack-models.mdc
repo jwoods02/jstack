@@ -9,8 +9,8 @@ alwaysApply: true
 # Load-bearing means hard to undo: data models and storage, public APIs, cross-service boundaries, and security.
 
 # Jobs (see j-mode).
-# Opus High: the Project chat routes work and briefs James. Cursor's Project settings set it; this line records it.
-coordinator: claude-opus-5-5-high
+# Opus High: the lead (a Cursor Project chat, or an OpenCode lead session) plans, starts builders and reviewers, and judges reviews. Cursor's Project settings set it; this line records it.
+lead: claude-opus-5-5-high
 # Opus High: an ordinary design is cheap to change later, so Extra High adds little.
 architect: claude-opus-5-5-high
 # Opus Extra High: a load-bearing design is hard to undo, so deeper reasoning changes the outcome.
@@ -34,7 +34,7 @@ investigator: claude-sonnet-5-5-high
 watcher: claude-sonnet-5-5-medium
 # Opus High: prose and judgment calls inside a job.
 judgment and prose: claude-opus-5-5-high
-# Opus Extra High: its verdict gates merging a milestone, like the arena judge.
+# Opus Extra High: it runs only on a stack with a one-way door, and its verdict gates the merge.
 milestone reviewer: claude-opus-5-5-xhigh
 
 # Skills.
@@ -54,7 +54,7 @@ arena cross-judge pool: claude-opus-5-5-xhigh
 swarm workers: claude-sonnet-5-5-high
 # Opus High: runners produce candidate designs; the architect makes the call.
 architect runners: claude-opus-5-5-high, gemini-4-argon-high
-# Opus High: /interrogate runs once on a big change, and the builder judges the findings. Two model families catch more than more depth on one.
+# Opus High: /interrogate runs once on a one-way door, and the lead judges the findings. Two model families catch more than more depth on one.
 interrogate reviewers: claude-opus-5-5-high, gemini-4-argon-high
 # Opus High: scans a decision trail for weak evidence and flags it. The flags are advice.
 trail reviewer: claude-opus-5-5-high

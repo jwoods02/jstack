@@ -25,10 +25,11 @@ To keep `/j-mode` on for the whole chat, pick it from the `/` menu and press Opt
 - **Investigator.** Answers "how does X work?" or "why is Y like this?". No PR.
 - **Architect.** Designs a big or unclear change and ends with a short decision list for you to answer.
 - **Builder.** One per PR. Opens a draft PR, gets CI green and says "ready for review".
-- **Reviewer.** A fresh agent per PR once CI is green, at most three rounds. A big change gets one `/interrogate` pass instead, with two models, and its builder judges their findings. The last PR of a milestone or big chain also gets a milestone review before you merge.
+- **Reviewer.** A fresh agent per PR once CI is green, at most three rounds. A one-way door (hard to reverse, such as a data migration or a public API) gets one `/interrogate` pass instead, with two models, and the lead judges their findings. A stack that holds one also gets a milestone review before you merge.
 - **Parallel builders.** As many builder and reviewer pairs as there are independent tasks. One builder per PR or task.
+- **Lead.** Once you agree a plan and say go, the chat leads the stream. It runs each PR's builder and reviewer as subagents and judges the reviews.
 
-In a Project, the coordinator chat picks the jobs and briefs you. In a single chat, the chat does the job itself.
+In a Project, the Project chat is the lead. In a single chat, the chat does the job itself.
 
 ## Rules that always hold
 

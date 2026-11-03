@@ -2,7 +2,7 @@
 # Role names match jstack/rules/jstack-models.mdc. IDs are provider/model#variant.
 # A reviewer from a different model family than the builder catches more, so reviewers use another family here.
 
-coordinator: anthropic/claude-opus-5-5#high
+lead: anthropic/claude-opus-5-5#high
 architect: anthropic/claude-opus-5-5#high
 architect for load-bearing designs: anthropic/claude-opus-5-5#xhigh
 plan reviewer: anthropic/claude-opus-5-5#high
@@ -16,7 +16,7 @@ reviewer: openai/gpt-6.1-sol#high
 investigator: anthropic/claude-sonnet-5-5#high
 watcher: anthropic/claude-sonnet-5-5#medium
 judgment and prose: anthropic/claude-opus-5-5#high
-milestone reviewer: openai/gpt-6-astra#high
+milestone reviewer: anthropic/claude-opus-5-5#high
 
 how explorer: anthropic/claude-sonnet-5-5#xhigh
 how explainer: anthropic/claude-opus-5-5#high
