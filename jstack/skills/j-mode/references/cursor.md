@@ -2,10 +2,10 @@
 
 This is j-mode's host file for Cursor. It says how j-mode's words map to Cursor's tools.
 
-## Chats and the board
+## Chats
 
 - **Lead.** In a Cursor Project, the Project chat is the lead for every stream in the Project, because James works in that one chat. It starts builders and reviewers and briefs James. A chat outside a Project is a one-off, and does the job itself as j-mode describes.
-- **Board.** The Project's task tracker. The project's docs are the Project's shared context. Outside a Project, use the chat's own todo list.
+- **Shared context.** The project's docs are the Project's shared context, and each stream's plan or handoff doc holds its state. Outside a Project, use the chat's own todo list.
 - **Earlier chats.** Read them from the workspace's `agent-transcripts/` directory. Don't glob across `~/.cursor/projects/*/`, which reads unrelated projects' chats.
 - **Project skills.** These live in `.cursor/skills/`.
 

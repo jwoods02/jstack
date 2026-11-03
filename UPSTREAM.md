@@ -7,7 +7,7 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 - Upstream: `cursor/plugins`, path `pstack/`.
 - Commit: `99743e9c151c8537cbbf1f98bb38f34ef3368453`, merged 15 Oct 2026.
 - Version: 0.15.25.
-- JStack's own version is 4.0.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
+- JStack's own version is 4.1.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
 - Upstream `pstack/` tree hash at import: `0d5fd349cbc77d054eed60f0e8cdfbea86321ff9`.
 
 ## Path mapping
@@ -151,9 +151,15 @@ All paths are inside `jstack/`.
 - `rules/jstack-models.mdc`: `coordinator` becomes `lead`, on Opus Medium. The milestone and `/interrogate` comments follow the one-way door wording.
 - `skills/interrogate/SKILL.md` and `skills/show-me-your-work/SKILL.md`: the lead runs and judges reviews. `skills/interrogate/references/reviewer-prompt.md`: reviewers skip claims CI already ran on the head.
 - `skills/architect/SKILL.md`: a contested design goes back to the lead for a plan review, instead of an `/interrogate` pass on the sketch.
-- `scripts/test-jteam-status.sh`: fixtures use the list board.
 - `skills/j-help/SKILL.md`, `docs/guide.md`, `README.md` and the root `README.md`: synced with the above.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.0.0.
+
+**No board (v4.1).** JStack no longer keeps a board. In two days of use it was a write-only log, and its content already lived in GitHub, `jteam ls` and the stream's plan doc. The local-stack lock it carried goes with it.
+
+- `skills/j-mode/SKILL.md`: Start, pause and resume read the stream's plan or handoff doc instead of a board line. The lead keeps the stream's state in that doc and says "Ready for James" in its own chat with each PR and the head its review passed on.
+- `skills/j-mode/references/cursor.md`: the Board bullet becomes Shared context.
+- OpenCode files: `skills/j-team/SKILL.md` drops The board section. `jteam status` drops its board argument and the stale-line and no-line reports, and keeps draft PRs with CI and prunable worktrees. `scripts/test-jteam-status.sh` tests that output. `agents/JMode.md` and `README.md` drop the board and the shared local stack.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.0.
 
 ## How to merge a new release
 

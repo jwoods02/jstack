@@ -1,6 +1,6 @@
 ---
 name: J Team
-description: j-mode's host file for OpenCode. Maps j-mode and its skills to OpenCode's subagents, model map, sessions, worktrees, compaction and board, and carries the jteam script. Load it after j-mode in every OpenCode session and subagent.
+description: j-mode's host file for OpenCode. Maps j-mode and its skills to OpenCode's subagents, model map, sessions, worktrees and compaction, and carries the jteam script. Load it after j-mode in every OpenCode session and subagent.
 disable-model-invocation: true
 ---
 
@@ -34,7 +34,7 @@ James opens every top-level session himself, and j-mode's brief for a new chat i
 
 **Compaction.** OpenCode compacts a session automatically near its context limit, and a summary replaces the older conversation, including the j-mode and j-team text. A lead plans in its own context, so at go:
 
-1. Write the plan doc and your board line, and start the first builder.
+1. Write the plan doc and start the first builder.
 2. If the session is over about 150k tokens, request compaction with `opencode api post "/api/session/$(jteam self)/compact" --data '{}'`. It runs at the next safe point.
 3. End the turn with the wait line (see Waits). The builder's report wakes the session after the summary.
 
@@ -51,7 +51,7 @@ Investigations and reviews of someone else's PR need no worktree. They run in th
 
 Every branch of the stream's stack lives in its worktree, because `gh stack add` makes and checks out each next branch in place. Builders and reviewers take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. While you wait on James about one PR, you can check out a later branch and build there.
 
-A session changes only its own worktree and branches, plus the board and docs. If setup fails, or a tool, credential or anything shared outside the worktree is broken (global toolchains, `~/.config/opencode`, the main checkout, commit signing), mark your board line blocked, say so in your session, and wait. James fixes it once, and parallel sessions repairing the same shared thing clobber each other.
+A session changes only its own worktree and branches, plus the project's docs. If setup fails, or a tool, credential or anything shared outside the worktree is broken (global toolchains, `~/.config/opencode`, the main checkout, commit signing), say so in your session, note it in the stream's doc, and wait. James fixes it once, and parallel sessions repairing the same shared thing clobber each other.
 
 Scratch files go in a directory named for your session ID under the shared temp dir, or inside your worktree. Never use a fixed name another session could also pick.
 
@@ -80,38 +80,6 @@ Drive `gh stack` non-interactively:
 
 Agents never merge, mark ready or unstack. The global `opencode.json` denies `gh stack merge*`, `gh stack submit *--open*`, `gh stack link *--open*` and `gh stack unstack*`. The gh-stack skill documents `merge` and `--open`, and this file overrides it. gh-stack keeps its metadata in the git dir every worktree of the clone shares, so only one lead touches a stack.
 
-## The board
-
-A repo has a board only if `~/.config/opencode/AGENTS.md` has a mapping line for it, in the form `JStack boards: <repo> -> <path>`. With no line, there is no board, and the session uses its own todo list.
-
-The board is a short list. Each stream is one line, grouped by what it waits on. The detail (calls, evidence, history) lives in the stream's plan and handoff docs, which the line links to. CI and PR state come from GitHub through `jteam status`, so the line needn't repeat them.
-
-```markdown
-## Needs James
-- **Auth: remove WorkOS** · RES-380, RES-393 · lead `ses_…` · #934 → #947 · calls 6 and 7 on #934 open · [plan](2026-11-02-auth-workos-removal-plan.md)
-
-## Running
-- **Chat context sweep** · RES-389 · lead `ses_…` · #946 → #953 · building PR 3 · [scope](2026-11-02-chat-context-sweep-scope.md)
-
-## Proposed
-- RES-342: read-only pre-checks for deleting the in-cluster Temporal server.
-
-## Shared resources
-- Local stack: held by `ses_…` since 3 Nov, for an end-to-end run on #947.
-
-## Calls worth remembering
-- 2 Nov: sign-in goes in alongside WorkOS first.
-```
-
-Every session with a board follows this protocol:
-
-1. **Start.** Read the board. Delete lines whose PRs are all merged. Check the open lines for a shared branch, files, a migration number or a shared resource.
-2. **Go.** A lead, or a long-running investigation James will come back to, writes its line. A one-off question doesn't.
-3. **On a change of state.** Move the line between sections and rewrite its few words of state. Don't narrate each event, because the stream's doc holds the history.
-4. **Finish.** Move the line to Needs James as "Ready for James" with each PR and the head its review passed on, and any migration number or shared file it holds.
-
-When James makes a call in your session, such as approving a PR or changing scope, put it in the stream's doc and say so in the line's state. A shared resource has one line naming its holder. Ask before you take a resource someone else holds. Use the edit tool on the board rather than overwriting it.
-
 ## jteam
 
 The script is `scripts/jteam` in this skill's directory. It needs the OpenCode V2 CLI, `git`, `jq` and `gh`.
@@ -120,16 +88,16 @@ The script is `scripts/jteam` in this skill's directory. It needs the OpenCode V
 jteam self                          this session's ID
 jteam ls [limit]                    top-level sessions: id, state, idle time, agent, title, directory
 jteam worktree <repo> <branch>      prune, then a new OpenCode worktree and branch off origin's default branch, set up
-jteam status [board]                stale board lines, sessions with no line, your draft PRs with CI, prunable worktrees
+jteam status                        your open draft PRs in this repo with CI, and prunable worktrees
 jteam watch <pr> [repo-dir]         wait on the PR's checks, then report CI and each review and comment since the head
 jteam prune [--dry-run] [repo]      remove clean worktrees whose PR is merged, with their branches, and archive their sessions
 jteam rm <worktree> [--force]       remove one worktree and archive its sessions; the branch is kept
 ```
 
 - **`worktree`** prints the worktree's path and the setup result. The setup is `~/.config/opencode/worktree-setup/<repo>.sh` when it exists.
-- **`status`** changes nothing. It reads a line as stale once every PR it names is merged or closed, or every session it names is archived.
+- **`status`** changes nothing. Run it inside a repo or one of its worktrees. It lists only that repo's PRs.
 - **`watch`** exits 0 when CI passes or the PR has no checks, 1 when a check fails, and 2 when checks are pending or `gh` errors. Bugbot's check passes even when it finds bugs, so read its findings in the report.
 - **`prune`** keeps any worktree with changes or commits its merged PR lacks. Run it when James says PRs have merged. `gh stack sync --prune` deletes a stack's other merged branches.
 - **`rm`** is for a stream that ends without a merge. Run it from outside the worktree.
 
-Don't poll. Use the board, `status` and `ls` when James asks for status.
+Don't poll. Use the stream's doc, `status` and `ls` when James asks for status.
