@@ -149,7 +149,9 @@ All paths are inside `jstack/`.
   - Cursor's Task fields, slugs, `-fast`, timers and the PR tool's `draft: true` move to `skills/j-mode/references/cursor.md`.
 - `skills/j-mode/references/cursor.md`: new, the Cursor host file.
 - `rules/jstack-models.mdc`: `coordinator` becomes `lead`. The milestone and `/interrogate` comments follow the one-way door wording.
-- `skills/interrogate/SKILL.md` and `skills/show-me-your-work/SKILL.md`: the lead runs and judges reviews.
+- `skills/interrogate/SKILL.md` and `skills/show-me-your-work/SKILL.md`: the lead runs and judges reviews. `skills/interrogate/references/reviewer-prompt.md`: reviewers skip claims CI already ran on the head.
+- `skills/architect/SKILL.md`: a contested design goes back to the lead for a plan review, instead of an `/interrogate` pass on the sketch.
+- `scripts/test-jteam-status.sh`: fixtures use the list board.
 - `skills/j-help/SKILL.md`, `docs/guide.md`, `README.md` and the root `README.md`: synced with the above.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.0.0.
 

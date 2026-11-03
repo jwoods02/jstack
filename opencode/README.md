@@ -47,7 +47,7 @@ You need OpenCode V2 with its `opencode` CLI on your PATH, plus `git`, `jq` and 
    }
    ```
 
-   The deny rules keep agents from merging, marking a PR ready or unstacking, which are yours. The gh-stack skill documents `gh stack merge` and `--open`, and `j-team` overrides it. With depth 2, a reviewer that a lead starts can run `/interrogate`'s own reviewers. `worktree.directory` puts worktrees beside each repo instead of in OpenCode's data folder.
+   The deny rules keep agents from merging, marking a PR ready or unstacking, which are yours. The gh-stack skill documents `gh stack merge` and `--open`, and `j-team` overrides it. With depth 2, a subagent the lead starts can start its own helpers, such as a reviewer's `/how` explorers. `worktree.directory` puts worktrees beside each repo instead of in OpenCode's data folder.
 5. Optional: give a repo a board with one line in `~/.config/opencode/AGENTS.md`, in the form `JStack boards: <repo> -> <path>`, for example `JStack boards: my-app -> ~/docs/my-app/board.md`. Sessions read the board at start and keep their stream's line current, and `jteam status` reads it too. A repo with no line has no board. `j-team` shows the board's shape.
 6. Optional: for each repo that needs setup in a fresh worktree (env files, dependency install), add an executable `~/.config/opencode/worktree-setup/<repo-name>.sh`. `jteam worktree` makes it the project's start command, so OpenCode runs it inside every new worktree, including ones you create in the app. Have it write its output to `$(git rev-parse --git-dir)/worktree-setup.log` and end with the line `worktree setup ok`, which is how `jteam` knows it worked. `git worktree list --porcelain | awk 'NR == 1 { print $2 }'` gives it the main checkout.
 

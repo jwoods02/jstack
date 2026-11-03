@@ -19,10 +19,14 @@ printf '#!/usr/bin/env bash\necho "[]"\n' >"$tmp/bin/opencode"
 chmod +x "$tmp/bin/gh" "$tmp/bin/opencode"
 
 cat >"$tmp/board.md" <<'EOF'
-| Stream | Ticket | Branch | Session | PR | State |
-|---|---|---|---|---|---|
-| Stacked stream | none | `jw/a` | none | #1 → #2 → #3 | Working |
-| Single stream | none | `jw/b` | none | #4 | Working |
+# Board
+
+## Running
+- **Stacked stream** · lead `ses_fixtureA` · #1 → #2 → #3 · building
+- **Single stream** · lead `ses_fixtureB` · #4 · building
+
+## Calls worth remembering
+- 2 Nov: #1 shipped first.
 EOF
 
 fail=0
@@ -30,7 +34,7 @@ check() {
   local want="$1" pr1="$2" pr2="$3" pr3="$4" out got
   out="$(cd "$tmp/repo" && PATH="$tmp/bin:$PATH" OPENCODE_BIN="$tmp/bin/opencode" PR_1="$pr1" PR_2="$pr2" PR_3="$pr3" PR_4=OPEN \
     "$JTEAM" status "$tmp/board.md" 2>&1)"
-  if grep -q '^ *Stacked stream' <<<"$out"; then got=stale; else got=fresh; fi
+  if grep -q '^ *\*\*Stacked stream' <<<"$out"; then got=stale; else got=fresh; fi
   if [ "$got" = "$want" ]; then echo "ok   $pr1 $pr2 $pr3 -> $got"; else echo "FAIL $pr1 $pr2 $pr3 -> $got, want $want"; fail=1; fi
 }
 
@@ -43,6 +47,6 @@ check stale MERGED CLOSED MERGED
 
 single="$(cd "$tmp/repo" && PATH="$tmp/bin:$PATH" OPENCODE_BIN="$tmp/bin/opencode" PR_1=OPEN PR_2=OPEN PR_3=OPEN PR_4=MERGED \
   "$JTEAM" status "$tmp/board.md" 2>&1)"
-if grep -q '^ *Single stream.*#4 is MERGED' <<<"$single"; then echo "ok   single merged PR -> stale"; else echo "FAIL single merged PR not stale"; fail=1; fi
+if grep -q '^ *\*\*Single stream.*#4 is MERGED' <<<"$single"; then echo "ok   single merged PR -> stale"; else echo "FAIL single merged PR not stale"; fail=1; fi
 
 exit "$fail"

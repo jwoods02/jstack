@@ -42,7 +42,7 @@ After any compaction, load j-mode and j-team again before you act.
 
 ## Worktrees
 
-A stream that changes files has one worktree, made at go:
+A stream that changes files has one worktree, made at go. A one-off builder with no lead makes its own the same way before its first edit.
 
 1. Run `jteam worktree <repo> <branch>` with a 10-minute shell timeout. It prunes merged worktrees, makes an OpenCode worktree off origin's default branch with the branch checked out, and runs the repo's setup.
 2. Move your session there with `session_move` (`tools.opencode.session_move` in code mode), so `jteam ls` and `jteam status` see it in its worktree.
