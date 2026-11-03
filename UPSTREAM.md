@@ -143,7 +143,7 @@ All paths are inside `jstack/`.
 **Host-neutral core (v4).** `j-mode` no longer names Cursor's tools. Each host gets a short host file, and j-mode reads it before its first reply.
 
 - `skills/j-mode/SKILL.md`:
-  - The coordinator becomes the **lead**: the chat James planned a stream with, which runs its PRs once he says go. A Running a stream list, an Ask James list and a rule for new ideas (a brief James pastes into a new chat) move here from the OpenCode file.
+  - The coordinator becomes the **lead**: the chat James planned a thread with, which runs its PRs once he says go. A Running a thread list, an Ask James list and a rule for new ideas (a brief James pastes into a new chat) move here from the OpenCode file.
   - The big-change tier becomes **one-way doors**: irreversible moves, and public API, storage format or cross-service contract changes. Size alone no longer counts. The lead, not the builder, runs `/interrogate` and judges it. The milestone review runs only on a stack that holds a one-way door. One reviewer is the default for every PR, and Reviews opens by asking for review scaled to the PR.
   - Builder reminders add proportionate testing and a stop-don't-work-around rule for shared tools such as commit signing. The investigator and reply rules lead with the answer. The Subagents section lists what every kickoff carries and adds a rule against spawning to double-check.
   - Cursor's Task fields, slugs, `-fast`, timers and the PR tool's `draft: true` move to `skills/j-mode/references/cursor.md`.
@@ -154,12 +154,18 @@ All paths are inside `jstack/`.
 - `skills/j-help/SKILL.md`, `docs/guide.md`, `README.md` and the root `README.md`: synced with the above.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.0.0.
 
-**No board (v4.1).** JStack no longer keeps a board. In two days of use it was a write-only log, and its content already lived in GitHub, `jteam ls` and the stream's plan doc. The local-stack lock it carried goes with it.
+**No board (v4.1).** JStack no longer keeps a board. In two days of use it was a write-only log, and its content already lived in GitHub, `jteam ls` and the plan doc. The local-stack lock it carried goes with it.
 
-- `skills/j-mode/SKILL.md`: Start, pause and resume read the stream's plan or handoff doc instead of a board line. The lead keeps the stream's state in that doc and says "Ready for James" in its own chat with each PR and the head its review passed on.
+- `skills/j-mode/SKILL.md`: Start, pause and resume read the plan or handoff doc instead of a board line. The lead keeps state in that doc and says "Ready for James" in its own chat with each PR and the head its review passed on.
 - `skills/j-mode/references/cursor.md`: the Board bullet becomes Shared context.
 - OpenCode files: `skills/j-team/SKILL.md` drops The board section. `jteam status` drops its board argument and the stale-line and no-line reports, and keeps draft PRs with CI and prunable worktrees. `scripts/test-jteam-status.sh` tests that output. `agents/JMode.md` and `README.md` drop the board and the shared local stack.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.0.
+
+**Thread, not stream (v4.1.1).** A piece of work James agreed is now a **thread**, not a stream. A thread runs from one PR to a stack of them, and can span several chats. Its lead is still the chat James talks to about it. Wording only, no change in behavior.
+
+- `skills/j-mode/SKILL.md` and `skills/j-mode/references/cursor.md`: the definition, Running a thread and the Ask James list use the new word. Sentences that read the same without the noun drop it, so "the stream's plan doc" becomes "the plan doc".
+- `skills/j-help/SKILL.md`, `docs/guide.md`, the root `README.md` and the OpenCode files (`README.md`, `agents/JMode.md`, `skills/j-team/SKILL.md`): synced with the above.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.1.
 
 ## How to merge a new release
 

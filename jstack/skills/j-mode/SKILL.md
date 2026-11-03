@@ -16,32 +16,32 @@ Bundled skills live at `../<name>/SKILL.md` from this file, so put this file's a
 
 ## Start
 
-1. Read your brief, the project's preferences, and the stream's plan or handoff doc if it has one. If another agent started you, you are a worker. Do your one job, then report back to it.
+1. Read your brief, the project's preferences, and the plan or handoff doc if it has one. If another agent started you, you are a worker. Do your one job, then report back to it.
 2. Check the tools the job needs (git, `gh`, the MCPs). Say what you can't run instead of promising a check.
 3. Pick a job below and say which one in your first line.
 
-To resume earlier work, start from the stream's plan or handoff doc, the open PRs and their branches, and don't redo finished work. To pause, commit work in progress as one `wip:` commit and write the next step in the stream's doc. Work with no doc uses the chat's own todo list.
+To resume earlier work, start from the plan or handoff doc, the open PRs and their branches, and don't redo finished work. To pause, commit work in progress as one `wip:` commit and write the next step in the doc. Work with no doc uses the chat's own todo list.
 
 ## Jobs
 
-A **stream** is one piece of work James agreed, from one PR to a stack of them. Its **lead** is the chat James talks to about it. Not every chat leads. An architect, an investigator or a one-off builder does its job and stops.
+A **thread** is one piece of work James agreed, from one PR to a stack of them. It can run across several chats. Its **lead** is the chat James talks to about it. Not every chat leads. An architect, an investigator or a one-off builder does its job and stops.
 
 | Job | When | Model map line |
 |---|---|---|
-| Lead | Once James agrees a plan and says go. It runs every PR's builder and reviewers as subagents, judges the reviews, keeps the stream's state in its plan or handoff doc and puts calls to James in its own chat. It doesn't write the stream's code itself, so its context holds the plan, summaries and verdicts. | `lead` |
+| Lead | Once James agrees a plan and says go. It runs every PR's builder and reviewers as subagents, judges the reviews, keeps state in its plan or handoff doc and puts calls to James in its own chat. It doesn't write the code itself, so its context holds the plan, summaries and verdicts. | `lead` |
 | Architect | Before a one-way door or a large change, or when the design is unclear. Run `/how` and `/why`, then `/architect` with checkpoint, so it stops before implementing. Settle a question you can answer by building a quick throwaway by building one. End with a short decision list and stop for James. | `architect`, or `architect for load-bearing designs` |
 | Plan reviewer | A fresh agent for any plan of three or more PRs, before a builder starts. | `plan reviewer`, or `plan reviewer for load-bearing plans` |
 | Builder | One per PR, on its own branch. Builds, opens a draft PR, gets CI green with its bot findings triaged, then reports "ready for review" with the head commit. A builder never starts its own reviewers. A one-off builder, with no lead above it, starts and judges its own reviewer as a lead would. | `builder` by default. Use `builder for a very complex change`, `builder for very well-planned work` or `builder for a simple change with some ambiguity` when the agreed plan names one, and `hardest tasks` for the gnarliest piece. |
 | Reviewer | One fresh agent per PR, never the builder, started by the lead once CI is green. See Reviews. | `reviewer`, or `interrogate reviewers` and `milestone reviewer` for one-way doors |
-| Parallel builders | Independent PRs in one stream. One builder per PR, each on its own branch. Before fanning out, check that no two touch the same branch, files or migration number (**principle-separate-before-serializing-shared-state**), and run the ones that do one after another. | Same as builder and reviewer |
+| Parallel builders | Independent PRs in one thread. One builder per PR, each on its own branch. Before fanning out, check that no two touch the same branch, files or migration number (**principle-separate-before-serializing-shared-state**), and run the ones that do one after another. | Same as builder and reviewer |
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. Lead the reply with the answer, in a few sentences, before any detail. | `investigator` |
 | Watcher | Only when waiting on something long, such as a deploy. Usually the lead or builder runs one blocking command instead (see the host file's waits). | `watcher` |
 
-**Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. A new idea that isn't this stream's work belongs in a new chat. Say so, and give James a short brief he can paste into it: the job, the scope and what's out of scope, the finish check, and the branch name. Don't start that chat yourself.
+**Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. A new idea that isn't this thread's work belongs in a new chat. Say so, and give James a short brief he can paste into it: the job, the scope and what's out of scope, the finish check, and the branch name. Don't start that chat yourself.
 
-**Running a stream.** Once James says go:
+**Running a thread.** Once James says go:
 
-1. Write the agreed plan to the project's docs, so it survives a context reset. Keep the stream's state in that doc, or in a handoff doc beside it.
+1. Write the agreed plan to the project's docs, so it survives a context reset. Keep the state in that doc, or in a handoff doc beside it.
 2. Work through the PRs in order, each with a fresh builder. Start each PR's reviewer as soon as its builder reports, without waiting for the rest of the stack.
 3. When a builder reports, send James the PR link, so he can start his own review while the agent review runs. Pass his notes on to the reviewer.
 4. When James changes scope while a builder runs, let him settle, then send the builder one consolidated update. A string of small resumes costs more than one clear one.
@@ -53,7 +53,7 @@ A **stream** is one piece of work James agreed, from one PR to a stack of them. 
 - a call comes up that the agreed plan doesn't cover;
 - a review finding changes scope or design, or you want to decline an Act-on finding;
 - anything is irreversible or touches production;
-- something shared is broken, or another stream holds a shared resource;
+- something shared is broken, or another thread holds a shared resource;
 - CI fails twice in code the PR didn't touch.
 
 While you wait, keep building later PRs that don't depend on the answer.
@@ -74,7 +74,7 @@ Builder reminders:
 - Milestone or load-bearing work: collect the calls James should make before you build. Give each a number, a recommended answer and the facts behind it, blocking calls first. More than about five means the plan has a gap, so send the top ones first. The lead puts them to James, and you build once he answers. When James has stepped away, make each call yourself and log it, with why and how hard it is to reverse. Lead the log with the calls he should look at first.
 - Tests: before review, run narrow local tests for what changed. Never run suites the repo says CI owns. Size the testing to the PR. A small change doesn't need dozens of harness runs.
 - Root causes: fix a root cause by simplifying, not by adding defensive handling (**principle-fix-root-causes**).
-- Shared tools: when signing, a hook, a credential or a global toolchain fails, stop and report it blocked. Don't turn signing off, skip hooks with `--no-verify` or change global config, because every other stream shares them and James has to unpick the workaround.
+- Shared tools: when signing, a hook, a credential or a global toolchain fails, stop and report it blocked. Don't turn signing off, skip hooks with `--no-verify` or change global config, because every other thread shares them and James has to unpick the workaround.
 - Waiting on CI or a run: one blocking command per wait, never repeated sleeps. The host file says how to wait longer.
 - Handoff: at the end of a PR, write a one-page handoff note (decisions, open items, files) for whoever picks up next.
 
@@ -197,7 +197,7 @@ Start subagents in the background, with an explicit model from the role's line i
 - Never start an Anthropic model on its max level, though escalating to it is fine.
 - If the host rejects a model, use the closest valid one of the same family and say so.
 
-**Spawn only what the job needs.** Don't start a subagent to double-check your own work or to re-run a check CI already ran. Delegate when work can run in parallel, needs its own context, or is a separate stream of work. Do small, sequential steps yourself.
+**Spawn only what the job needs.** Don't start a subagent to double-check your own work or to re-run a check CI already ran. Delegate when work can run in parallel, needs its own context, or is a separate thread of work. Do small, sequential steps yourself.
 
 You own every subagent's work. Review the diff and write your own summary, don't pass through what it said.
 
