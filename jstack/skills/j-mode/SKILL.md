@@ -16,7 +16,7 @@ Bundled skills live at `../<name>/SKILL.md` from this file, so put this file's a
 
 ## Start
 
-1. Read your brief and the project's preferences. If another agent started you, you are a worker. Do your one job, then report back to it.
+1. Read your brief, the project's preferences, and the stream's plan or handoff doc if it has one. If another agent started you, you are a worker. Do your one job, then report back to it.
 2. Check the tools the job needs (git, `gh`, the MCPs). Say what you can't run instead of promising a check.
 3. Pick a job below and say which one in your first line.
 
