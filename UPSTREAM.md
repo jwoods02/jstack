@@ -7,7 +7,7 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 - Upstream: `cursor/plugins`, path `pstack/`.
 - Commit: `99743e9c151c8537cbbf1f98bb38f34ef3368453`, merged 15 Oct 2026.
 - Version: 0.15.25.
-- JStack's own version is 3.2.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
+- JStack's own version is 4.0.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
 - Upstream `pstack/` tree hash at import: `0d5fd349cbc77d054eed60f0e8cdfbea86321ff9`.
 
 ## Path mapping
@@ -20,7 +20,7 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 | `pstack/skills/poteto-mode/SKILL.md` | `jstack/skills/j-mode/SKILL.md`, rewritten in v2 |
 | `pstack/skills/poteto-mode/playbooks/` | removed (v2) |
 | `pstack/skills/poteto-mode/scripts/` | removed (v2) |
-| `pstack/skills/poteto-mode/references/` | `jstack/skills/j-mode/references/` |
+| `pstack/skills/poteto-mode/references/` | `jstack/skills/j-mode/references/`, plus JStack's own `cursor.md` host file (v4) |
 | `pstack/skills/poteto-help/` | `jstack/skills/j-help/` |
 | `pstack/agents/poteto-agent.md` | `jstack/agents/j-agent.md` |
 | `pstack/docs/guide/` | removed (v2), replaced by `jstack/docs/guide.md` |
@@ -139,6 +139,21 @@ All paths are inside `jstack/`.
 - `rules/jstack-models.mdc`: drops the lens seats' line. `interrogate reviewers` becomes `claude-opus-5-5-high, gemini-4-argon-high`.
 - `skills/j-help/SKILL.md`, `docs/guide.md`, `README.md`, the root `README.md` and the OpenCode files (`agents/j-agent.md`, `skills/j-team/SKILL.md`, `jstack-models.example.md`): synced with the above. The example map drops the lens seats' line too, and runs both `interrogate reviewers` entries on high.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 3.2.0.
+
+**Host-neutral core (v4).** `j-mode` no longer names Cursor's tools. Each host gets a short host file, and j-mode reads it before its first reply.
+
+- `skills/j-mode/SKILL.md`:
+  - The coordinator becomes the **lead**: the chat James planned a stream with, which runs its PRs once he says go. A Running a stream list, an Ask James list and a rule for new ideas (a brief James pastes into a new chat) move here from the OpenCode file.
+  - The big-change tier becomes **one-way doors**: irreversible moves, and public API, storage format or cross-service contract changes. Size alone no longer counts. The lead, not the builder, runs `/interrogate` and judges it. The milestone review runs only on a stack that holds a one-way door. One reviewer is the default for every PR, and Reviews opens by asking for review scaled to the PR.
+  - Builder reminders add proportionate testing and a stop-don't-work-around rule for shared tools such as commit signing. The investigator and reply rules lead with the answer. The Subagents section lists what every kickoff carries and adds a rule against spawning to double-check.
+  - Cursor's Task fields, slugs, `-fast`, timers and the PR tool's `draft: true` move to `skills/j-mode/references/cursor.md`.
+- `skills/j-mode/references/cursor.md`: new, the Cursor host file.
+- `rules/jstack-models.mdc`: `coordinator` becomes `lead`, on Opus Medium. The milestone and `/interrogate` comments follow the one-way door wording.
+- `skills/interrogate/SKILL.md` and `skills/show-me-your-work/SKILL.md`: the lead runs and judges reviews. `skills/interrogate/references/reviewer-prompt.md`: reviewers skip claims CI already ran on the head.
+- `skills/architect/SKILL.md`: a contested design goes back to the lead for a plan review, instead of an `/interrogate` pass on the sketch.
+- `scripts/test-jteam-status.sh`: fixtures use the list board.
+- `skills/j-help/SKILL.md`, `docs/guide.md`, `README.md` and the root `README.md`: synced with the above.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 4.0.0.
 
 ## How to merge a new release
 

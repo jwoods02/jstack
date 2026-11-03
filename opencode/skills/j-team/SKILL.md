@@ -1,143 +1,135 @@
 ---
 name: J Team
-description: JStack on OpenCode. Maps j-mode's Cursor terms to OpenCode, and has a lead session own each stream end to end, in one git worktree, with builders and reviewers as subagents and GitHub stacks for layered work. Load it together with j-mode on OpenCode.
+description: j-mode's host file for OpenCode. Maps j-mode and its skills to OpenCode's subagents, model map, sessions, worktrees, compaction and board, and carries the jteam script. Load it after j-mode in every OpenCode session and subagent.
 disable-model-invocation: true
 ---
 
 # J team
 
-j-mode was written for Cursor. On OpenCode, read it with the substitutions below. Where this file and j-mode disagree, this file wins on OpenCode. Everything else in j-mode holds as written.
+This is j-mode's host file for OpenCode. j-mode holds the workflow. This file says how to run it with OpenCode's tools. Where the two disagree, this file wins on OpenCode.
 
-## Terms
+## Skills written for Cursor
 
-| j-mode says | On OpenCode |
+j-mode is host-neutral, but some skills it calls (`how`, `why`, `interrogate`, `arena`, `swarm`, `reflect`, `no-comments`) still name Cursor's tools. Read them this way.
+
+| A skill says | On OpenCode |
 |---|---|
 | The Task tool, `subagent_type: X`, `run_in_background: true` | The `subagent` tool with `agent: X` and `background: true` |
-| `j-agent` | `j-agent`. It loads j-mode itself, so the kickoff needs no path. |
+| `j-agent` | `j-agent`. It loads j-mode and this file itself, so the kickoff needs no path. |
 | `generalPurpose` | `general`. It can't start subagents, so use `j-agent` when the child must start its own. |
-| Readonly | The `explore` agent |
+| `readonly: true` | The `explore` agent |
 | `comment-sicko` | `explore`, told to read `../../agents/comment-sicko.md` from j-mode's skill directory and act as it |
-| The `model` line in `jstack-models.mdc` | The same role's line in the OpenCode model map (see Models) |
-| The Project chat, the coordinator | The stream's lead, which starts its own builders and reviewers (see Streams and leads). Leads share the board, and James makes cross-stream calls. |
-| The Project's task tracker | The repo's issue tracker for work the team should see. The repo's board for the agents' own streams (see The board). |
-| The Project's shared context | The docs folder your instructions name, and the repo's own docs |
-| `/loop`, timers, CI subscriptions | A top-level session watching a PR on its own runs `jteam watch <n>` as a background shell command, and OpenCode wakes the session when it ends. A subagent runs `jteam watch` and its other waits in the foreground (see Waits). |
+| The `jstack-models.mdc` rule | The model map below |
 | `.cursor/skills/` | `.opencode/skills/` |
-| Chat history in `~/.cursor/projects/*/agent-transcripts` | OpenCode sessions, read with `jteam ls` and `jteam peek` |
-| A skill's file under `~/.cursor/plugins/` | Load it with the skill tool by its ID |
+| Chat history in `agent-transcripts/` | OpenCode sessions. List them with `jteam ls`, and read one with `opencode api get "/api/session/<id>/message?limit=40&order=desc"`. |
+| A skill's file under `~/.cursor/plugins/` | Load the skill with the skill tool by its ID |
 
 ## Models
 
-The model map is `jstack-models.md` in the OpenCode config directory (`~/.config/opencode/`). It uses the role names from `jstack-models.mdc`, with OpenCode model IDs in `provider/model#variant` form. Pass the role's model as `model` on every `subagent` call and as the model argument to `jteam spawn`. If the file is missing, leave `model` unset so the child inherits.
+The model map is `jstack-models.md` in `~/.config/opencode/`. It uses the role names from `jstack-models.mdc`, with OpenCode model IDs in `provider/model#variant` form. Pass the role's model as `model` on every `subagent` call. If the file is missing, leave `model` unset so the child inherits. Nobody spawns the lead, so its `lead` line only records the `JMode` agent's model, which `opencode.json` sets under `agents.JMode.model`.
 
-## Streams and leads
+## Sessions
 
-These rules replace j-mode's rows for the coordinator, builder, reviewer and parallel builders. A **stream** is a piece of work, one row on the board. Its **lead** is the top-level session that owns it end to end.
+James opens every top-level session himself, and j-mode's brief for a new chat is what he pastes into one. Leads start subagents in the background.
 
-A session does the job its first message gives it. An architect, an investigator or a one-off builder does that job and stops. A one-off builder starts and judges its own reviewers as in step 3 below, and stops once the review passes. When James agrees a plan and says go, the session becomes the stream's lead. James talks to sessions directly, so a lead puts its calls to James in its own session, in place of j-mode's coordinator relay.
+**Compaction.** OpenCode compacts a session automatically near its context limit, and a summary replaces the older conversation, including the j-mode and j-team text. A lead plans in its own context, so at go:
 
-### How a lead runs a stream
+1. Write the plan doc and your board line, and start the first builder.
+2. If the session is over about 150k tokens, request compaction with `opencode api post "/api/session/$(jteam self)/compact" --data '{}'`. It runs at the next safe point.
+3. End the turn with the wait line (see Waits). The builder's report wakes the session after the summary.
 
-1. **Pick up.** Read the board, check `jteam ls` and the open rows for anyone on the same area, and write your row.
-2. **Plan.** Work out the plan yourself or with architect subagents. A plan of three or more PRs gets a fresh plan reviewer. End with j-mode's decision list and stop for James.
-3. **Run the stack.** Once James says go, work through the stack one PR at a time, with every builder and reviewer as a subagent. For each PR:
-   1. Start a fresh `j-agent` builder on the `builder` model, in the stream's worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
-   2. The builder builds, opens or pushes the draft PR in the stack, then runs `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes. Foreground commands time out after 2 minutes by default. On a red run it fixes, pushes and watches again. It retries a failure that looks flaky once, as a fresh run, and an identical second failure is real. A failure in code the PR didn't touch means a rebase, or a report that it's blocked. On a green run, including one with no checks, it triages the Bugbot and other bot findings in the report per j-mode's `references/bugbot-triage.md`. A fix means a push, so it watches again. Once a head is green with its findings triaged, it reports "ready for review" with that head commit. When the repo has no CI, the builder still runs `jteam watch` to collect bot findings. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so. The builder doesn't start reviewers.
-   3. You don't watch CI. Once the builder reports, post the PR link in your session. Start one fresh `j-agent` reviewer on the `reviewer` model, or an `/interrogate` pass for a big change. You judge the findings.
-   4. Send fixes back to the same builder or a fresh one. Round 2 is one fresh reviewer on the fix commits only.
-   5. Move on once the review passes, CI is green where the repo has it, and the passing verdict's head commit equals `gh pr view <n> --json headRefOid`. A verdict for an older head is stale.
-4. **Finish.** For a big change, run the milestone reviewer once on the top of the stack. Then set your row to "Ready for James" with the whole stack and each PR's reviewed head. James merges.
+After any compaction, load j-mode and j-team again before you act.
 
-Only summaries and verdicts land in a lead's context. j-mode's resume rule applies to builder subagents.
+## Worktrees
 
-### Waits
+A stream that changes files has one worktree, made at go. A one-off builder with no lead makes its own the same way before its first edit.
 
-- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. Builders and reviewers run their waits in the foreground, and a builder runs `jteam watch` with a timeout of about 45 minutes. Leads still start subagents in the background.
-- A session that ends a turn on a wait says so in its last line. The line names what it waits on, the head commit, when the wait started and what the session does next. For example: "Waiting on the reviewer for #946 at `50c0fe7`, started 14:05. I start PR 2 once it and round 2 pass."
+1. Run `jteam worktree <repo> <branch>` with a 10-minute shell timeout. It prunes merged worktrees, makes an OpenCode worktree off origin's default branch with the branch checked out, and runs the repo's setup.
+2. Move your session there with `session_move` (`tools.opencode.session_move` in code mode), so `jteam ls` and `jteam status` see it in its worktree.
 
-### Ask James
+Investigations and reviews of someone else's PR need no worktree. They run in the main checkout and change no files there.
 
-Ask in your session, and wait on that PR, when:
+Every branch of the stream's stack lives in its worktree, because `gh stack add` makes and checks out each next branch in place. Builders and reviewers take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. While you wait on James about one PR, you can check out a later branch and build there.
 
-- a call comes up that the agreed plan doesn't cover;
-- a review finding changes scope or design, or you want to decline an Act-on finding;
-- anything is irreversible or touches production;
-- something shared is broken, or another stream holds a shared resource;
-- CI fails twice in code the PR didn't touch.
-
-While you wait, keep building later PRs that don't depend on the answer. When James makes a call in your session, such as approving a PR, pausing reviewers or changing scope, your board row names it, for example "James approved the PR in-session".
-
-### Other top-level sessions
-
-- Fan-out inside a stream uses subagents: builders, reviewers, explorers and helpers. Work that would go faster in parallel stays in the stream, and its builders take turns in the stream's worktree. It never becomes a new top-level session.
-- `jteam spawn` is only for genuinely new or different work, and only once James agrees to it. If the board or `jteam ls` shows a stream already on it, tell James which. Before spawning, check the board's open rows for a shared branch, files, a migration number, or a local resource the repo's instructions name, such as a dev stack or test database.
-- When your own context gets heavy, write a handoff note, spawn a fresh lead on the same worktree with `jteam spawn --continue`, say so, and stop.
-
-### One worktree per stream
-
-A stream has one worktree, made when the lead starts building. The lead that makes it moves its own session there with `session_move` (`tools.opencode.session_move` in code mode), so `jteam status` and `jteam ls` see the session in its worktree. A session started by `jteam spawn` already runs there. Every branch in its stack lives there, because `gh stack add` makes and checks out each next branch in place. Builders and reviewers take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. While you wait on James about one PR, you can check out a later branch and build there.
-
-A session changes only its own worktree and branches, plus the board and docs. If its setup fails, or a tool, credential or anything shared outside the worktree is broken (global toolchains, `~/.config/opencode`, the main checkout), it marks its board row blocked, says so in its session, and waits. James fixes it once. Parallel sessions repairing the same shared thing clobber each other.
+A session changes only its own worktree and branches, plus the board and docs. If setup fails, or a tool, credential or anything shared outside the worktree is broken (global toolchains, `~/.config/opencode`, the main checkout, commit signing), mark your board line blocked, say so in your session, and wait. James fixes it once, and parallel sessions repairing the same shared thing clobber each other.
 
 Scratch files go in a directory named for your session ID under the shared temp dir, or inside your worktree. Never use a fixed name another session could also pick.
 
-### PRs and stacks
+## Each PR
 
-- A PR does a full chunk of work. Keep PRs few and the work contained. When a big change splits into layers a reviewer would read separately, ship them as a GitHub stack, each layer passing CI on its own. Otherwise ship one PR.
-- j-mode's big-change cues hold, except "a chain of three or more PRs", which doesn't apply on OpenCode. The lead weighs the cues with what it knows about the stream to decide on `/interrogate` and the milestone review.
-- Drive `gh stack` non-interactively:
-  - `gh stack init` makes the stack.
-  - `gh stack add <branch>` adds each next branch.
-  - `gh stack submit --auto` opens the PRs as drafts.
-  - `gh stack rebase` then `gh stack push` cascade a fix in a lower PR up the stack.
-  - `gh stack sync` runs after James merges a lower PR, and `--prune` deletes merged branches.
-  - `gh stack view --json` reads the state.
-- Agents never merge, mark ready or unstack. The global `opencode.json` denies `gh stack merge*`, `gh stack submit *--open*`, `gh stack link *--open*` and `gh stack unstack*`. The gh-stack skill documents `merge` and `--open`, and this file overrides it.
-- gh-stack keeps its metadata in the git dir every worktree of the clone shares. Its commands lock against each other, but other git commands don't. One lead per stack, and only that stream's worktree touches its branches.
+- **The builder.** Start a fresh `j-agent` on the `builder` model, in the stream's worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
+- **The builder's watch.** The builder opens or pushes the draft PR, then runs `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes. Shell commands time out after 2 minutes by default. On a red run it fixes, pushes and watches again. On a green run, including one with no checks, it triages the bot findings in the report per j-mode's `references/bugbot-triage.md`. A fix means a push, so it watches again. Once a head is green with its findings triaged, it reports "ready for review" with that head commit.
+- **Repos with no CI.** The builder still runs `jteam watch` to collect bot findings. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so.
+- **The lead's part.** The lead doesn't watch CI. It posts the PR link in its session, starts the reviewer, and judges the findings. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
+
+## Waits
+
+- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. Builders and reviewers run their waits in the foreground. A builder that once ended its turn with CI and reviewers still running cost its stream three hours, because nothing woke the lead when they finished.
+- A session that ends a turn on a wait says so in its last line. The line names what it waits on, the head commit, when the wait started and what the session does next. For example: "Waiting on the reviewer for #946 at `50c0fe7`, started 14:05. I start PR 2 once it passes."
+- A top-level session watching a PR on its own runs `jteam watch <n>` as a background shell command, and OpenCode wakes the session when it ends.
+
+## Stacks
+
+Drive `gh stack` non-interactively:
+
+- `gh stack init` makes the stack, and `gh stack add <branch>` adds each next branch.
+- `gh stack submit --auto` opens the PRs as drafts.
+- `gh stack rebase` then `gh stack push` cascade a fix in a lower PR up the stack.
+- `gh stack sync` runs after James merges a lower PR, and `--prune` deletes merged branches.
+- `gh stack view --json` reads the state.
+
+Agents never merge, mark ready or unstack. The global `opencode.json` denies `gh stack merge*`, `gh stack submit *--open*`, `gh stack link *--open*` and `gh stack unstack*`. The gh-stack skill documents `merge` and `--open`, and this file overrides it. gh-stack keeps its metadata in the git dir every worktree of the clone shares, so only one lead touches a stack.
 
 ## The board
 
-The board for a repo comes from a mapping line in `~/.config/opencode/AGENTS.md`, in the form `JStack boards: <repo> -> <path>`, for example `JStack boards: resonance-service -> ~/git/docs/resonance/board.md`. With no mapping line for the repo, it is `.opencode/jstack-board.md` at the repo root. Any session may edit the board and docs. Keep it short, and rewrite what's stale. Use the edit tool rather than overwriting the whole file.
+A repo has a board only if `~/.config/opencode/AGENTS.md` has a mapping line for it, in the form `JStack boards: <repo> -> <path>`. With no line, there is no board, and the session uses its own todo list.
 
-Every session follows this protocol.
+The board is a short list. Each stream is one line, grouped by what it waits on. The detail (calls, evidence, history) lives in the stream's plan and handoff docs, which the line links to. CI and PR state come from GitHub through `jteam status`, so the line needn't repeat them.
 
-1. **Start.** Read the board for the repo you are in. Delete rows whose PRs are all merged. Check the open rows for shared branches, files, migration numbers and the shared-resources slot.
-2. **Before you build.** Write your row: stream, ticket, branch, session, PR and state. A stream has one row, not one per PR. The PR cell lists the stack in order, for example `#934 → #950 → #951`.
-3. **Finish.** Set the state to "Ready for James" with the PR links, the head commit each review passed on, and any migration number or shared file you hold.
+```markdown
+## Needs James
+- **Auth: remove WorkOS** · RES-380, RES-393 · lead `ses_…` · #934 → #947 · calls 6 and 7 on #934 open · [plan](2026-11-02-auth-workos-removal-plan.md)
 
-A shared slot, such as the local stack, has one line that names its holder. Ask before you take a slot someone else holds. `jteam status` shows what has gone stale.
+## Running
+- **Chat context sweep** · RES-389 · lead `ses_…` · #946 → #953 · building PR 3 · [scope](2026-11-02-chat-context-sweep-scope.md)
+
+## Proposed
+- RES-342: read-only pre-checks for deleting the in-cluster Temporal server.
+
+## Shared resources
+- Local stack: held by `ses_…` since 3 Nov, for an end-to-end run on #947.
+
+## Calls worth remembering
+- 2 Nov: sign-in goes in alongside WorkOS first.
+```
+
+Every session with a board follows this protocol:
+
+1. **Start.** Read the board. Delete lines whose PRs are all merged. Check the open lines for a shared branch, files, a migration number or a shared resource.
+2. **Go.** A lead, or a long-running investigation James will come back to, writes its line. A one-off question doesn't.
+3. **On a change of state.** Move the line between sections and rewrite its few words of state. Don't narrate each event, because the stream's doc holds the history.
+4. **Finish.** Move the line to Needs James as "Ready for James" with each PR and the head its review passed on, and any migration number or shared file it holds.
+
+When James makes a call in your session, such as approving a PR or changing scope, put it in the stream's doc and say so in the line's state. A shared resource has one line naming its holder. Ask before you take a resource someone else holds. Use the edit tool on the board rather than overwriting it.
 
 ## jteam
 
-The script is `scripts/jteam` in this skill's directory. It needs the OpenCode V2 CLI, `git` and `jq`.
+The script is `scripts/jteam` in this skill's directory. It needs the OpenCode V2 CLI, `git`, `jq` and `gh`.
 
 ```text
-jteam self                                   this session's ID
-jteam ls [limit]                             top-level sessions: id, state, idle time, agent, title, directory
-jteam peek <session> [n]                     last n messages from both sides (default 4), oldest first, each labelled and cut to 1500 chars
-jteam send [--now] <session> <text...>       queue a message; --now delivers it mid-turn
-jteam spawn <repo> <branch|-> <title> <brief-file|-> [model] [agent]
-jteam spawn --continue <worktree> <title> <brief-file|-> [model] [agent]
-jteam status [board]                         stale board rows, sessions with no row, your draft PRs with CI, prunable worktrees
-jteam watch <pr> [repo-dir]                  wait on the PR's checks, then report CI and each review and comment since the head commit
-jteam prune [--dry-run] [repo]               remove clean worktrees whose PR is merged, with their branches, and archive their sessions
-jteam rm <worktree> [--force]                remove one worktree and archive its sessions; the branch is kept
+jteam self                          this session's ID
+jteam ls [limit]                    top-level sessions: id, state, idle time, agent, title, directory
+jteam worktree <repo> <branch>      prune, then a new OpenCode worktree and branch off origin's default branch, set up
+jteam status [board]                stale board lines, sessions with no line, your draft PRs with CI, prunable worktrees
+jteam watch <pr> [repo-dir]         wait on the PR's checks, then report CI and each review and comment since the head
+jteam prune [--dry-run] [repo]      remove clean worktrees whose PR is merged, with their branches, and archive their sessions
+jteam rm <worktree> [--force]       remove one worktree and archive its sessions; the branch is kept
 ```
 
-`spawn` uses OpenCode's own worktrees, so the session belongs to the repo's project and the worktree shows up in the app. It prunes the repo first. Then it creates the worktree off origin's default branch, at the configured `worktree.directory`, named `<repo>-<branch>`, and creates the branch. OpenCode runs the project's start command in the new worktree. `spawn` sets that command to `~/.config/opencode/worktree-setup/<repo>.sh` when the file exists, so worktrees made in the app get the same setup. Last, it starts a session (agent `JMode` by default). The session gets the brief plus a footer naming its own session ID, the worktree, the setup result and the session that started it. The session reads the board itself at start (see The board). Setup can take minutes, so run `spawn` with a 10-minute shell timeout. For work that changes no files, such as an investigation or a review of someone's PR, pass `-` as the branch. The session then runs in the main checkout, with no worktree.
+- **`worktree`** prints the worktree's path and the setup result. The setup is `~/.config/opencode/worktree-setup/<repo>.sh` when it exists.
+- **`status`** changes nothing. It reads a line as stale once every PR it names is merged or closed, or every session it names is archived.
+- **`watch`** exits 0 when CI passes or the PR has no checks, 1 when a check fails, and 2 when checks are pending or `gh` errors. Bugbot's check passes even when it finds bugs, so read its findings in the report.
+- **`prune`** keeps any worktree with changes or commits its merged PR lacks. Run it when James says PRs have merged. `gh stack sync --prune` deletes a stack's other merged branches.
+- **`rm`** is for a stream that ends without a merge. Run it from outside the worktree.
 
-`spawn --continue <worktree>` is for handoffs. It starts the session in an existing worktree on the branch already checked out there. It doesn't prune, run setup, or make a worktree or branch, and its footer names the worktree and branch.
-
-`status` reads a row as stale once every PR in its PR cell is merged or closed, or once every session it names is archived.
-
-`watch` exits 0 when CI passes or the PR has no checks, 1 when a check fails, and 2 when checks are still pending or `gh` errors. The report then says which, with `gh`'s error. It waits on every check, Cursor Bugbot's included. Bugbot's check passes even when it finds bugs. Its findings are reviews and review comments, so they show in the report.
-
-A spawn brief carries what j-mode's kickoff needs: the job, the scope and what is out of scope, the finish check, and James's standing orders that apply. Name branches `<type>/<ticket>-<slug>`, with `<type>` the PR title's conventional-commit type, for example `feat/res-391-chat-prompt`. With no ticket, use `<type>/<slug>`.
-
-A plain `send` waits until the receiver's current turn ends. Use `--now` only when the message changes what the receiver is doing right now, such as a stop or a fix that unblocks it.
-
-`send` and `spawn` tag their messages in the message metadata, so `peek` can tell James's own turns from agent traffic. It labels each message `[james]`, `[assistant]`, `[send from <session>]` or `[brief from <session>]`. Messages sent before the tag existed, or by other API clients, show as `[sent]`.
-
-Don't poll. Use the board, `status`, `ls` and `peek` when James asks for status, or before you write a brief about a stream. `status` is a read-only report and changes nothing. A flagged board row is yours to fix with the edit tool, and a worktree it lists is cleared by `prune`.
-
-Worktrees clean up after themselves. `prune` removes one once its PR is merged, the worktree is clean, and its commits are all in the merged PR. It runs on every `spawn` that makes a worktree. Run it yourself when James says PRs have merged, or `prune --dry-run` to see what it would remove. When a stream ends without a merge (abandoned, superseded, or a test), run `rm` on its worktree from outside it. The branch is kept. A stack's worktree goes once the PR of its checked-out branch is merged and nothing local is left. `gh stack sync --prune` deletes the stack's other merged branches.
+Don't poll. Use the board, `status` and `ls` when James asks for status.

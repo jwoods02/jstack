@@ -2,7 +2,7 @@
 
 <img src="./assets/logo.svg" alt="JStack logo" width="96" />
 
-JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). it is Cursor-only. the skills and principles come from pstack. the workflow in `j-mode` is James's own.
+JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). the skills and principles come from pstack. the workflow in `j-mode` is James's own. `j-mode` is the same on every host, and a short host file maps it to the host's tools: [`references/cursor.md`](./skills/j-mode/references/cursor.md) for Cursor, and the `j-team` skill in [`../opencode/`](../opencode/) for OpenCode.
 
 ## install
 
@@ -14,11 +14,11 @@ type [`/j-mode`](./skills/j-mode/SKILL.md) with a goal and a way to check it's d
 
 | job | when | model |
 |---|---|---|
-| coordinator | the Project chat. picks jobs, starts builders and reviewers, briefs James | opus 5.5 high |
-| architect | before a big change, or when the design is unclear. ends with a short decision list | opus 5.5 high; extra high for load-bearing designs |
+| lead | once James agrees a plan and says go. runs each PR's builder and reviewers as subagents and judges the reviews. in Cursor, the Project chat | opus 5.5 medium |
+| architect | before a one-way door or a large change, or when the design is unclear. ends with a short decision list | opus 5.5 high; extra high for load-bearing designs |
 | plan reviewer | plans of three or more PRs, before any builder starts | opus 5.5 high; extra high for load-bearing plans |
 | builder | one per PR. draft PR, CI green, then "ready for review" | opus 5.5 medium by default; opus 5.5 high for a very complex change; sonnet 5.5 high for very well-planned work; sonnet 5.5 extra high for a simple change with some ambiguity |
-| reviewer | one fresh agent per PR once CI is green, at most three rounds. a big change gets one `/interrogate` pass that its builder judges, and the last PR of a milestone or big chain gets a milestone review | opus 5.5 high; `/interrogate` on opus 5.5 high plus gemini 4 argon high; milestone reviewer on opus 5.5 extra high |
+| reviewer | one fresh agent per PR once CI is green, at most three rounds. a one-way door gets one `/interrogate` pass that the lead judges, and a stack that holds one gets a milestone review | opus 5.5 high; `/interrogate` on opus 5.5 high plus gemini 4 argon high; milestone reviewer on opus 5.5 extra high |
 | parallel builders | as many builder and reviewer pairs as there are independent tasks, one builder per PR or task | same as builder and reviewer |
 | investigator | read-only questions. no PR | sonnet 5.5 high |
 | watcher | only when waiting on something long, such as a deploy | sonnet 5.5 medium |
@@ -36,7 +36,7 @@ to keep `/j-mode` on across turns, pick it from the `/` menu and press option+en
 
 | skill | use it when |
 |---|---|
-| [`/j-mode`](./skills/j-mode/SKILL.md) | default entry point. picks one job (architect, builder, reviewer, investigator, or parallel builders) and keeps PRs draft. |
+| [`/j-mode`](./skills/j-mode/SKILL.md) | default entry point. picks one job (lead, architect, builder, reviewer, investigator, or parallel builders) and keeps PRs draft. |
 | [`/j-help`](./skills/j-help/SKILL.md) | you're new to JStack, or unsure which job, skill, or principle fits. finds out what you're trying to do, answers that part, and hands you a prompt to type. runs only when you type `/j-help`. |
 | [`/in-your-own-words`](./skills/in-your-own-words/SKILL.md) | you want the agent to play back your goal and the problem before it starts. runs only when you type `/in-your-own-words`. |
 | [`/sharpen`](./skills/sharpen/SKILL.md) | you want a task approached the way a top expert would, aimed at what you're really after, without overspecifying it or deciding your choices for you. |

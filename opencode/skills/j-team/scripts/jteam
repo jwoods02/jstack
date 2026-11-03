@@ -1,34 +1,23 @@
 #!/usr/bin/env bash
-# jteam: run and track JStack worker sessions on OpenCode. See ../SKILL.md.
+# jteam: worktrees, PR watches and board status for JStack on OpenCode. See ../SKILL.md.
 set -euo pipefail
 
 OC="${OPENCODE_BIN:-$(command -v opencode || echo /Applications/OpenCode.app/Contents/Resources/opencode-cli)}"
-SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 
 usage() {
   cat <<EOF
-jteam self                                   this session's ID
-jteam ls [limit]                             top-level sessions: id, state, idle time, agent, title, directory
-jteam peek <session> [n]                     last n messages (default 4), oldest first, each cut to 1500 chars
-                                             and labelled [james], [assistant], [send from <id>],
-                                             [brief from <id>], or [sent] for untagged API messages
-jteam send [--now] <session> <text...>       queue a message; --now delivers it mid-turn
-jteam spawn <repo> <branch|-> <title> <brief-file|-> [model] [agent]
-                                             new OpenCode worktree and branch off origin's default branch,
-                                             set up by the project's start command, with a session given the brief;
-                                             branch - runs the session in the main checkout with no worktree;
-                                             e.g. jteam spawn my-app feat/res-391-chat-prompt "Chat prompt" brief.md
-jteam spawn --continue <worktree> <title> <brief-file|-> [model] [agent]
-                                             a session in an existing worktree on its current branch, for handoffs;
-                                             makes no worktree or branch and doesn't prune
-jteam status [board]                         stale board rows, sessions with no row, your draft PRs with CI, and the
-                                             worktrees prune would remove; the board defaults to the repo's mapping line
-jteam watch <pr> [repo-dir]                  wait on the PR's checks, then print CI passed or the failing checks,
-                                             and each review and comment since the head commit; exits 1 on a red run
-jteam prune [--dry-run] [repo]               remove clean worktrees whose PR is merged, with their branches,
-                                             and archive their sessions; --dry-run only lists them
-jteam rm <worktree> [--force]                remove one worktree and archive its sessions; the branch is kept
+jteam self                          this session's ID
+jteam ls [limit]                    top-level sessions: id, state, idle time, agent, title, directory
+jteam worktree <repo> <branch>      prune, then a new OpenCode worktree and branch off origin's default branch,
+                                    set up by the project's start command; prints the path and the setup result
+jteam status [board]                stale board lines, sessions with no line, your draft PRs with CI, and the
+                                    worktrees prune would remove; the board defaults to the repo's mapping line
+jteam watch <pr> [repo-dir]         wait on the PR's checks, then print CI passed or the failing checks,
+                                    and each review and comment since the head commit; exits 1 on a red run
+jteam prune [--dry-run] [repo]      remove clean worktrees whose PR is merged, with their branches,
+                                    and archive their sessions; --dry-run only lists them
+jteam rm <worktree> [--force]       remove one worktree and archive its sessions; the branch is kept
 EOF
 }
 
@@ -41,11 +30,6 @@ api() {
   rm -f "$out"
 }
 data() { jq 'if type == "object" and has("data") then .data else . end'; }
-
-model_ref() { # provider/model[#variant] -> Model.Ref JSON
-  jq -cn --arg m "$1" '$m | capture("^(?<p>[^/]+)/(?<id>[^#]+)(#(?<v>.+))?$")
-    | {providerID: .p, id: .id} + (if .v then {variant: .v} else {} end)'
-}
 
 main_checkout() { # any path in a repo or one of its worktrees -> the main checkout
   local common
@@ -84,14 +68,13 @@ remove_worktree() { # project ID, main checkout, worktree directory, force
     || if [ "$4" = true ]; then git -C "$2" worktree remove --force "$3"; else git -C "$2" worktree remove "$3"; fi
 }
 
-board_for() { # main checkout -> board named by the `JStack boards: <repo> -> <path>` line in the global AGENTS.md, else the repo's own
+board_for() { # main checkout -> board named by the `JStack boards: <repo> -> <path>` line in the global AGENTS.md, else nothing
   local path
   path="$(awk -v r="$(basename "$1")" '/^JStack boards:/ {
       line = $0; sub(/^JStack boards:[ \t]*/, "", line); i = index(line, "->")
       name = substr(line, 1, i - 1); gsub(/[ \t]+$/, "", name)
       if (i && name == r) { line = substr(line, i + 2); gsub(/^[ \t]+|[ \t]+$/, "", line); print line; exit } }' "$CONFIG_DIR/AGENTS.md" 2>/dev/null)"
-  [ -n "$path" ] || path="$1/.opencode/jstack-board.md"
-  echo "${path/#\~/$HOME}"
+  [ -z "$path" ] || echo "${path/#\~/$HOME}"
 }
 
 prune() { # main checkout, project ID, dry run (true or false)
@@ -116,16 +99,16 @@ prune() { # main checkout, project ID, dry run (true or false)
       /^branch / { print dir "\t" head "\t" substr($2, 12) }')
 }
 
-pr_cell_refs() { # PR cell, repo's owner/name -> "owner/name number" per PR, with link labels not read as bare numbers
+pr_refs() { # board line, repo's owner/name -> "owner/name number" per PR, with link labels not read as bare numbers
   {
     grep -oE '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+' <<<"$1" || true
     sed -E 's/\[[^]]*\]\([^)]*\)//g' <<<"$1" | grep -oE '#[0-9]+' | sed -E "s|^#|$2/pull/|" || true
   } | sed -E 's|/pull/| |' | sort -u
 }
 
-stale_row() { # board row, active sessions JSON, repo's owner/name -> the reason the row is stale, if any
-  local row="$1" active="$2" nwo="$3" id ref n state done_prs="" all_done=false all_archived=false
-  [ -z "${PR_COLUMN:-}" ] || while read -r ref n; do
+stale_line() { # board line, active sessions JSON, repo's owner/name -> the reason the line is stale, if any
+  local line="$1" active="$2" nwo="$3" id ref n state done_prs="" all_done=false all_archived=false
+  while read -r ref n; do
     [ -n "$n" ] || continue
     state="$(gh pr view "$n" -R "$ref" --json state -q .state 2>/dev/null || true)"
     case "$state" in
@@ -133,32 +116,32 @@ stale_row() { # board row, active sessions JSON, repo's owner/name -> the reason
       "") echo "  could not read PR $ref#$n" >&2; all_done=false; break;;
       *) all_done=false; break;;
     esac
-  done < <(pr_cell_refs "$(awk -F'|' -v c="$PR_COLUMN" '{ print $c }' <<<"$row")" "$nwo")
+  done < <(pr_refs "$line" "$nwo")
   if [ "$all_done" = true ]; then echo "$done_prs"; return; fi
-  for id in $(grep -oE 'ses_[A-Za-z0-9]+' <<<"$row" | sort -u || true); do
+  for id in $(grep -oE 'ses_[A-Za-z0-9]+' <<<"$line" | sort -u || true); do
     all_archived=true
     jq -e --arg id "$id" 'any(.[]; .id == $id)' <<<"$active" >/dev/null && { all_archived=false; break; }
     api get "/api/session/$id" 2>/dev/null | data | jq -e '.time.archived' >/dev/null 2>&1 || { all_archived=false; break; }
   done
-  if [ "$all_archived" = true ]; then echo "every session in the row is archived"; fi
+  if [ "$all_archived" = true ]; then echo "every session in the line is archived"; fi
 }
 
 status() { # [board file]
-  local repo board nwo row reason active dirs
+  local repo board nwo line reason active dirs
   repo="$(main_checkout .)"
   board="${1:-$(board_for "$repo")}"
+  [ -n "$board" ] || { echo "no board for $(basename "$repo"): add a JStack boards line to $CONFIG_DIR/AGENTS.md" >&2; return 1; }
   [ -f "$board" ] || { echo "no board at $board" >&2; return 1; }
   nwo="$(cd "$repo" && gh repo view --json nameWithOwner -q .nameWithOwner)"
-  PR_COLUMN="$(awk -F'|' '/^\| *Stream/ { for (i = 1; i <= NF; i++) if ($i ~ /^ *PR *$/) print i; exit }' "$board")"
   active="$(api get "/api/session?parentID=null&archived=false&limit=100" | data)"
 
-  echo "Stale board rows ($board)"
-  while IFS= read -r row; do
-    reason="$(stale_row "$row" "$active" "$nwo")"
-    [ -z "$reason" ] || echo "  $(cut -d'|' -f2 <<<"$row" | cut -c1-70): $reason"
-  done < <(grep -E '^\|.*[A-Za-z0-9]' "$board" | awk -F'|' 'tolower($2) !~ /^ *stream *$/')
+  echo "Stale board lines ($board)"
+  while IFS= read -r line; do
+    reason="$(stale_line "$line" "$active" "$nwo")"
+    [ -z "$reason" ] || echo "  $(sed -E "s/^[-*] +//" <<<"$line" | cut -c1-70): $reason"
+  done < <(grep -E "ses_[A-Za-z0-9]+" "$board" || true)
 
-  echo "Active sessions with no row"
+  echo "Active sessions with no line"
   dirs="$(git -C "$repo" worktree list --porcelain | awk '/^worktree / { print substr($0, 10) }' | jq -R . | jq -sc .)"
   jq -r --argjson dirs "$dirs" '.[] | select(.location.directory as $d | $dirs | index($d)) | "\(.id)\t\(.title // "-")"' <<<"$active" \
     | while IFS=$'\t' read -r id title; do grep -qF "$id" "$board" || echo "  $id  $title"; done
@@ -241,92 +224,28 @@ case "$cmd" in
         .location.directory
       ] | @tsv'
     ;;
-  peek)
-    id="${1:?session id}"
-    n="${2:-4}"
-    api get "/api/session/$id/message?limit=$(( n * 4 > 40 ? n * 4 : 40 ))&order=desc" | data | jq -r --argjson n "$n" '
-      def who:
-        if .type == "assistant" then "assistant"
-        elif .metadata.jteam then "\(.metadata.jteam.kind // "send") from \(.metadata.jteam.from // "jteam")"
-        elif .metadata.displayText then "james"
-        else "sent" end;
-      [ .[] | select(.type == "assistant" or .type == "user")
-        | { who: who,
-            text: (if .type == "user" then (.metadata.displayText // .text // "")
-                   else [ .content[]? | select(.type == "text") | .text ] | join("\n") end) }
-        | select(.text | length > 0) ][:$n] | reverse | .[] | "[\(.who)] \(.text[0:1500])\n---"'
-    ;;
-  send)
-    delivery=queue
-    if [ "${1:-}" = --now ]; then delivery=steer; shift; fi
-    id="${1:?session id}"; shift
-    [ $# -gt 0 ] || { echo "nothing to send" >&2; exit 1; }
-    api post "/api/session/$id/prompt" -d "$(jq -cn --arg t "$*" --arg d "$delivery" --arg f "${OPENCODE_SESSION_ID:-}" \
-      '{text: $t, delivery: $d, metadata: {jteam: ({kind: "send"} + if $f == "" then {} else {from: $f} end)}}')" >/dev/null
-    echo "sent to $id ($delivery)"
-    ;;
-  spawn)
-    if [ "${1:-}" = --continue ]; then
-      [ $# -ge 4 ] || { usage >&2; exit 1; }
-      dir="$(cd "$(git -C "$2" rev-parse --show-toplevel)" && pwd -P)"
-      repo="$(main_checkout "$dir")"
-      [ "$dir" != "$repo" ] || { echo "--continue needs a worktree, not the main checkout" >&2; exit 1; }
-      branch="$(git -C "$dir" branch --show-current)"
-      [ -n "$branch" ] || { echo "$dir has no branch checked out" >&2; exit 1; }
-      shift 2
-      set -- "$repo" "$branch" "$@"
-      continuing=true
-    else
-      [ $# -ge 4 ] || { usage >&2; exit 1; }
-      repo="$(main_checkout "$1")"
-      continuing=false
-    fi
-    branch="$2" title="$3" brief_src="$4" model="${5:-}" agent="${6:-JMode}"
-    brief="$(if [ "$brief_src" = - ]; then cat; else cat "$brief_src"; fi)"
+  worktree)
+    [ $# -eq 2 ] || { usage >&2; exit 1; }
+    repo="$(main_checkout "$1")" branch="$2"
     pid="$(project_id "$repo")"
-    if [ "$continuing" = true ]; then
-      setup_note="Existing worktree."
-      footer="Worktree: $dir (branch $branch, continued from an earlier session, no new branch)."
-    elif [ "$branch" = - ]; then
-      dir="$repo"
-      setup_note="No worktree."
-      footer="Directory: $repo, the main checkout. This session has no worktree, so change no files here."
+    ensure_start_command "$pid" "$repo"
+    prune "$repo" "$pid" >&2
+
+    git -C "$repo" fetch -q origin
+    base="$(git -C "$repo" symbolic-ref -q --short refs/remotes/origin/HEAD || echo origin/main)"
+    dir="$(api post /api/worktree -d "$(jq -cn --arg p "$pid" --arg n "$(basename "$repo")-${branch//\//-}" --arg b "$base" \
+      '{projectID: $p, name: $n, branch: $b}')" | data | jq -r .directory)"
+    git -C "$dir" switch -q -c "$branch"
+
+    log="$(git -C "$dir" rev-parse --path-format=absolute --git-dir)/worktree-setup.log"
+    if [ ! -x "$CONFIG_DIR/worktree-setup/$(basename "$repo").sh" ]; then
+      setup_note="no setup script for this repo"
+    elif [ ! -f "$log" ] || [ "$(tail -n 1 "$log")" = "worktree setup ok" ]; then
+      setup_note="setup ran"
     else
-      ensure_start_command "$pid" "$repo"
-      prune "$repo" "$pid"
-
-      git -C "$repo" fetch -q origin
-      base="$(git -C "$repo" symbolic-ref -q --short refs/remotes/origin/HEAD || echo origin/main)"
-      dir="$(api post /api/worktree -d "$(jq -cn --arg p "$pid" --arg n "$(basename "$repo")-${branch//\//-}" --arg b "$base" \
-        '{projectID: $p, name: $n, branch: $b}')" | data | jq -r .directory)"
-      git -C "$dir" switch -q -c "$branch"
-
-      log="$(git -C "$dir" rev-parse --path-format=absolute --git-dir)/worktree-setup.log"
-      if [ ! -x "$CONFIG_DIR/worktree-setup/$(basename "$repo").sh" ]; then
-        setup_note="No setup script for this repo."
-      elif [ ! -f "$log" ] || [ "$(tail -n 1 "$log")" = "worktree setup ok" ]; then
-        setup_note="Setup ran."
-      else
-        setup_note="Setup did not finish. Read $log, then mark your board row blocked and wait."
-      fi
-      footer="Worktree: $dir (branch $branch off $base). $setup_note"
+      setup_note="setup did not finish: read $log, mark your board line blocked and wait"
     fi
-
-    body="$(jq -cn --arg t "$title" --arg a "$agent" --arg d "$dir" '{title: $t, agent: $a, location: {directory: $d}}')"
-    [ -n "$model" ] && body="$(jq -c --argjson m "$(model_ref "$model")" '. + {model: $m}' <<<"$body")"
-    sid="$(api post /api/session -d "$body" | data | jq -r .id)"
-
-    footer="Your session: $sid.
-$footer"
-    parent="${OPENCODE_SESSION_ID:-}"
-    if [ -n "$parent" ]; then
-      footer="$footer
-Started from session $parent. To send it a line (optional): $SELF send $parent \"<one or two lines>\""
-    fi
-    api post "/api/session/$sid/prompt" -d "$(jq -cn --arg t "$brief
-
-$footer" --arg f "$parent" '{text: $t, metadata: {jteam: ({kind: "brief"} + if $f == "" then {} else {from: $f} end)}}')" >/dev/null
-    printf '%s\t%s\t%s\t%s\n' "$sid" "$branch" "$dir" "$setup_note"
+    printf '%s\t%s off %s\t%s\n' "$dir" "$branch" "$base" "$setup_note"
     ;;
   status)
     status "${1:-}"

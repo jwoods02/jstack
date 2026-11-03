@@ -32,7 +32,7 @@ Review the code through every lens in the rubric and the code-quality lens above
 
 ## Evidence
 
-- If the code comes with a PR description, re-run every claim and number in it that you can. Say which ran and which couldn't.
+- If the code comes with a PR description, re-run every claim and number in it that you can, except what CI already ran on this head. Say which ran and which couldn't.
 - Back each bug you claim with a failing test or script that you ran, pasted into the finding so the author can rerun it. Don't commit it or change the repo.
 - Label a finding with no failing test "reasoned, not tested". The lead won't put it in Act on unless the reasoning is a proof.
 
