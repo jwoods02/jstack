@@ -16,7 +16,7 @@ Bundled skills live at `../<name>/SKILL.md` from this file, so put this file's a
 
 ## Start
 
-1. Read your brief, the project's preferences, and the plan or handoff doc if it has one. If another agent started you, you are a worker. Do your one job, then report back to it.
+1. Read your brief, the project's preferences, and the plan or handoff doc if it has one. If another agent started you as a subagent, you are a worker. Do your one job, then report back to it. A top-level chat that another chat started is standalone. It reports to James in its own chat and never reports back to the chat that started it.
 2. Check the tools the job needs (git, `gh`, the MCPs). Say what you can't run instead of promising a check.
 3. Pick a job below and say which one in your first line.
 
@@ -37,7 +37,7 @@ A **thread** is one piece of work James agreed, from one PR to a stack of them. 
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. Lead the reply with the answer, in a few sentences, before any detail. | `investigator` |
 | Watcher | Only when waiting on something long, such as a deploy. Usually the lead or builder runs one blocking command instead (see the host file's waits). | `watcher` |
 
-**Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. A new idea that isn't this thread's work belongs in a new chat. Say so, and give James a short brief he can paste into it: the job, the scope and what's out of scope, the finish check, and the branch name. Don't start that chat yourself.
+**Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. Work that isn't this thread's, such as a new idea or James asking for a new session, goes where the host file says. Write it a short brief: the job, the scope and what's out of scope, the finish check, and the branch name.
 
 **Running a thread.** Once James says go:
 
@@ -74,7 +74,7 @@ Builder reminders:
 - Milestone or load-bearing work: collect the calls James should make before you build. Give each a number, a recommended answer and the facts behind it, blocking calls first. More than about five means the plan has a gap, so send the top ones first. The lead puts them to James, and you build once he answers. When James has stepped away, make each call yourself and log it, with why and how hard it is to reverse. Lead the log with the calls he should look at first.
 - Tests: before review, run narrow local tests for what changed. Never run suites the repo says CI owns. Size the testing to the PR. A small change doesn't need dozens of harness runs.
 - Root causes: fix a root cause by simplifying, not by adding defensive handling (**principle-fix-root-causes**).
-- Shared tools: when signing, a hook, a credential or a global toolchain fails, stop and report it blocked. Don't turn signing off, skip hooks with `--no-verify` or change global config, because every other thread shares them and James has to unpick the workaround.
+- Shared tools: every role stops and reports it blocked only when a shared tool the job needs fails in a way a workaround would hide, such as commit signing, a hook, a credential or global config. Don't turn signing off, skip hooks with `--no-verify` or change global config, because every other thread shares them and James has to unpick the workaround. A missing convenience tool with an equivalent is not a blocker. Use the equivalent and say so in your report. When `rg` isn't installed, use `git grep` or the grep tool and carry on.
 - Waiting on CI or a run: one blocking command per wait, never repeated sleeps. The host file says how to wait longer.
 - Handoff: at the end of a PR, write a one-page handoff note (decisions, open items, files) for whoever picks up next.
 

@@ -167,6 +167,14 @@ All paths are inside `jstack/`.
 - `skills/j-help/SKILL.md`, `docs/guide.md`, the root `README.md` and the OpenCode files (`README.md`, `agents/JMode.md`, `skills/j-team/SKILL.md`): synced with the above.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.1.
 
+**Narrower tool-stop rule, agent-started sessions (v4.1.2).** A worker stops on a shared tool only when the job needs it and a workaround would hide the failure. A missing convenience tool with an equivalent is not a blocker.
+
+- `skills/j-mode/SKILL.md`: the Shared tools reminder applies to every role and names commit signing, hooks, credentials and global config. A missing `rg` means `git grep` or the grep tool, noted in the report.
+- OpenCode files: `agents/j-agent.md` carries the same rule. `skills/j-team/SKILL.md` narrows its shared-breakage list to match, says `jteam` isn't on PATH and gives its full path, says builders and leads run it while reviewers, architects and investigators don't, and makes scratch directories with `mktemp -d` instead of the session ID.
+- Agents start top-level sessions. Work outside the thread gets a new top-level chat that the agent starts itself, instead of a brief James pastes. `skills/j-mode/SKILL.md` says new work goes where the host file says, and that a top-level chat another chat started is standalone and reports to James. `skills/j-mode/references/cursor.md` keeps new work in the Project chat, or a brief to paste outside a Project. `agents/JMode.md` tells a session another session started that it is standalone. `skills/j-team/SKILL.md` documents `opencode run` for starting a session and messaging one, and `jteam ls` or `opencode session list` for finding them. Both READMEs drop "you open each session yourself".
+- `skills/j-team/SKILL.md` adds a platform-first rule. Prefer OpenCode's own commands and tools, and give any new jteam subcommand a reason the platform can't meet.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.2.
+
 ## How to merge a new release
 
 1. Add `https://github.com/cursor/plugins` as a remote named `upstream`, then fetch it.

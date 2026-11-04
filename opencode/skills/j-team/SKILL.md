@@ -21,7 +21,7 @@ j-mode is host-neutral, but some skills it calls (`how`, `why`, `interrogate`, `
 | `comment-sicko` | `explore`, told to read `../../agents/comment-sicko.md` from j-mode's skill directory and act as it |
 | The `jstack-models.mdc` rule | The model map below |
 | `.cursor/skills/` | `.opencode/skills/` |
-| Chat history in `agent-transcripts/` | OpenCode sessions. List them with `jteam ls`, and read one with `opencode api get "/api/session/<id>/message?limit=40&order=desc"`. |
+| Chat history in `agent-transcripts/` | OpenCode sessions. List them with `opencode session list`, and read one with `opencode api get "/api/session/<id>/message?limit=40&order=desc"`. |
 | A skill's file under `~/.cursor/plugins/` | Load the skill with the skill tool by its ID |
 
 ## Models
@@ -30,7 +30,11 @@ The model map is `jstack-models.md` in `~/.config/opencode/`. It uses the role n
 
 ## Sessions
 
-James opens every top-level session himself, and j-mode's brief for a new chat is what he pastes into one. Leads start subagents in the background.
+Leads start subagents in the background. Work outside the thread gets its own top-level session, which a top-level session starts itself with OpenCode's own CLI. Run both commands below as background shell commands.
+
+- **Start a new top-level session.** Write the brief to a file in your scratch dir. From the target repo, run `opencode run --agent JMode --model <role's model> --title '<job>' --auto -f <brief file> "Your brief is in the attached file. Follow it."`, with the model from the new session's role line in the model map. Tell James you started it. It reports to James in its own session, not to the one that started it.
+- **Send another session a message.** Run `opencode run -s <session id> -f <file> "<short pointer>"`. Use it to pass on follow-ups and scope changes.
+- **Find sessions.** `jteam ls` lists top-level sessions across projects. `opencode session list` lists the current project's.
 
 **Compaction.** OpenCode compacts a session automatically near its context limit, and a summary replaces the older conversation, including the j-mode and j-team text. A lead plans in its own context, so at go:
 
@@ -51,9 +55,9 @@ Investigations and reviews of someone else's PR need no worktree. They run in th
 
 Every branch of the stack lives in its worktree, because `gh stack add` makes and checks out each next branch in place. Builders and reviewers take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. While you wait on James about one PR, you can check out a later branch and build there.
 
-A session changes only its own worktree and branches, plus the project's docs. If setup fails, or a tool, credential or anything shared outside the worktree is broken (global toolchains, `~/.config/opencode`, the main checkout, commit signing), say so in your session, note it in the plan doc, and wait. James fixes it once, and parallel sessions repairing the same shared thing clobber each other.
+A session changes only its own worktree and branches, plus the project's docs. If setup fails, or something shared outside the worktree that the job needs is broken (commit signing, a hook, a credential, global config such as `~/.config/opencode`, the main checkout), say so in your session, note it in the plan doc, and wait. James fixes it once, and parallel sessions repairing the same shared thing clobber each other.
 
-Scratch files go in a directory named for your session ID under the shared temp dir, or inside your worktree. Never use a fixed name another session could also pick.
+Scratch files go in a directory from `mktemp -d` under the shared temp dir, or inside your worktree. Never use a fixed name another session could also pick.
 
 ## Each PR
 
@@ -82,7 +86,11 @@ Agents never merge, mark ready or unstack. The global `opencode.json` denies `gh
 
 ## jteam
 
-The script is `scripts/jteam` in this skill's directory. It needs the OpenCode V2 CLI, `git`, `jq` and `gh`.
+The script is `scripts/jteam` in this skill's directory. It isn't on PATH, so call it by its full path, the base directory shown when this skill loads followed by `/scripts/jteam`. This file writes it as `jteam` for short. It needs the OpenCode V2 CLI, `git`, `jq` and `gh`.
+
+Prefer OpenCode's own commands and tools, documented in this skill. jteam covers only what OpenCode can't do, so a new subcommand needs a reason the platform can't meet.
+
+Builders and leads run it. Reviewers, architects and investigators don't need it. Their brief gives the PR, the head and the paths, and `gh` reads PR state.
 
 ```text
 jteam self                          this session's ID
