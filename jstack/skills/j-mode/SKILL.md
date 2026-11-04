@@ -16,7 +16,7 @@ Bundled skills live at `../<name>/SKILL.md` from this file, so put this file's a
 
 ## Start
 
-1. Read your brief, the project's preferences, and the plan or handoff doc if it has one. If another agent started you, you are a worker. Do your one job, then report back to it.
+1. Read your brief, the project's preferences, and the plan or handoff doc if it has one. If another agent started you as a subagent, you are a worker. Do your one job, then report back to it. A top-level chat that another chat started is standalone. It reports to James in its own chat and never reports back to the chat that started it.
 2. Check the tools the job needs (git, `gh`, the MCPs). Say what you can't run instead of promising a check.
 3. Pick a job below and say which one in your first line.
 
@@ -37,7 +37,7 @@ A **thread** is one piece of work James agreed, from one PR to a stack of them. 
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. Lead the reply with the answer, in a few sentences, before any detail. | `investigator` |
 | Watcher | Only when waiting on something long, such as a deploy. Usually the lead or builder runs one blocking command instead (see the host file's waits). | `watcher` |
 
-**Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. Work that isn't this thread's, such as a new idea or James asking for a new session, belongs in a new top-level chat, not a subagent. Write it a short brief: the job, the scope and what's out of scope, the finish check, and the branch name. Start the new chat as the host file describes, and tell James you did. It reports to James in its own chat. If the host can't start one, give James the brief to paste.
+**Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. Work that isn't this thread's, such as a new idea or James asking for a new session, goes where the host file says. Write it a short brief: the job, the scope and what's out of scope, the finish check, and the branch name.
 
 **Running a thread.** Once James says go:
 

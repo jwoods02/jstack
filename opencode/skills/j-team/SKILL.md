@@ -32,7 +32,7 @@ The model map is `jstack-models.md` in `~/.config/opencode/`. It uses the role n
 
 Leads start subagents in the background. Work outside the thread gets its own top-level session, which a top-level session starts itself with OpenCode's own CLI. Run both commands below as background shell commands.
 
-- **Start a new top-level session.** Write the brief to a file in your scratch dir. From the target repo, run `opencode run --agent JMode --model <role's model> --title '<job>' --auto -f <brief file> "Your brief is in the attached file. Follow it."`, with the model from the new session's role line in the model map. It reports to James in its own session, not to the one that started it.
+- **Start a new top-level session.** Write the brief to a file in your scratch dir. From the target repo, run `opencode run --agent JMode --model <role's model> --title '<job>' --auto -f <brief file> "Your brief is in the attached file. Follow it."`, with the model from the new session's role line in the model map. Tell James you started it. It reports to James in its own session, not to the one that started it.
 - **Send another session a message.** Run `opencode run -s <session id> -f <file> "<short pointer>"`. Use it to pass on follow-ups and scope changes.
 - **Find sessions.** `jteam ls` lists top-level sessions across projects. `opencode session list` lists the current project's.
 
