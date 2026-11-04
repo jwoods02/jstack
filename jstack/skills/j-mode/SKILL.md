@@ -37,7 +37,7 @@ A **thread** is one piece of work James agreed, from one PR to a stack of them. 
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. Lead the reply with the answer, in a few sentences, before any detail. | `investigator` |
 | Watcher | Only when waiting on something long, such as a deploy. Usually the lead or builder runs one blocking command instead (see the host file's waits). | `watcher` |
 
-**Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. A new idea that isn't this thread's work belongs in a new chat. Say so, and give James a short brief he can paste into it: the job, the scope and what's out of scope, the finish check, and the branch name. Don't start that chat yourself.
+**Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. Work that isn't this thread's, such as a new idea or James asking for a new session, belongs in a new top-level chat, not a subagent. Write it a short brief: the job, the scope and what's out of scope, the finish check, and the branch name. Start the new chat as the host file describes, and tell James you did. It reports to James in its own chat. If the host can't start one, give James the brief to paste.
 
 **Running a thread.** Once James says go:
 

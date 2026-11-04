@@ -8,6 +8,7 @@ This is j-mode's host file for Cursor. It says how j-mode's words map to Cursor'
 - **Shared context.** The project's docs are the Project's shared context, and each plan or handoff doc holds its state. Outside a Project, use the chat's own todo list.
 - **Earlier chats.** Read them from the workspace's `agent-transcripts/` directory. Don't glob across `~/.cursor/projects/*/`, which reads unrelated projects' chats.
 - **Project skills.** These live in `.cursor/skills/`.
+- **New chats.** JStack has no tested way for an agent to open a top-level Cursor chat, so give James the brief to paste into one.
 
 ## Subagents
 

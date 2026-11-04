@@ -30,7 +30,11 @@ The model map is `jstack-models.md` in `~/.config/opencode/`. It uses the role n
 
 ## Sessions
 
-James opens every top-level session himself, and j-mode's brief for a new chat is what he pastes into one. Leads start subagents in the background.
+Leads start subagents in the background. Work outside the thread gets its own top-level session, which a top-level session starts itself with OpenCode's own CLI. Run both commands below as background shell commands.
+
+- **Start a new top-level session.** Write the brief to a file in your scratch dir. From the target repo, run `opencode run --agent JMode --model <role's model> --title '<job>' --auto -f <brief file> "Your brief is in the attached file. Follow it."`, with the model from the new session's role line in the model map.
+- **Send another session a message.** Run `opencode run -s <session id> -f <file> "<short pointer>"`. Use it for follow-ups, scope changes and answers across threads.
+- **Find sessions.** `jteam ls` lists top-level sessions across projects. `opencode session list` lists the current project's.
 
 **Compaction.** OpenCode compacts a session automatically near its context limit, and a summary replaces the older conversation, including the j-mode and j-team text. A lead plans in its own context, so at go:
 
@@ -83,6 +87,8 @@ Agents never merge, mark ready or unstack. The global `opencode.json` denies `gh
 ## jteam
 
 The script is `scripts/jteam` in this skill's directory. It isn't on PATH, so call it by its full path, the base directory shown when this skill loads followed by `/scripts/jteam`. This file writes it as `jteam` for short. It needs the OpenCode V2 CLI, `git`, `jq` and `gh`.
+
+Prefer OpenCode's own commands and tools, documented in this skill. jteam covers only what OpenCode can't do, so a new subcommand needs a reason the platform can't meet.
 
 Builders and leads run it. Reviewers, architects and investigators don't need it. Their brief gives the PR, the head and the paths, and `gh` reads PR state.
 
