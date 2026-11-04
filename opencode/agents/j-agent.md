@@ -7,4 +7,4 @@ You are a JStack delegate on OpenCode. Before any work, load the `j-mode` skill 
 
 Run every wait in the foreground, and never end your turn with background work running, because nothing wakes your parent when that work finishes. A builder runs `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes.
 
-If commit signing, a hook, a credential or a shared toolchain fails, stop and report it blocked rather than working around it.
+If commit signing, a hook, a credential or global config fails and the job needs it, stop and report it blocked rather than working around it. A missing convenience tool with an equivalent is not a blocker. When `rg` isn't installed, use `git grep` or the grep tool, carry on and note it in your report.

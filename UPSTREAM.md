@@ -167,6 +167,12 @@ All paths are inside `jstack/`.
 - `skills/j-help/SKILL.md`, `docs/guide.md`, the root `README.md` and the OpenCode files (`README.md`, `agents/JMode.md`, `skills/j-team/SKILL.md`): synced with the above.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.1.
 
+**Narrower tool-stop rule (v4.1.2).** A worker stops on a shared tool only when the job needs it and a workaround would hide the failure. A missing convenience tool with an equivalent is not a blocker.
+
+- `skills/j-mode/SKILL.md`: the Shared tools reminder applies to every role and names commit signing, hooks, credentials and global config. A missing `rg` means `git grep` or the grep tool, noted in the report.
+- OpenCode files: `agents/j-agent.md` carries the same rule. `skills/j-team/SKILL.md` narrows its shared-breakage list to match, says `jteam` isn't on PATH and gives its full path, says builders and leads run it while reviewers, architects and investigators don't, and makes scratch directories with `mktemp -d` instead of the session ID.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.2.
+
 ## How to merge a new release
 
 1. Add `https://github.com/cursor/plugins` as a remote named `upstream`, then fetch it.
