@@ -1,6 +1,7 @@
 # JStack model map for OpenCode. Copy to ~/.config/opencode/jstack-models.md and set the IDs your providers offer.
 # Role names match jstack/rules/jstack-models.mdc. IDs are provider/model#variant.
-# The reviewer is always a different provider from the builder, at the builder's level. Sol builds by default and Opus reviews it.
+# The reviewer is a different provider from the builder, at the builder's level. Sol builds by default and Opus reviews it.
+# An Opus builder at any level, including `hardest tasks`, gets the Sol High reviewer.
 # Opus builds only security-sensitive, very ambiguous or one-way-door work, and Sol reviews that.
 # Reviewers go up a level only for the milestone review, or a holistic review James asks for.
 # The explore agent always runs on Sonnet Medium. Leads, architects and plan reviewers stay as they are.
