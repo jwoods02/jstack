@@ -20,7 +20,7 @@ To install it, open Cursor's Customize, choose From GitHub Repository, and add t
 
 ## Jobs and models
 
-The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) and the [Artificial Analysis](https://artificialanalysis.ai) Intelligence Index as guides. Anthropic leads every role, and on Cursor no OpenAI models are used. The OpenCode map, which you set yourself, can put another family on the reviewer seats. Gemini only takes a second seat on panels that an Anthropic agent leads. Opus runs at High unless deeper reasoning clearly changes the outcome. Agents never start on Max but may escalate to it.
+The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) and the [Artificial Analysis](https://artificialanalysis.ai) Intelligence Index as guides. Anthropic leads every role, and on Cursor no OpenAI models are used. The OpenCode map, which you set yourself, can put another family on the builder and reviewer seats. The example map has Sol build by default and Opus review it, and Opus build only security-sensitive, very ambiguous or one-way-door work with Sol reviewing. Gemini only takes a second seat on panels that an Anthropic agent leads. Opus runs at High unless deeper reasoning clearly changes the outcome. Agents never start on Max but may escalate to it.
 
 | Job or role | Model | Why |
 |---|---|---|
