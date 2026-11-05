@@ -64,7 +64,7 @@ Scratch files go in a directory from `mktemp -d` under the shared temp dir, or i
 - **The builder.** Start a fresh `j-agent` on the `builder` model, in the worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
 - **The builder's watch.** The builder opens or pushes the draft PR, then runs `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes. Shell commands time out after 2 minutes by default. On a red run it fixes, pushes and watches again. On a green run, including one with no checks, it triages the bot findings in the report per j-mode's `references/bugbot-triage.md`. A fix means a push, so it watches again. Once a head is green with its findings triaged, it reports "ready for review" with that head commit.
 - **Repos with no CI.** The builder still runs `jteam watch` to collect bot findings. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so.
-- **The lead's part.** The lead doesn't watch CI. It posts the PR link in its session, starts the reviewer on the line for the other provider from the builder, at the builder's level, and judges the findings. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
+- **The lead's part.** The lead doesn't watch CI. It posts the PR link in its session, starts the reviewer on the reviewer line the map gives for that builder's model and level, and judges the findings. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
 
 ## Waits
 
