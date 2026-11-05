@@ -175,6 +175,12 @@ All paths are inside `jstack/`.
 - `skills/j-team/SKILL.md` adds a platform-first rule. Prefer OpenCode's own commands and tools, and give any new jteam subcommand a reason the platform can't meet.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.2.
 
+**UI screenshots (v4.1.3).** UI PRs kept losing their screenshots. They sat in scattered docs folders, a reviewer opened one and counted the set as seen, and `gh` couldn't upload them, so agents tried a browser.
+
+- `skills/j-mode/references/ui-screenshots.md`: new. One flat shots folder per thread with a `pr-<n>-<state>-<before|after>.png` set in body order, one read per image, and a Screenshots table in the PR body. It uses `gh --attach` (v2.99.0 and later) when present. Otherwise it leaves file-name placeholders, opens the folder in Finder and ends the report with the files in drag order. No browser, no repo commits.
+- `skills/j-mode/SKILL.md`: a PR rule and a skill trigger point to it.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.3.
+
 ## How to merge a new release
 
 1. Add `https://github.com/cursor/plugins` as a remote named `upstream`, then fetch it.

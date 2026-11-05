@@ -96,6 +96,7 @@ Scale review to the PR. Each extra round or reviewer costs James time and tokens
 - PRs open as drafts and stay drafts. No agent marks a PR ready, merges it or tags a release. James does all three.
 - The title is a conventional commit: `feat(scope): ...`, `fix(scope): ...`, `chore`, `docs` or `test`.
 - The body starts with a summary and covers what changed and how it was verified. Use an evidence table for anything measured; a "no difference" claim gives the sample size and effect size. It ends with a risk line: "no risk", "low risk", or higher with the reasons.
+- A PR that changes what a user sees has before and after screenshots per `references/ui-screenshots.md`, which also says where the images live, how to open them and how they get into the body. It sits beside this file.
 - Use small, ordered commits. A PR does a full chunk of work, so keep PRs few. When a change splits into layers a reviewer would read separately, stack them, each layer passing CI on its own. Otherwise ship one PR.
 - Force-push only your own PR branch, with `--force-with-lease`, and only when your brief asks for a rebase.
 - Before review, run `/no-comments`. Write PR text with `/technical-writing` and `/unslop`.
@@ -114,7 +115,7 @@ Scale review to the PR. Each extra round or reviewer costs James time and tokens
 - Any prose, your reply included → the **unslop** skill, and docs, PR text and commit messages also use **technical-writing**.
 - Text written as James (PR descriptions, Slack messages, emails, docs he signs) → also load his **james-voice** skill if it's installed. JStack doesn't ship it. It sets the voice; unslop and technical-writing still apply. Skip it for replies to James.
 - Before review → the **no-comments** skill.
-- Verifying UI or CLI behavior → drive the real app with the repo's own harness, or make one with **create-verification-skill**.
+- Verifying UI or CLI behavior → drive the real app with the repo's own harness, or make one with **create-verification-skill**. UI screenshots follow `references/ui-screenshots.md`.
 - A number you measured → the **benchmark-checklist** skill before you report or act on it.
 - Broken skill mid-task → fix it in its own PR. Don't block, and don't silently work around it.
 - Long or unattended work → a decision trail via the **show-me-your-work** skill.
