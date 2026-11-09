@@ -62,9 +62,8 @@ Scratch files go in a directory from `mktemp -d` under the shared temp dir, or i
 ## Each PR
 
 - **The builder.** Start a fresh `j-agent` on the `builder` model, in the worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
-- **The builder's watch.** The builder opens or pushes the draft PR, then runs `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes. Shell commands time out after 2 minutes by default. On a red run it fixes, pushes and watches again. On a green run, including one with no checks, it triages the bot findings in the report per j-mode's `references/bugbot-triage.md`. A fix means a push, so it watches again. Once a head is green with its findings triaged, it reports "ready for review" with that head commit.
-- **Repos with no CI.** The builder still runs `jteam watch` to collect bot findings. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so.
-- **The lead's part.** The lead doesn't watch CI. It posts the PR link in its session, starts the reviewer on the reviewer line the map gives for that builder's model and level, and judges the findings. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
+- **The reviewer's watch.** CI runs while the reviewer reviews, so its last step is `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes. Shell commands time out after 2 minutes by default. The report gives CI's result and each bot or human review since the head, and the reviewer includes them in its verdict. The builder never watches CI. In a repo with no CI the watch still collects bot findings, and the PR passes on its review plus the plan's finish check run locally.
+- **The lead's part.** The lead posts the PR link in its session, starts the reviewer on the reviewer line the map gives for that builder's model and level, and judges the findings. It runs `jteam watch <n>` itself, as a background shell command, only when no reviewer is running, such as after a fix that earns no round 2. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
 
 ## Waits
 
@@ -90,7 +89,7 @@ The script is `scripts/jteam` in this skill's directory. It isn't on PATH, so ca
 
 Prefer OpenCode's own commands and tools, documented in this skill. jteam covers only what OpenCode can't do, so a new subcommand needs a reason the platform can't meet.
 
-Builders and leads run it. Reviewers, architects and investigators don't need it. Their brief gives the PR, the head and the paths, and `gh` reads PR state.
+Leads, reviewers and one-off builders run it. Architects and investigators don't need it. Their brief gives the PR, the head and the paths, and `gh` reads PR state.
 
 ```text
 jteam self                          this session's ID
@@ -104,7 +103,7 @@ jteam rm <worktree> [--force]       remove one worktree and archive its sessions
 
 - **`worktree`** prints the worktree's path and the setup result. The setup is `~/.config/opencode/worktree-setup/<repo>.sh` when it exists.
 - **`status`** changes nothing. Run it inside a repo or one of its worktrees. It lists only that repo's PRs.
-- **`watch`** exits 0 when CI passes or the PR has no checks, 1 when a check fails, and 2 when checks are pending or `gh` errors. Bugbot's check passes even when it finds bugs, so read its findings in the report.
+- **`watch`** waits for every check except `Cursor Bugbot Autofix`, which sits in progress for 30 minutes whenever Bugbot finds something. It exits 0 when CI passes or the PR has no checks, 1 when a check fails, and 2 when checks are pending or `gh` errors. Bugbot's check passes even when it finds bugs, so read its findings in the report.
 - **`prune`** keeps any worktree with changes or commits its merged PR lacks. Run it when James says PRs have merged. `gh stack sync --prune` deletes a stack's other merged branches.
 - **`rm`** is for a thread that ends without a merge. Run it from outside the worktree.
 

@@ -175,6 +175,15 @@ All paths are inside `jstack/`.
 - `skills/j-team/SKILL.md` adds a platform-first rule. Prefer OpenCode's own commands and tools, and give any new jteam subcommand a reason the platform can't meet.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.2.
 
+**Faster PRs, PR text that stands alone (v4.2.0).** `gh pr checks --watch` waited 30 minutes on `Cursor Bugbot Autofix` after every Bugbot finding, and builders wrote PR descriptions that pointed at files on James's machine.
+
+- `opencode/skills/j-team/scripts/jteam`: `watch` polls `gh pr checks --json` itself, skips `Cursor Bugbot Autofix` and waits up to a minute for checks to appear after a push.
+- `skills/j-mode/SKILL.md`: builders open the PR with a placeholder body and don't wait on CI. The reviewer ends by collecting CI and bot comments, the lead writes the description after review, a pass with only Consider findings gets no round 2, and the lead runs independent work in parallel and updates plan state less often.
+- `skills/j-mode/references/pr-and-ticket-text.md`: new.
+- OpenCode and Cursor host files, `docs/guide.md` and `skills/j-help/SKILL.md`: synced.
+- `AGENTS.md`: new, a short note to keep prompts light.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 4.2.0.
+
 ## How to merge a new release
 
 1. Add `https://github.com/cursor/plugins` as a remote named `upstream`, then fetch it.

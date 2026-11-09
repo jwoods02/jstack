@@ -108,19 +108,41 @@ status() {
 
 oneline() { tr '\n' ' ' <"$1" | sed 's/ *$//'; }
 
-watch_pr() { # PR number, URL or branch -> report on its checks and on reviews and comments since the head commit
-  local pr="$1" view n since watch_err watch_rc=0 checks checks_err rc=0 verdict status=0 spec page findings=""
-  watch_err="$(mktemp)" checks_err="$(mktemp)"
-  gh pr checks "$pr" --watch --interval 30 >/dev/null 2>"$watch_err" || watch_rc=$?
+# Cursor Bugbot Autofix sits in progress for 30 minutes whenever Bugbot finds something, so waiting on it stalls every watch.
+UNWATCHED_CHECKS='^Cursor Bugbot Autofix$'
+
+await_checks() { # PR -> sets checks, checks_err and checks_rc once every watched check finishes or gh keeps erroring
+  local pr="$1" interval="${JTEAM_CHECK_INTERVAL:-10}" grace="${JTEAM_CHECK_GRACE:-60}" started errors=0
+  started="$(date +%s)"
+  while :; do
+    checks_rc=0
+    checks="$(gh pr checks "$pr" --json name,bucket 2>"$checks_err")" || checks_rc=$?
+    if grep -q '^no checks reported' "$checks_err"; then
+      [ $(( $(date +%s) - started )) -lt "$grace" ] || return 0
+    elif jq -e 'type == "array"' <<<"$checks" >/dev/null 2>&1; then
+      errors=0
+      checks="$(jq -c --arg skip "$UNWATCHED_CHECKS" 'map(select(.name | test($skip) | not))' <<<"$checks")"
+      [ "$(jq 'any(.[]; .bucket == "pending")' <<<"$checks")" = true ] || return 0
+    else
+      errors=$((errors + 1))
+      [ "$errors" -lt 3 ] || return 0
+    fi
+    sleep "$interval"
+  done
+}
+
+watch_pr() { # PR number, URL or branch -> CI result, then reviews and comments since the head commit
+  local pr="$1" view n since checks checks_rc checks_err verdict status=0 spec page findings=""
+  checks_err="$(mktemp)"
+  await_checks "$pr"
   view="$(gh pr view "$pr" --json number,title,headRefOid)" || return 2
   n="$(jq -r .number <<<"$view")"
   since="$(gh api "repos/{owner}/{repo}/commits/$(jq -r .headRefOid <<<"$view")" --jq .commit.committer.date)" || return 2
   jq -r '"#\(.number) \(.title) (head \(.headRefOid[0:7]))"' <<<"$view"
-  checks="$(gh pr checks "$n" --json name,bucket 2>"$checks_err")" || rc=$?
   if grep -q '^no checks reported' "$checks_err"; then
     verdict="CI passed (no checks)"
   elif ! jq -e 'type == "array"' <<<"$checks" >/dev/null 2>&1; then
-    verdict="CI unreadable (gh pr checks exited $rc): $(oneline "$checks_err")" status=2
+    verdict="CI unreadable (gh pr checks exited $checks_rc): $(oneline "$checks_err")" status=2
   else
     verdict="$(jq -r '
       def names(b): [.[] | select(.bucket as $x | b | index($x)) | .name] | join(", ");
@@ -131,11 +153,8 @@ watch_pr() { # PR number, URL or branch -> report on its checks and on reviews a
       "CI failed"*) status=1;;
       "CI pending"*) status=2;;
     esac
-    if [ "$watch_rc" != 0 ] && [ "$status" != 1 ]; then
-      verdict="$verdict (watch exited $watch_rc: $(oneline "$watch_err"))" status=2
-    fi
   fi
-  rm -f "$watch_err" "$checks_err"
+  rm -f "$checks_err"
   echo "$verdict"
   for spec in "review:pulls/$n/reviews" "review comment:pulls/$n/comments" "comment:issues/$n/comments"; do
     if page="$(gh api --paginate "repos/{owner}/{repo}/${spec#*:}")" && page="$(jq -c --arg k "${spec%%:*}" '.[]
