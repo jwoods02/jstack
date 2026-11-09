@@ -109,7 +109,7 @@ Jobs are sections of `/j-mode`, not skills, so they have no slash command. Descr
 
 - "How does X work?" or "why is Y like this?" runs the investigator. No PR.
 - "Design X", or any large or hard-to-reverse change, runs the architect. It ends with a short decision list and stops for the user.
-- "Fix", "build" or "change X" runs a builder. It opens a draft PR, and a fresh reviewer starts straight away and reviews while the lead waits on CI. A one-way door (a change that is hard to reverse, such as a data migration or a public API) gets one `/interrogate` pass with two models instead, and a stack that holds one gets a milestone review before the user merges.
+- "Fix", "build" or "change X" runs a builder. It opens a draft PR, and a fresh reviewer starts straight away. A one-way door (a change that is hard to reverse, such as a data migration or a public API) gets one `/interrogate` pass with two models instead, and a stack that holds one gets a milestone review before the user merges.
 - Agreeing a plan and saying go makes the chat the lead. It runs each PR's builder and reviewer as subagents and judges the reviews.
 - Several independent changes run as one builder and reviewer pair each, at once.
 

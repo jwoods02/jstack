@@ -175,14 +175,14 @@ All paths are inside `jstack/`.
 - `skills/j-team/SKILL.md` adds a platform-first rule. Prefer OpenCode's own commands and tools, and give any new jteam subcommand a reason the platform can't meet.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.1.2.
 
-**Faster PRs, PR text that stands alone (v4.2.0).** A session on a four-PR stack lost about two and a half hours of builder time to `Cursor Bugbot Autofix`, a check that sits in progress for 30 minutes whenever Bugbot finds something, while `gh pr checks --watch` waited on it. PR descriptions written by builders also pointed at files on James's machine.
+**Faster PRs, PR text that stands alone (v4.2.0).** `gh pr checks --watch` waited 30 minutes on `Cursor Bugbot Autofix` after every Bugbot finding, and builders wrote PR descriptions that pointed at files on James's machine.
 
-- `opencode/skills/j-team/scripts/jteam`: `watch` polls `gh pr checks --json` itself instead of `gh pr checks --watch`. It ignores `Cursor Bugbot Autofix`, exits on the first failed check, and waits up to a minute for checks to appear after a push. `scripts/test-jteam-watch.sh` covers each.
-- `skills/j-mode/SKILL.md`: the builder opens the PR with a placeholder body, never waits on CI and hands over a verification note. The reviewer starts when the builder reports and never waits on CI. The lead runs `jteam watch` in the background beside it and judges both results together. The builder gets one fix pass for everything. A pass with only Consider findings gets no round 2. The lead writes the PR description after review. PR bodies and tickets never point at files on James's machine.
-- `skills/j-mode/SKILL.md`, Running a thread: the plan names its parallel split and James's go covers it, a PR above one in review can start once the contract it needs is settled, and a reviewed PR takes late work as a fix with a delta review instead of a new PR stacked on top. State in the plan doc updates at start, at each pass and at handoff, because in one session 36 of 194 lead turns, about $8.50 of $43, were plan-doc edits.
-- `skills/j-mode/references/pr-and-ticket-text.md`: new. It covers who writes the text and when, the stand-alone rule, using the repo's PR template or a default narrative shape, keeping a bot's marker block, and what a ticket holds.
-- OpenCode files: `skills/j-team/SKILL.md` and `agents/j-agent.md` move the watch from the builder to the lead, add `jteam findings` for reviewers, and add parallel builders in their own worktrees. `skills/j-team/SKILL.md` also says to rebase upper PRs once per lower PR and why `gh stack rebase` needs care when a reviewer has a branch checked out.
-- `docs/guide.md`, `skills/j-help/SKILL.md`, `plugin.json` and `.cursor-plugin/plugin.json`: synced, version 4.2.0.
+- `opencode/skills/j-team/scripts/jteam`: `watch` polls `gh pr checks --json` itself, skips `Cursor Bugbot Autofix` and waits up to a minute for checks to appear after a push.
+- `skills/j-mode/SKILL.md`: builders open the PR with a placeholder body and don't wait on CI. The reviewer ends by collecting CI and bot comments, the lead writes the description after review, a pass with only Consider findings gets no round 2, and the lead runs independent work in parallel and updates plan state less often.
+- `skills/j-mode/references/pr-and-ticket-text.md`: new.
+- OpenCode and Cursor host files, `docs/guide.md` and `skills/j-help/SKILL.md`: synced.
+- `AGENTS.md`: new, a short note to keep prompts light.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 4.2.0.
 
 ## How to merge a new release
 

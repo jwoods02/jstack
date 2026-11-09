@@ -13,7 +13,6 @@ jteam worktree <repo> <branch>      prune, then a new OpenCode worktree and bran
 jteam status                        your open draft PRs in this repo with CI, and the worktrees prune would remove
 jteam watch <pr> [repo-dir]         wait on the PR's checks, then print CI passed or the failing checks,
                                     and each review and comment since the head commit; exits 1 on a red run
-jteam findings <pr> [repo-dir]      reviews and comments since the head commit, from bots and people, without waiting
 jteam prune [--dry-run] [repo]      remove clean worktrees whose PR is merged, with their branches,
                                     and archive their sessions; --dry-run only lists them
 jteam rm <worktree> [--force]       remove one worktree and archive its sessions; the branch is kept
@@ -112,8 +111,8 @@ oneline() { tr '\n' ' ' <"$1" | sed 's/ *$//'; }
 # Cursor Bugbot Autofix sits in progress for 30 minutes whenever Bugbot finds something, so waiting on it stalls every watch.
 UNWATCHED_CHECKS='^Cursor Bugbot Autofix$'
 
-await_checks() { # PR -> sets checks, checks_err and checks_rc once every watched check finishes, one fails, or gh keeps erroring
-  local pr="$1" interval="${JTEAM_CHECK_INTERVAL:-10}" grace="${JTEAM_CHECK_GRACE:-60}" started errors=0 pending failed
+await_checks() { # PR -> sets checks, checks_err and checks_rc once every watched check finishes or gh keeps erroring
+  local pr="$1" interval="${JTEAM_CHECK_INTERVAL:-10}" grace="${JTEAM_CHECK_GRACE:-60}" started errors=0
   started="$(date +%s)"
   while :; do
     checks_rc=0
@@ -123,9 +122,7 @@ await_checks() { # PR -> sets checks, checks_err and checks_rc once every watche
     elif jq -e 'type == "array"' <<<"$checks" >/dev/null 2>&1; then
       errors=0
       checks="$(jq -c --arg skip "$UNWATCHED_CHECKS" 'map(select(.name | test($skip) | not))' <<<"$checks")"
-      failed="$(jq 'any(.[]; .bucket == "fail" or .bucket == "cancel")' <<<"$checks")"
-      pending="$(jq 'any(.[]; .bucket == "pending")' <<<"$checks")"
-      if [ "$failed" = true ] || [ "$pending" = false ]; then return 0; fi
+      [ "$(jq 'any(.[]; .bucket == "pending")' <<<"$checks")" = true ] || return 0
     else
       errors=$((errors + 1))
       [ "$errors" -lt 3 ] || return 0
@@ -134,34 +131,14 @@ await_checks() { # PR -> sets checks, checks_err and checks_rc once every watche
   done
 }
 
-pr_head() { # PR -> sets n and since (when the head commit landed), prints "#n title (head sha)"
-  local view
-  view="$(gh pr view "$1" --json number,title,headRefOid)" || return 2
+watch_pr() { # PR number, URL or branch -> CI result, then reviews and comments since the head commit
+  local pr="$1" view n since checks checks_rc checks_err verdict status=0 spec page findings=""
+  checks_err="$(mktemp)"
+  await_checks "$pr"
+  view="$(gh pr view "$pr" --json number,title,headRefOid)" || return 2
   n="$(jq -r .number <<<"$view")"
   since="$(gh api "repos/{owner}/{repo}/commits/$(jq -r .headRefOid <<<"$view")" --jq .commit.committer.date)" || return 2
   jq -r '"#\(.number) \(.title) (head \(.headRefOid[0:7]))"' <<<"$view"
-}
-
-findings() { # n, since -> reviews and comments since the head commit, from bots and people alike
-  local spec page all="" status=0
-  for spec in "review:pulls/$1/reviews" "review comment:pulls/$1/comments" "comment:issues/$1/comments"; do
-    if page="$(gh api --paginate "repos/{owner}/{repo}/${spec#*:}")" && page="$(jq -c --arg k "${spec%%:*}" '.[]
-      | {kind: $k, at: (.submitted_at // .created_at), state, who: .user.login, body, url: .html_url}' <<<"$page")"; then
-      all+="$page"$'\n'
-    else
-      echo "Findings unreadable: ${spec#*:}"; status=2
-    fi
-  done
-  jq -rs --arg since "$2" 'sort_by(.at)[] | select(.at > $since)
-    | "\(.kind) by \(.who)\(if .state then " \(.state)" else "" end): \((.body // "") | split("\n") | map(select(test("\\S") and (test("^\\s*<!--") | not))) | (.[0] // "") | .[0:160]) \(.url)"' <<<"$all" || status=2
-  return "$status"
-}
-
-watch_pr() { # PR number, URL or branch -> CI result, then reviews and comments since the head commit
-  local pr="$1" n since checks checks_rc checks_err verdict status=0 running
-  checks_err="$(mktemp)"
-  await_checks "$pr"
-  pr_head "$pr" || return 2
   if grep -q '^no checks reported' "$checks_err"; then
     verdict="CI passed (no checks)"
   elif ! jq -e 'type == "array"' <<<"$checks" >/dev/null 2>&1; then
@@ -172,15 +149,23 @@ watch_pr() { # PR number, URL or branch -> CI result, then reviews and comments 
       if names(["fail", "cancel"]) != "" then "CI failed: \(names(["fail", "cancel"]))"
       elif names(["pending"]) != "" then "CI pending: \(names(["pending"]))"
       else "CI passed" end' <<<"$checks")"
-    running="$(jq -r '[.[] | select(.bucket == "pending") | .name] | join(", ")' <<<"$checks")"
     case "$verdict" in
-      "CI failed"*) status=1; [ -z "$running" ] || verdict="$verdict (still running: $running, so its findings may not be in yet)";;
+      "CI failed"*) status=1;;
       "CI pending"*) status=2;;
     esac
   fi
   rm -f "$checks_err"
   echo "$verdict"
-  findings "$n" "$since" || status=2
+  for spec in "review:pulls/$n/reviews" "review comment:pulls/$n/comments" "comment:issues/$n/comments"; do
+    if page="$(gh api --paginate "repos/{owner}/{repo}/${spec#*:}")" && page="$(jq -c --arg k "${spec%%:*}" '.[]
+      | {kind: $k, at: (.submitted_at // .created_at), state, who: .user.login, body, url: .html_url}' <<<"$page")"; then
+      findings+="$page"$'\n'
+    else
+      echo "Findings unreadable: ${spec#*:}"; status=2
+    fi
+  done
+  jq -rs --arg since "$since" 'sort_by(.at)[] | select(.at > $since)
+    | "\(.kind) by \(.who)\(if .state then " \(.state)" else "" end): \((.body // "") | split("\n") | map(select(test("\\S") and (test("^\\s*<!--") | not))) | (.[0] // "") | .[0:160]) \(.url)"' <<<"$findings" || status=2
   return "$status"
 }
 
@@ -234,11 +219,6 @@ case "$cmd" in
   watch)
     cd "${2:-.}"
     watch_pr "${1:?PR number}"
-    ;;
-  findings)
-    cd "${2:-.}"
-    pr_head "${1:?PR number}" >/dev/null
-    findings "$n" "$since"
     ;;
   prune)
     dry=false

@@ -53,7 +53,7 @@ A thread that changes files has one worktree, made at go. A one-off builder with
 
 Investigations and reviews of someone else's PR need no worktree. They run in the main checkout and change no files there.
 
-Every branch of the stack lives in its worktree, because `gh stack add` makes and checks out each next branch in place. A builder and a reviewer on the same PR take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. Parallel work gets its own worktree, so a reviewer of one PR and the builder of the next don't share a checkout.
+Every branch of the stack lives in its worktree, because `gh stack add` makes and checks out each next branch in place. Builders and reviewers take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. While you wait on James about one PR, you can check out a later branch and build there.
 
 A session changes only its own worktree and branches, plus the project's docs. If setup fails, or something shared outside the worktree that the job needs is broken (commit signing, a hook, a credential, global config such as `~/.config/opencode`, the main checkout), say so in your session, note it in the plan doc, and wait. James fixes it once, and parallel sessions repairing the same shared thing clobber each other.
 
@@ -62,11 +62,8 @@ Scratch files go in a directory from `mktemp -d` under the shared temp dir, or i
 ## Each PR
 
 - **The builder.** Start a fresh `j-agent` on the `builder` model, in the worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
-- **The lead's watch.** In the turn it starts a PR's reviewer, the lead runs `jteam watch <n>` as a background shell command, and OpenCode wakes it when CI ends. The reviewer never waits on CI. The lead needs both results before it sends the builder its one fix pass, so it judges the verdict, then reads the watch report for CI and each bot or human review since the head. The same goes for a round 2 reviewer and for a fix that earns no round 2.
-- **Repos with no CI.** The watch still collects bot findings. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so.
-- **Reviewers and findings.** A reviewer runs `jteam findings <n>` when it starts and again just before it reports. It prints reviews and comments from bots and people since the head commit, without waiting, and the reviewer passes on whatever it finds.
-- **Parallel builders.** Each builder has its own worktree from `jteam worktree`, branched from the head of the PR it builds on, or a detached checkout for a reviewer. The lead coordinates rebases, one branch at a time.
-- **The lead's other part.** The lead posts the PR link in its session as soon as the builder reports, starts the reviewer on the reviewer line the map gives for that builder's model and level, and judges the findings. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
+- **The reviewer's watch.** CI runs while the reviewer reviews, so its last step is `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes. Shell commands time out after 2 minutes by default. The report gives CI's result and each bot or human review since the head, and the reviewer includes them in its verdict. The builder never watches CI. In a repo with no CI the watch still collects bot findings, and the PR passes on its review plus the plan's finish check run locally.
+- **The lead's part.** The lead posts the PR link in its session, starts the reviewer on the reviewer line the map gives for that builder's model and level, and judges the findings. It runs `jteam watch <n>` itself, as a background shell command, only when no reviewer is running, such as after a fix that earns no round 2. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
 
 ## Waits
 
@@ -80,7 +77,7 @@ Drive `gh stack` non-interactively:
 
 - `gh stack init` makes the stack, and `gh stack add <branch>` adds each next branch.
 - `gh stack submit --auto` opens the PRs as drafts.
-- `gh stack rebase` then `gh stack push` cascade a fix in a lower PR up the stack. Rebase the PRs above a lower PR once, after its fixes settle, because each rebase restarts their CI. `gh stack rebase` also rebases local branches that other worktrees have checked out, such as a reviewer's. When one does, rebase each branch with `git rebase --onto <new base> <old base>` and push it with `--force-with-lease`.
+- `gh stack rebase` then `gh stack push` cascade a fix in a lower PR up the stack.
 - `gh stack sync` runs after James merges a lower PR, and `--prune` deletes merged branches.
 - `gh stack view --json` reads the state.
 
@@ -92,7 +89,7 @@ The script is `scripts/jteam` in this skill's directory. It isn't on PATH, so ca
 
 Prefer OpenCode's own commands and tools, documented in this skill. jteam covers only what OpenCode can't do, so a new subcommand needs a reason the platform can't meet.
 
-Leads, one-off builders and reviewers (for `findings`) run it. Architects and investigators don't need it. Their brief gives the PR, the head and the paths, and `gh` reads PR state.
+Leads, reviewers and one-off builders run it. Architects and investigators don't need it. Their brief gives the PR, the head and the paths, and `gh` reads PR state.
 
 ```text
 jteam self                          this session's ID
@@ -106,8 +103,7 @@ jteam rm <worktree> [--force]       remove one worktree and archive its sessions
 
 - **`worktree`** prints the worktree's path and the setup result. The setup is `~/.config/opencode/worktree-setup/<repo>.sh` when it exists.
 - **`status`** changes nothing. Run it inside a repo or one of its worktrees. It lists only that repo's PRs.
-- **`watch`** polls every 10 seconds and exits 0 when CI passes or the PR has no checks, 1 as soon as a check fails, and 2 when `gh` keeps erroring. It waits up to a minute for checks to appear after a push, so it needs no `sleep` before it. When a check fails first, the report names the checks still running, since Bugbot's findings may not be in yet. It doesn't wait on `Cursor Bugbot Autofix`, which sits in progress for 30 minutes whenever Bugbot finds something. Bugbot's own check passes even when it finds bugs, so read its findings in the report.
-- **`findings`** only reads. Run it any time.
+- **`watch`** waits for every check except `Cursor Bugbot Autofix`, which sits in progress for 30 minutes whenever Bugbot finds something. It exits 0 when CI passes or the PR has no checks, 1 when a check fails, and 2 when checks are pending or `gh` errors. Bugbot's check passes even when it finds bugs, so read its findings in the report.
 - **`prune`** keeps any worktree with changes or commits its merged PR lacks. Run it when James says PRs have merged. `gh stack sync --prune` deletes a stack's other merged branches.
 - **`rm`** is for a thread that ends without a merge. Run it from outside the worktree.
 

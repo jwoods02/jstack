@@ -60,12 +60,6 @@ expect "pending checks are polled until they pass" "CI passed" "$out"
 [ "$(calls)" = 3 ] && echo "ok   polled three times" || { echo "FAIL polled $(calls) times, want 3"; fail=1; }
 exits "polled to pass" "$rc" 0
 
-rc=0; out="$(run '[{"name": "lint", "bucket": "fail"}, {"name": "slow", "bucket": "pending"}]')" || rc=$?
-expect "a failure ends the watch while another check is pending" "CI failed: lint" "$out"
-expect "a failure names what is still running" "still running: slow" "$out"
-[ "$(calls)" = 1 ] && echo "ok   failed fast after one poll" || { echo "FAIL polled $(calls) times, want 1"; fail=1; }
-exits "fail fast" "$rc" 1
-
 rc=0; out="$(run '[{"name": "lint", "bucket": "pass"}, {"name": "Cursor Bugbot Autofix", "bucket": "pending"}]')" || rc=$?
 expect "an in-progress Bugbot Autofix doesn't hold the watch" "CI passed" "$out"
 [ "$(calls)" = 1 ] && echo "ok   passed after one poll" || { echo "FAIL polled $(calls) times, want 1"; fail=1; }
@@ -80,11 +74,6 @@ rc=0; out="$(run '' CHECKS_ERR="HTTP 502: Bad Gateway")" || rc=$?
 expect "checks query error shows gh's error" "CI unreadable (gh pr checks exited 1): HTTP 502: Bad Gateway" "$out"
 expect_not "checks query error isn't reported as passed" "CI passed" "$out"
 exits "checks query error" "$rc" 2
-
-rc=0; out="$(cd "$tmp/repo" && PATH="$tmp/bin:$PATH" CALLS_FILE="$tmp/calls" "$JTEAM" findings 7 2>&1)" || rc=$?
-expect "findings lists a review after the head commit" "review by cursor[bot] COMMENTED: New finding https://x/new" "$out"
-expect_not "findings doesn't report CI" "CI " "$out"
-exits "findings" "$rc" 0
 
 for endpoint in pulls/7/reviews pulls/7/comments issues/7/comments; do
   rc=0; out="$(run '[{"name": "test", "bucket": "pass"}]' FAILING_ENDPOINT="repos/{owner}/{repo}/$endpoint")" || rc=$?

@@ -21,8 +21,7 @@ This is j-mode's host file for Cursor. It says how j-mode's words map to Cursor'
 
 ## Waits
 
-- For a short wait, run one blocking `gh pr checks --watch --fail-fast`. Add `--required` where the repo has required checks, because `Cursor Bugbot Autofix` sits in progress for 30 minutes whenever Bugbot finds something.
-- The lead starts that wait when it starts the reviewer, so CI runs while the reviewer reviews. The reviewer never waits on CI.
+- For a short wait, run one blocking `gh pr checks --watch`. Add `--required` where the repo has required checks, because `Cursor Bugbot Autofix` sits in progress for 30 minutes whenever Bugbot finds something.
 - For a wait over about 20 minutes, end the turn and subscribe to a timer with `/loop`, or to CI events. Subscribe to merged, ready for review and CI conclusion, not every push.
 - End every watch with a clear stand-down.
 
