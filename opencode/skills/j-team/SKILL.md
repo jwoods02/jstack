@@ -53,7 +53,7 @@ A thread that changes files has one worktree, made at go. A one-off builder with
 
 Investigations and reviews of someone else's PR need no worktree. They run in the main checkout and change no files there.
 
-Every branch of the stack lives in its worktree, because `gh stack add` makes and checks out each next branch in place. Builders and reviewers take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. While you wait on James about one PR, you can check out a later branch and build there.
+Every branch of the stack lives in its worktree, because `gh stack add` makes and checks out each next branch in place. A builder and a reviewer on the same PR take turns in it, and nothing else uses it while one is running. A reviewer tests a checked-out head, so a builder can't switch branches under it. Parallel work gets its own worktree, so a reviewer of one PR and the builder of the next don't share a checkout.
 
 A session changes only its own worktree and branches, plus the project's docs. If setup fails, or something shared outside the worktree that the job needs is broken (commit signing, a hook, a credential, global config such as `~/.config/opencode`, the main checkout), say so in your session, note it in the plan doc, and wait. James fixes it once, and parallel sessions repairing the same shared thing clobber each other.
 
@@ -62,14 +62,15 @@ Scratch files go in a directory from `mktemp -d` under the shared temp dir, or i
 ## Each PR
 
 - **The builder.** Start a fresh `j-agent` on the `builder` model, in the worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
-- **The reviewer's watch.** A reviewer for a PR, and each round 2 reviewer, starts `jteam watch <n>` in the background as its first step and reads the result before it reports, so CI and Bugbot run while it reviews. See Waits for the commands. Its report gives CI's result on the head and each bot finding with a fix or dismiss call per j-mode's `references/bugbot-triage.md`.
-- **Repos with no CI.** The reviewer still runs `jteam watch` to collect bot findings. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so.
-- **The lead's part.** The lead posts the PR link in its session as soon as the builder reports, and starts the reviewer on the reviewer line the map gives for that builder's model and level in the same turn. It sends the builder one resume with every reviewer finding, bot finding and CI failure. It doesn't watch CI itself, except for a one-way door's `/interrogate` or after a fix that earns no round 2, where it runs `jteam watch <n>` as a background shell command. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
+- **The lead's watch.** In the turn it starts a PR's reviewer, the lead runs `jteam watch <n>` as a background shell command, and OpenCode wakes it when CI ends. The reviewer never waits on CI. The lead needs both results before it sends the builder its one fix pass, so it judges the verdict, then reads the watch report for CI and each bot or human review since the head. The same goes for a round 2 reviewer and for a fix that earns no round 2.
+- **Repos with no CI.** The watch still collects bot findings. The PR then passes on its review plus the plan's finish check run locally, and the PR body says so.
+- **Reviewers and findings.** A reviewer runs `jteam findings <n>` when it starts and again just before it reports. It prints reviews and comments from bots and people since the head commit, without waiting, and the reviewer passes on whatever it finds.
+- **Parallel builders.** Each builder has its own worktree from `jteam worktree`, branched from the head of the PR it builds on, or a detached checkout for a reviewer. The lead coordinates rebases, one branch at a time.
+- **The lead's other part.** The lead posts the PR link in its session as soon as the builder reports, starts the reviewer on the reviewer line the map gives for that builder's model and level, and judges the findings. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
 
 ## Waits
 
-- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. A builder runs its waits in the foreground. A builder that once ended its turn with CI and reviewers still running cost three hours, because nothing woke the lead when they finished.
-- **A reviewer overlaps CI with its review** with two commands. First a background shell command, with `out` from `mktemp -d`: `jteam watch <n> >"$out/watch.txt" 2>&1; echo $? >"$out/watch.rc"`. When the review is drafted, one foreground shell command with a timeout of about 45 minutes: `while [ ! -e "$out/watch.rc" ]; do sleep 5; done; cat "$out/watch.txt" "$out/watch.rc"`. The reviewer never reports with the first still running.
+- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. Builders and reviewers run their waits in the foreground. A builder that once ended its turn with CI and reviewers still running cost three hours, because nothing woke the lead when they finished.
 - A session that ends a turn on a wait says so in its last line. The line names what it waits on, the head commit, when the wait started and what the session does next. For example: "Waiting on the reviewer for #946 at `50c0fe7`, started 14:05. I start PR 2 once it passes."
 - A top-level session watching a PR on its own runs `jteam watch <n>` as a background shell command, and OpenCode wakes the session when it ends.
 
@@ -91,7 +92,7 @@ The script is `scripts/jteam` in this skill's directory. It isn't on PATH, so ca
 
 Prefer OpenCode's own commands and tools, documented in this skill. jteam covers only what OpenCode can't do, so a new subcommand needs a reason the platform can't meet.
 
-Leads, reviewers and one-off builders run it. Architects and investigators don't need it. Their brief gives the PR, the head and the paths, and `gh` reads PR state.
+Leads, one-off builders and reviewers (for `findings`) run it. Architects and investigators don't need it. Their brief gives the PR, the head and the paths, and `gh` reads PR state.
 
 ```text
 jteam self                          this session's ID
@@ -105,7 +106,8 @@ jteam rm <worktree> [--force]       remove one worktree and archive its sessions
 
 - **`worktree`** prints the worktree's path and the setup result. The setup is `~/.config/opencode/worktree-setup/<repo>.sh` when it exists.
 - **`status`** changes nothing. Run it inside a repo or one of its worktrees. It lists only that repo's PRs.
-- **`watch`** polls every 10 seconds and exits 0 when CI passes or the PR has no checks, 1 as soon as a check fails, and 2 when `gh` keeps erroring. It waits up to a minute for checks to appear after a push, so it needs no `sleep` before it. It doesn't wait on `Cursor Bugbot Autofix`, which sits in progress for 30 minutes whenever Bugbot finds something. Bugbot's own check passes even when it finds bugs, so read its findings in the report.
+- **`watch`** polls every 10 seconds and exits 0 when CI passes or the PR has no checks, 1 as soon as a check fails, and 2 when `gh` keeps erroring. It waits up to a minute for checks to appear after a push, so it needs no `sleep` before it. When a check fails first, the report names the checks still running, since Bugbot's findings may not be in yet. It doesn't wait on `Cursor Bugbot Autofix`, which sits in progress for 30 minutes whenever Bugbot finds something. Bugbot's own check passes even when it finds bugs, so read its findings in the report.
+- **`findings`** only reads. Run it any time.
 - **`prune`** keeps any worktree with changes or commits its merged PR lacks. Run it when James says PRs have merged. `gh stack sync --prune` deletes a stack's other merged branches.
 - **`rm`** is for a thread that ends without a merge. Run it from outside the worktree.
 

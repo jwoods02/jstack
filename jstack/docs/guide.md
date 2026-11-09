@@ -25,7 +25,7 @@ To keep `/j-mode` on for the whole chat, pick it from the `/` menu and press Opt
 - **Investigator.** Answers "how does X work?" or "why is Y like this?". No PR.
 - **Architect.** Designs a big or unclear change and ends with a short decision list for you to answer.
 - **Builder.** One per PR. Opens a draft PR with a placeholder body and says "ready for review". The lead writes the PR description once the PR has passed review.
-- **Reviewer.** A fresh agent per PR, started as soon as the builder reports. It waits on CI while it reviews. At most three rounds. A one-way door (hard to reverse, such as a data migration or a public API) gets one `/interrogate` pass instead, with two models, and the lead judges their findings. A stack that holds one also gets a milestone review before you merge.
+- **Reviewer.** A fresh agent per PR, started as soon as the builder reports. It reviews while the lead waits on CI. At most three rounds. A one-way door (hard to reverse, such as a data migration or a public API) gets one `/interrogate` pass instead, with two models, and the lead judges their findings. A stack that holds one also gets a milestone review before you merge.
 - **Parallel builders.** As many builder and reviewer pairs as there are independent tasks. One builder per PR or task.
 - **Lead.** Once you agree a plan and say go, the chat leads the thread. It runs each PR's builder and reviewer as subagents and judges the reviews.
 
