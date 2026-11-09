@@ -2,7 +2,7 @@
 
 Use this when you write a PR description or a ticket. Both are read by people who have none of James's files, chats or agents. Write for a colleague who opens the link cold.
 
-Load `/technical-writing` and `/unslop` first, and James's `james-voice` skill when it's installed. A PR description goes out as James.
+Load `/technical-writing` and `/unslop` first, and James's `james-voice` skill when it's installed, reading its PR samples. A PR description goes out with his name on it.
 
 ## Who writes it and when
 
@@ -24,7 +24,7 @@ If the repo has a PR template (`.github/pull_request_template.md`, `.github/PULL
 
 1. **Why.** Open with a short plain paragraph: the problem, who it's for and what changes for them. Then what the next engineer who owns this code inherits. A reader who stops here should still know why the PR exists.
 2. **What it does.** Group by what a reviewer reads together, not by file. Name the real symbols and paths in the repo. For a stack, say where this PR sits, what it's based on and what merges with it.
-3. **Decisions and trade-offs.** Each call that shaped the change: what was chosen, what was rejected and why, and what it costs. Include the calls made in the chat with James. Write them as "I chose X over Y because", since the text goes out as him.
+3. **Decisions and trade-offs.** Each call that shaped the change: what was chosen, what was rejected and why, and what it costs. Include the calls made in the chat with James. Write his calls in first person ("I chose X over Y because"), and credit digging an agent did plainly, as `james-voice` says.
 4. **Verification.** The commands and tests that prove it, and what each showed. An evidence table for anything measured, with the sample size. Say what you didn't test.
 5. **For the reviewer and the deployer.** Anything to do or know: migrations and their order, flags, config, rollout steps, backfills, what to read first, known gaps and follow-ups, and what this PR leaves out.
 6. **Ticket and risk.** The ticket line in the form the repo asks for, then a risk line: "no risk", "low risk", or higher with the reasons.
