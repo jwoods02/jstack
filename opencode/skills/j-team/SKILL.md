@@ -36,11 +36,7 @@ Leads start subagents in the background. Work outside the thread gets its own to
 - **Send another session a message.** Run `opencode run -s <session id> -f <file> "<short pointer>"`. Use it to pass on follow-ups and scope changes.
 - **Find sessions.** `jteam ls` lists top-level sessions across projects. `opencode session list` lists the current project's.
 
-**Compaction.** OpenCode compacts a session automatically near its context limit, and a summary replaces the older conversation, including the j-mode and j-team text. A lead plans in its own context, so at go:
-
-1. Write the plan doc and start the first builder.
-2. If the session is over about 150k tokens, request compaction with `opencode api post "/api/session/$(jteam self)/compact" --data '{}'`. It runs at the next safe point.
-3. End the turn with the wait line (see Waits). The builder's report wakes the session after the summary.
+**Compaction.** OpenCode compacts a session automatically near its context limit, and a summary replaces the older conversation, including the j-mode and j-team text. A lead plans in its own context, so at go it writes the plan doc, starts the first builder, requests compaction with `opencode api post "/api/session/$(jteam self)/compact" --data '{}'`, and ends the turn with the wait line (see Waits). Compaction runs at the next safe point, and the builder's report wakes the session after the summary.
 
 After any compaction, load j-mode and j-team again before you act.
 
@@ -61,13 +57,13 @@ Scratch files go in a directory from `mktemp -d` under the shared temp dir, or i
 
 ## Each PR
 
-- **The builder.** Start a fresh `j-agent` on the `builder` model, in the worktree, on the next stack branch. Use another builder line only when the agreed plan names it for that PR. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
-- **The reviewer's watch.** CI runs while the reviewer reviews, so its last step is `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes. Shell commands time out after 2 minutes by default. The report gives CI's result and each bot or human review since the head, and the reviewer includes them in its verdict. The builder never watches CI. In a repo with no CI the watch still collects bot findings, and the PR passes on its review plus the plan's finish check run locally.
-- **The lead's part.** The lead posts the PR link in its session, starts the reviewer on the reviewer line the map gives for that builder's model and level, and judges the findings. It runs `jteam watch <n>` itself, as a background shell command, only when no reviewer is running, such as after a fix that earns no round 2. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
+- **The builder.** Start a fresh `j-agent` on the builder line j-mode picks for the PR, in the worktree, on the next stack branch. A builder that turns out harder than planned reports back, and you ask James before restarting it a level up.
+- **The reviewer's watch.** CI runs while the reviewer works, so its last step is `jteam watch <n>` in the foreground with a shell timeout of about 45 minutes. Shell commands time out after 2 minutes by default. The report gives CI's result and each bot or human review since the head, and the reviewer fixes the real ones before its verdict. In a repo with no CI the watch still collects bot findings, and the PR passes on the reviewer's verdict plus the plan's finish check run locally.
+- **The lead's part.** The lead starts the reviewer on the `reviewer` line, and posts the PR link in its session once the reviewer reports. It runs `jteam watch <n>` itself, as a background shell command, only when no reviewer is running, such as after a late fix. A passing verdict's head must equal `gh pr view <n> --json headRefOid`.
 
 ## Waits
 
-- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. Builders and reviewers run their waits in the foreground. A builder that once ended its turn with CI and reviewers still running cost three hours, because nothing woke the lead when they finished.
+- A subagent never ends its turn with background work running. It ends done, blocked or needing a call, and says which. Builders and reviewers run their waits in the foreground, because nothing wakes the lead when background work finishes.
 - A session that ends a turn on a wait says so in its last line. The line names what it waits on, the head commit, when the wait started and what the session does next. For example: "Waiting on the reviewer for #946 at `50c0fe7`, started 14:05. I start PR 2 once it passes."
 - A top-level session watching a PR on its own runs `jteam watch <n>` as a background shell command, and OpenCode wakes the session when it ends.
 

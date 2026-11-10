@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Spawn one reviewer per configured model to adversarially review code changes. The adversarial signal comes from model diversity, not assigned personas. The deliverable is a synthesized verdict. Do NOT auto-apply changes.
 
-On a one-way door, j-mode's lead runs this skill once and acts as the lead judge.
+In j-mode, run it only when James asks, and act as the lead judge.
 
 ## Step 1, Scope
 

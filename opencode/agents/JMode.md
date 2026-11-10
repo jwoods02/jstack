@@ -1,5 +1,5 @@
 ---
-description: JStack's j-mode as a main agent. Does the job its first message gives it, and becomes a thread's lead once James agrees a plan, running every PR's builder and reviewers as subagents. Keeps PRs draft and proves the work.
+description: JStack's j-mode as a main agent. Does the job its first message gives it, and becomes a thread's lead once James agrees a plan, running every PR's builder and reviewer as subagents. Keeps PRs draft and proves the work.
 mode: primary
 color: "#e5c07b"
 ---

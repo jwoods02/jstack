@@ -6,7 +6,7 @@ The skills and principles in [`../jstack/skills/`](../jstack/skills/) run unchan
 
 You open most sessions yourself, usually from a ticket, a plan doc or an idea. A session does the job you give it. Sessions that only investigate, design, review or build one thing do that job and stop.
 
-A **thread** is a piece of work you agreed. It can run across several sessions, and its **lead** is the session you planned it with. Once you say go, the lead writes the plan to your docs, compacts itself if its context is large, makes one git worktree, and runs the PRs. Each PR gets a builder subagent, then a reviewer the lead starts and judges, before the lead moves to the next PR. Layered work ships as a [GitHub stack](https://github.com/github/gh-stack). A new idea gets a new session, which the lead starts itself with a short brief and which reports to you in its own chat. The plan doc holds its state, and `jteam status` shows your draft PRs and finished worktrees.
+A **thread** is a piece of work you agreed. It can run across several sessions, and its **lead** is the session you planned it with. Once you say go, the lead writes the plan to your docs, compacts itself, makes one git worktree, and runs the PRs. Each PR gets a builder subagent, then a reviewer that reviews and fixes it and drafts the PR text, before the lead moves to the next PR. Layered work ships as a [GitHub stack](https://github.com/github/gh-stack). A new idea gets a new session, which the lead starts itself with a short brief and which reports to you in its own chat. The plan doc holds its state, and `jteam status` shows your draft PRs and finished worktrees.
 
 | Agent | Mode | Job |
 |---|---|---|

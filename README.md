@@ -16,21 +16,22 @@ To install it, open Cursor's Customize, choose From GitHub Repository, and add t
 
 ## OpenCode
 
-[`opencode/`](opencode/) runs the same skills on OpenCode V2, with nothing copied out of `jstack/`. `j-mode` is host-neutral. Each host has a short host file for its tools: [`references/cursor.md`](jstack/skills/j-mode/references/cursor.md) on Cursor, and the `j-team` skill on OpenCode. `opencode/` adds two agents, a model map template and `j-team`, with its `jteam` script. You open sessions, and a session can start another for separate work. Once you agree a plan, the session leads the thread in one git worktree, runs every PR's builder and reviewers as subagents, and ships layered work as a GitHub stack. Install also covers the `gh stack` extension, its agent skill, and deny rules that keep agents from merging, marking ready or unstacking. See [its README](opencode/README.md).
+[`opencode/`](opencode/) runs the same skills on OpenCode V2, with nothing copied out of `jstack/`. `j-mode` is host-neutral. Each host has a short host file for its tools: [`references/cursor.md`](jstack/skills/j-mode/references/cursor.md) on Cursor, and the `j-team` skill on OpenCode. `opencode/` adds two agents, a model map template and `j-team`, with its `jteam` script. You open sessions, and a session can start another for separate work. Once you agree a plan, the session leads the thread in one git worktree, runs every PR's builder and reviewer as subagents, and ships layered work as a GitHub stack. Install also covers the `gh stack` extension, its agent skill, and deny rules that keep agents from merging, marking ready or unstacking. See [its README](opencode/README.md).
 
 ## Jobs and models
 
-The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) and the [Artificial Analysis](https://artificialanalysis.ai) Intelligence Index as guides. Anthropic leads every role, and on Cursor no OpenAI models are used. The OpenCode map, which you set yourself, can put another family on the builder and reviewer seats. The example map has Sol build by default and Opus review it, and Opus build only security-sensitive, very ambiguous or one-way-door work with Sol reviewing. Gemini only takes a second seat on panels that an Anthropic agent leads. Opus runs at High unless deeper reasoning clearly changes the outcome. Agents never start on Max but may escalate to it.
+The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) and the [Artificial Analysis](https://artificialanalysis.ai) Intelligence Index as guides. Anthropic leads every role, and on Cursor no OpenAI models are used. The OpenCode map, which you set yourself, can put another family on the builder seat. The example map has Sol build PRs that are mainly code and Opus build ones that are mainly process, prompts, docs or skills. An Opus reviewer reviews and fixes every PR, and Fable architects. Gemini only takes a second seat on panels that an Anthropic agent leads. Opus runs at High unless deeper reasoning clearly changes the outcome. Agents never start on Max but may escalate to it.
 
 | Job or role | Model | Why |
 |---|---|---|
-| Lead (the Project chat on Cursor) | Opus 5.5 Medium | Plans, runs builders and reviewers, judges reviews; on Cursor, set in the Project's settings |
-| Architect | Opus 5.5 High; Extra High for load-bearing designs | A load-bearing design is hard to undo |
-| Plan reviewer (plans of three or more PRs) | Opus 5.5 High; Extra High for load-bearing plans | On a load-bearing plan, its verdict gates every builder |
-| Builder | Opus 5.5 Medium by default; Opus 5.5 High for a very complex change; Sonnet 5.5 High for very well-planned work; Sonnet 5.5 Extra High for a simple change with some ambiguity | James's builder rule (27 Oct) |
-| Hardest tasks | Opus 5.5 Extra High | Subtle concurrency, tricky algorithms and repeat-failure bugs are where depth pays |
-| Reviewer (every PR) | Opus 5.5 High | High ties Extra High on CursorBench at about half the cost |
-| `/interrogate` (one-way doors) | Opus 5.5 High + Gemini 4 Argon High | Two model families try to break a change that is hard to reverse, and the lead judges their findings |
+| Lead (the Project chat on Cursor) | Opus 5.5 Medium | Plans, runs builders and reviewers; on Cursor, set in the Project's settings |
+| Architect | Opus 5.5 High; up to Extra High for a load-bearing design | A load-bearing design is hard to undo |
+| Plan reviewer (load-bearing plans only) | Opus 5.5 Extra High | Its verdict gates every builder |
+| Builder | Opus 5.5 Medium; down to Sonnet 5.5 High for very well-planned work; up to Opus 5.5 High, or Extra High for the hardest pieces | James's builder rule (27 Oct) |
+| Builder for process work | Opus 5.5 Medium; up to High | Process, prompts, docs and skills |
+| Reviewer (every PR) | Opus 5.5 High; down to Medium for small PRs | Reviews hawkishly and fixes what it finds. High ties Extra High on CursorBench at about half the cost |
+| Holistic reviewer (when James asks) | Opus 5.5 High; down to Medium | A whole-stack review with no one-way door |
+| `/interrogate` (when James asks) | Opus 5.5 High + Gemini 4 Argon High | Two model families try to break a change |
 | Milestone reviewer | Opus 5.5 Extra High | Runs only on a stack with a one-way door, and its verdict gates the merge |
 | Investigator | Sonnet 5.5 High | Read-only questions |
 | Watcher | Sonnet 5.5 Medium | Only when waiting on something long |
