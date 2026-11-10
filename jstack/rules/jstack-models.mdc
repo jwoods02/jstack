@@ -5,7 +5,7 @@ alwaysApply: true
 # JStack model configuration, read by j-mode and the skills. One line per role. A comma in a role name means those roles share the line.
 # Every role has a line. Any spawn without its own role uses `other helpers`. Never fall back to a model this file doesn't name.
 # James Woods's choices: Anthropic leads every role and no OpenAI models are used. Gemini only takes a second seat on a panel an Anthropic agent leads.
-# A line gives the default, then when to step down or up, as `role: default; down <model> for <when>; up <model> for <when>`. The lead picks the level at spawn. Never start an Anthropic model on max, though escalating to max is fine.
+# A line gives the default, then when to step down or up, as `role: default; down <model> for <when>; up <model> for <when>`. Never start an Anthropic model on max, though escalating to max is fine.
 # Load-bearing means hard to undo: data models and storage, public APIs, cross-service boundaries, and security.
 
 # Jobs (see j-mode).

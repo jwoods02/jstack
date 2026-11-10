@@ -26,7 +26,7 @@ j-mode is host-neutral, but some skills it calls (`how`, `why`, `interrogate`, `
 
 ## Models
 
-The model map is `jstack-models.md` in `~/.config/opencode/`. It uses the role names from `jstack-models.mdc`, with OpenCode model IDs in `provider/model#variant` form, the default first and its step down or up after it. Pass the role's model as `model` on every `subagent` call. If the file is missing, leave `model` unset so the child inherits. Nobody spawns the lead, so its `lead` line only records the `JMode` agent's model, which `opencode.json` sets under `agents.JMode.model`.
+The model map is `jstack-models.md` in `~/.config/opencode/`. It uses the role names from `jstack-models.mdc`, with OpenCode model IDs in `provider/model#variant` form. Pass the role's model as `model` on every `subagent` call. If the file is missing, leave `model` unset so the child inherits. Nobody spawns the lead, so its `lead` line only records the `JMode` agent's model, which `opencode.json` sets under `agents.JMode.model`.
 
 ## Sessions
 

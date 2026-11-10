@@ -1,8 +1,8 @@
 # JStack model map for OpenCode. Copy to ~/.config/opencode/jstack-models.md and set the IDs your providers offer.
 # Role names match jstack/rules/jstack-models.mdc. IDs are provider/model#variant, through OpenRouter here. With a direct
 # provider, drop the prefix: openrouter/anthropic/claude-opus-5.5 becomes anthropic/claude-opus-5-5.
-# A line gives the default, then when to step down or up. The lead picks the level when it spawns the agent.
-# Sol builds PRs that are mainly code, and Opus builds ones that are mainly process, prompts, docs or skills. The finisher writes the PR text.
+# A line gives the default, then when to step down or up.
+# Sol builds PRs that are mainly code, and Opus builds ones that are mainly process, prompts, docs or skills.
 
 lead: openrouter/anthropic/claude-sonnet-5.5#high
 architect: openrouter/anthropic/claude-fable-5.2#medium; down openrouter/anthropic/claude-opus-5.5#high or #medium for smaller, process or writing-heavy work; up openrouter/anthropic/claude-fable-5.2#high only for a very large change that's hard to undo, or when James asks
