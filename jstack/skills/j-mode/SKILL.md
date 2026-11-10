@@ -191,7 +191,7 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 - pointers to files, PRs and handoff notes rather than pasted context;
 - the shape of the report you want back.
 
-Start subagents in the background, with an explicit model from the role's line in the model map. Each line gives a default and when to step down or up, and you pick the level at spawn, because an agent can't change its own. A spawn with no role of its own uses `other helpers`.
+Start subagents in the background, with an explicit model from the role's line in the model map. Pick the level at spawn from the line's default, step down and step up, because an agent can't change its own. A spawn with no role of its own uses `other helpers`.
 
 **Match the model to the job.**
 
