@@ -5,37 +5,28 @@ alwaysApply: true
 # JStack model configuration, read by j-mode and the skills. One line per role. A comma in a role name means those roles share the line.
 # Every role has a line. Any spawn without its own role uses `other helpers`. Never fall back to a model this file doesn't name.
 # James Woods's choices: Anthropic leads every role and no OpenAI models are used. Gemini only takes a second seat on a panel an Anthropic agent leads.
-# Use each level as written. Raise one step only for the hardest or subtlest work. Never start an Anthropic model on max, though escalating to max is fine.
+# A line gives the default, then when to step down or up, as `role: default; down <model> for <when>; up <model> for <when>`. The lead picks the level at spawn. Never start an Anthropic model on max, though escalating to max is fine.
 # Load-bearing means hard to undo: data models and storage, public APIs, cross-service boundaries, and security.
 
 # Jobs (see j-mode).
-# Opus Medium: James's default lead (3 Nov). The lead (a Cursor Project chat, or an OpenCode lead session) plans, starts builders and reviewers, and judges reviews, and the architect and reviewers carry the deeper reasoning. Cursor's Project settings set it; this line records it.
+# Opus Medium: James's default lead (3 Nov). The lead (a Cursor Project chat, or an OpenCode lead session) plans and starts builders and finishers, and the architect and finishers carry the deeper reasoning. Cursor's Project settings set it; this line records it.
 lead: claude-opus-5-5-medium
-# Opus High: an ordinary design is cheap to change later, so Extra High adds little.
-architect: claude-opus-5-5-high
-# Opus Extra High: a load-bearing design is hard to undo, so deeper reasoning changes the outcome.
-architect for load-bearing designs: claude-opus-5-5-xhigh
-# Opus High: an ordinary plan review checks order, gaps and risk lines.
-plan reviewer: claude-opus-5-5-high
-# Opus Extra High: on a load-bearing plan, its verdict gates every builder that follows.
-plan reviewer for load-bearing plans: claude-opus-5-5-xhigh
-# Builders start on Opus 5.5 Medium. Switch to the matching line below for a very complex change, very well-planned work, or a simple change with some ambiguity.
-# Opus Medium: James's default builder (27 Oct). The plan and the reviewer carry the judgment.
-builder: claude-opus-5-5-medium
-# Opus High: a very complex change needs more reasoning than the default builder.
-builder for a very complex change: claude-opus-5-5-high
-builder for very well-planned work: claude-sonnet-5-5-high
-builder for a simple change with some ambiguity: claude-sonnet-5-5-xhigh
-# Opus Extra High: the hardest pieces (subtle concurrency, tricky algorithms, a bug two fixes have failed to kill) are where deeper reasoning changes the outcome.
-hardest tasks: claude-opus-5-5-xhigh
-# Opus High: one fresh holistic review per small or medium PR. High ties Extra High on CursorBench at about half the cost.
-reviewer: claude-opus-5-5-high
+# Opus High: an ordinary design is cheap to change later. A load-bearing design is hard to undo, so deeper reasoning changes the outcome.
+architect: claude-opus-5-5-high; up claude-opus-5-5-xhigh for a load-bearing design
+# Opus Extra High: it runs only on a load-bearing plan, and its verdict gates every builder that follows.
+plan reviewer: claude-opus-5-5-xhigh
+# Opus Medium: James's default builder (27 Oct). The plan and the finisher carry the judgment.
+builder: claude-opus-5-5-medium; down claude-sonnet-5-5-high for very well-planned work; up claude-opus-5-5-high for a very complex change, or claude-opus-5-5-xhigh for the hardest pieces
+builder for process work: claude-opus-5-5-medium; up claude-opus-5-5-high for harder pieces
+# Opus High: one fresh agent per PR reviews hawkishly and fixes what it finds. High ties Extra High on CursorBench at about half the cost.
+finisher: claude-opus-5-5-high; down claude-opus-5-5-medium for small PRs; up claude-opus-5-5-xhigh for hard PRs
+# Opus Extra High: it runs only on a stack with a one-way door, and its verdict gates the merge.
+milestone reviewer: claude-opus-5-5-xhigh
+holistic reviewer: claude-opus-5-5-high; down claude-opus-5-5-medium for a small stack
 investigator: claude-sonnet-5-5-high
 watcher: claude-sonnet-5-5-medium
 # Opus High: prose and judgment calls inside a job.
 judgment and prose: claude-opus-5-5-high
-# Opus Extra High: it runs only on a stack with a one-way door, and its verdict gates the merge.
-milestone reviewer: claude-opus-5-5-xhigh
 
 # Skills.
 how explorer: claude-sonnet-5-5-xhigh
@@ -54,7 +45,7 @@ arena cross-judge pool: claude-opus-5-5-xhigh
 swarm workers: claude-sonnet-5-5-high
 # Opus High: runners produce candidate designs; the architect makes the call.
 architect runners: claude-opus-5-5-high, gemini-4-argon-high
-# Opus High: /interrogate runs once on a one-way door, and the lead judges the findings. Two model families catch more than more depth on one.
+# Opus High: /interrogate runs only when James asks for it. Two model families catch more than more depth on one.
 interrogate reviewers: claude-opus-5-5-high, gemini-4-argon-high
 # Opus High: scans a decision trail for weak evidence and flags it. The flags are advice.
 trail reviewer: claude-opus-5-5-high

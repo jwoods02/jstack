@@ -15,7 +15,7 @@ This is j-mode's host file for Cursor. It says how j-mode's words map to Cursor'
 - Start each one with the Task tool, `subagent_type: "j-agent"`, `run_in_background: true`, in agent mode. Readonly mode strips MCP access.
 - If `j-agent` isn't an available `subagent_type` (for example, in a cloud worker where the plugin didn't load), use `generalPurpose`. Put j-mode's absolute path in the prompt and tell the worker to read it in full first.
 - Where a skill says readonly, set `readonly: true` when the Task tool offers it.
-- The model map is the always-applied `jstack-models.mdc` rule. Pass the role's slug as `model`.
+- The model map is the always-applied `jstack-models.mdc` rule. Pass the role's slug as `model`, the line's default unless you step down or up.
 - Use a `-fast` slug only when something is urgent: CI or `main` is red, or James is blocked right now.
 - If the Task tool rejects a slug, use the closest valid slug of the same family and say so.
 
