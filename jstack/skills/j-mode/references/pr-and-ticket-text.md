@@ -2,7 +2,7 @@
 
 PR descriptions and tickets are read by people who have none of James's files, chats or agents. Write for a colleague who opens the link cold. Load `/technical-writing`, `/unslop` and, when installed, `james-voice` with its PR samples.
 
-The lead writes the description once the PR has passed review, because it holds the calls made in the chat. A builder opens the PR with the body `Draft. Description to follow.` and hands over a verification note.
+A builder opens the PR with the body `Draft. Description to follow.` and hands over a verification note. The finisher drafts the description from the plan doc and the diff, and the lead adds the calls made in the chat.
 
 Tell the story to a human. Open with why the PR exists, who it's for and what changes for them. Then what it does, grouped the way a reviewer reads it. Then the decisions and trade-offs, including the ones made in the chat: what was chosen, what was rejected and why. Then how it was verified, and what a reviewer or deployer has to do or know, such as migrations, flags, rollout order and what's left out. End with the ticket line and the risk line. Write James's calls in first person and credit agent digging plainly, as `james-voice` says.
 
