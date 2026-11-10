@@ -5,10 +5,10 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 ## Last merged
 
 - Upstream: `cursor/plugins`, path `pstack/`.
-- Commit: `99743e9c151c8537cbbf1f98bb38f34ef3368453`, merged 15 Oct 2026.
-- Version: 0.15.25.
-- JStack's own version is 4.1.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
-- Upstream `pstack/` tree hash at import: `0d5fd349cbc77d054eed60f0e8cdfbea86321ff9`.
+- Commit: `de8ee15dd1194627d21eb5fcd41cb1873208dabb`, merged 10 Nov 2026.
+- Version: 0.15.36.
+- JStack's own version is 4.3.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
+- Upstream `pstack/` tree hash at this merge: `4719e1c4b4c43bac85d4206a8b41dd2899769c1c`.
 
 ## Path mapping
 
@@ -26,6 +26,7 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 | `pstack/docs/guide/` | removed (v2), replaced by `jstack/docs/guide.md` |
 | `pstack/skills/make-bot-ui/` | removed (v2) |
 | `pstack/assets/logo.png` | removed (v2), replaced by `jstack/assets/logo.svg` |
+| `pstack/docs/harness/` | removed (v4.3), the Claude Code adapter for a generated tree JStack doesn't ship |
 
 The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rename-upstream.py) reproduces it on files or on an upstream diff:
 
@@ -52,6 +53,7 @@ The rename itself is mechanical, and [`scripts/rename-upstream.py`](scripts/rena
 - `docs/guide/` (v2): the 10-page guide, its index and its 6 images.
 - `skills/make-bot-ui/` (v2): the Grok Bot webhook page skill, along with its rows in `README.md` and `skills/j-help/SKILL.md`.
 - `assets/logo.png` (v2): poteto's avatar, used as the listing logo, along with the README line that credited it.
+- `docs/harness/claude-code.md` (v4.3): the Claude Code adapter, and the Claude Code install section that went with it in `README.md` and `skills/j-help/SKILL.md`. JStack installs on Cursor and OpenCode only.
 
 ## Added
 
@@ -184,6 +186,20 @@ All paths are inside `jstack/`.
 - `AGENTS.md`: new, a short note to keep prompts light.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.2.0.
 
+**Upstream 0.15.36 (v4.3.0).** Merged `99743e9c` to `de8ee15d`.
+
+- Taken as upstream wrote it:
+  - New skills `create-formal-verification-skill`, `maintain-formal-verification-skill`, `ketchup-video` and `statechart` (the TLA+ chart renderer, with its scripts and test corpus).
+  - Rewrites of `ketchup` and `sharpen`, the "Explain the Number" principle (skill and index line), `reflect`'s rule against editing the plugin cache, and the `typescript-best-practices` fixes.
+- Rows for the new skills and the new `ketchup` and `sharpen` wording are in `README.md`, `skills/j-help/SKILL.md` and `skills/j-help/references/recipes.md`. j-help also points at the formal verification skills when a project has none.
+- Not taken:
+  - `skills/interrogate/SKILL.md`, whose upstream rewrite has adversaries prove each finding by running it, and which deletes `references/rubric.md`, `code-quality-review.md`, `lead-judgment.md` and `reviewer-prompt.md`. JStack's Reviews section, the reviewer's rubric and the Act on, Consider, Noted and Dismissed buckets depend on those files, so JStack keeps its own `interrogate`.
+  - `skills/arena/SKILL.md`. Upstream's family-aware judge and seat-dropping fallback assume the pool can hold non-Anthropic entries, and JStack's judge is always Anthropic.
+  - `skills/j-mode/SKILL.md` except the "Explain the Number" line. The upstream "restate the goal on your first message" trigger, the Task-call fallback wording and the `name: j-mode` rename (JStack keeps `J Mode`) stay out.
+  - `setup-pstack` (removed), the playbooks, `scripts/` and `docs/guide/` (all removed). That covers the agentic Orchestrate rewrite and its deleted `orch` scripts.
+  - Upstream's version number.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 4.3.0.
+
 ## How to merge a new release
 
 1. Add `https://github.com/cursor/plugins` as a remote named `upstream`, then fetch it.
@@ -199,3 +215,4 @@ All paths are inside `jstack/`.
 | Date | Upstream commit | Version | JStack PR |
 |---|---|---|---|
 | 2026-10-15 | `99743e9c` | 0.15.25 | [#1](https://github.com/jwoods02/jstack/pull/1) (import) |
+| 2026-11-10 | `de8ee15d` | 0.15.36 | this PR |
