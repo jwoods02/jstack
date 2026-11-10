@@ -43,7 +43,7 @@ JStack runs on Cursor and on OpenCode. `/j-mode` is the same on both, and a host
 
 ## Start a task with `/j-mode`
 
-`/j-mode` picks one job: architect, builder, reviewer, investigator, or as many builder and reviewer pairs as there are independent tasks. It runs the skills that job needs. PRs stay draft, and James merges. A good prompt states the goal and how to tell it's done. It doesn't list skills, because the job already picks them. Read [`references/prompting.md`](references/prompting.md) before you help word one. [The guide](../../docs/guide.md) has examples.
+`/j-mode` picks one job: architect, builder, finisher, investigator, or as many builder and finisher pairs as there are independent tasks. It runs the skills that job needs. PRs stay draft, and James merges. A good prompt states the goal and how to tell it's done. It doesn't list skills, because the job already picks them. Read [`references/prompting.md`](references/prompting.md) before you help word one. [The guide](../../docs/guide.md) has examples.
 
 Whether `/j-mode` stays on depends on how the user starts it:
 
@@ -51,7 +51,7 @@ Whether `/j-mode` stays on depends on how the user starts it:
 - Option+Enter on Mac or Alt+Enter on Windows, or Use as Mode from the skill entry, makes it a Custom Mode. It stays in context every turn until the user exits the mode, and it stays out of casual turns.
 - Cursor's docs list Custom Modes in the Agents Window and the CLI. Elsewhere, start each new task with `/j-mode`.
 
-Link [Cursor's skills docs](https://cursor.com/docs/skills) when this comes up. Mid-chat, "new task" makes the mode pick a fresh job. `/j-mode` already uses `j-agent` for every builder, reviewer and helper it spawns. To get the same style from a subagent of your own, spawn it with `subagent_type: "j-agent"`.
+Link [Cursor's skills docs](https://cursor.com/docs/skills) when this comes up. Mid-chat, "new task" makes the mode pick a fresh job. `/j-mode` already uses `j-agent` for every builder, finisher and helper it spawns. To get the same style from a subagent of your own, spawn it with `subagent_type: "j-agent"`.
 
 ## Pick a skill
 
@@ -114,11 +114,11 @@ Jobs are sections of `/j-mode`, not skills, so they have no slash command. Descr
 
 - "How does X work?" or "why is Y like this?" runs the investigator. No PR.
 - "Design X", or any large or hard-to-reverse change, runs the architect. It ends with a short decision list and stops for the user.
-- "Fix", "build" or "change X" runs a builder. It opens a draft PR, and a fresh reviewer starts straight away. A one-way door (a change that is hard to reverse, such as a data migration or a public API) gets one `/interrogate` pass with two models instead, and a stack that holds one gets a milestone review before the user merges.
-- Agreeing a plan and saying go makes the chat the lead. It runs each PR's builder and reviewer as subagents and judges the reviews.
-- Several independent changes run as one builder and reviewer pair each, at once.
+- "Fix", "build" or "change X" runs a builder. It opens a draft PR, and a fresh finisher starts straight away to review and fix it. A stack with a one-way door (a change that is hard to reverse, such as a data migration or a public API) also gets a milestone review before the user merges.
+- Agreeing a plan and saying go makes the chat the lead. It runs each PR's builder and finisher as subagents.
+- Several independent changes run as one builder and finisher pair each, at once.
 
-No agent marks a PR ready or merges it. The user does both. JStack has no planning skill. Plans of three or more PRs get a plan review before any builder starts.
+No agent marks a PR ready or merges it. The user does both. JStack has no planning skill. Load-bearing plans get a plan review before any builder starts.
 
 Principles are one-rule skills that `/j-mode` reads and cites in its replies. The user rarely invokes one. They steer with the names instead, as in "apply prove it works. show me the real output." Typing `/principle-<name>` still loads one on demand. The Principles section of [`j-mode`](../j-mode/SKILL.md) lists them.
 
@@ -141,7 +141,7 @@ For a run that drifts, [`references/prompting.md`](references/prompting.md) has 
 
 - [`/automate-me`](../automate-me/SKILL.md) drafts a personal mode skill from the user's own history, to use alongside `/j-mode`.
 - [`/reflect`](../reflect/SKILL.md) after a session turns its lessons into skill edits the user approves.
-- `/j-mode write a skill for <workflow>` runs a builder and a reviewer on the JStack repo. Anything agents read needs a live run on the real models before the user merges it.
+- `/j-mode write a skill for <workflow>` runs a builder and a finisher on the JStack repo. Anything agents read needs a live run on the real models before the user merges it.
 - Fix a misbehaving skill in its own PR, not inside the feature work where it went wrong.
 
 

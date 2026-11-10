@@ -37,14 +37,14 @@ Swap in the real paths, skills, and done checks. Informal wording works.
 - `/create-formal-verification-skill prove <property> holds in <module>, even when <steps> interleave or retry.` After merges or refactors in that code: `/maintain-formal-verification-skill`.
 - `/swarm check every package under <dir> against its check script. one worker per package. one report.`
 - `/j-mode open the pr. small ordered commits, evidence in the description.`
-- `/j-mode get pr <number> green. fix what's failing, then hand it to a reviewer.` For status only: `/j-mode check on pr <number>. anything outstanding?`
+- `/j-mode get pr <number> green. fix what's failing, then hand it to a finisher.` For status only: `/j-mode check on pr <number>. anything outstanding?`
 - `/j-mode is the stack ready for me to merge? check each pr's review and ci.`
 
 ## Away and back
 
 - `/j-mode im going to bed. <goal> in a fresh worktree off <base>. done means <checks>. keep a decision log. don't ask me before committing. /loop until done. if you're truly stuck after a few hours, stop and write up why.`
 - `/show-me-your-work catch me up on what you did last night.` Read its Attention section first.
-- `/j-mode build these three changes in parallel, one builder and reviewer each. each one is independent.`
+- `/j-mode build these three changes in parallel, one builder and finisher each. each one is independent.`
 - `/j-mode build these changes as a stack, one draft pr per phase. i'll merge.`
 - `/ketchup` catches you up on this chat since your last message and lists every call that waits on you.
 - `/reflect capture what we learned so the next run doesn't repeat it.` Approve only edits that change a future decision.
