@@ -7,7 +7,7 @@ JStack tracks pstack, Lauren Tan's plugin in [`cursor/plugins`](https://github.c
 - Upstream: `cursor/plugins`, path `pstack/`.
 - Commit: `de8ee15dd1194627d21eb5fcd41cb1873208dabb`, merged 10 Nov 2026.
 - Version: 0.15.36.
-- JStack's own version is 4.3.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
+- JStack's own version is 4.4.0, set in both `plugin.json` files. It is not upstream's number. `agents/j-agent.md` picks the installed copy with the highest version, so a later upstream bump must not outrank it. "Last merged" records the upstream base only.
 - Upstream `pstack/` tree hash at this merge: `4719e1c4b4c43bac85d4206a8b41dd2899769c1c`.
 
 ## Path mapping
@@ -193,12 +193,20 @@ All paths are inside `jstack/`.
   - Rewrites of `ketchup` and `sharpen`, the "Explain the Number" principle (skill and index line), `reflect`'s rule against editing the plugin cache, and the `typescript-best-practices` fixes.
 - Rows for the new skills and the new `ketchup` and `sharpen` wording are in `README.md`, `skills/j-help/SKILL.md` and `skills/j-help/references/recipes.md`. j-help also points at the formal verification skills when a project has none.
 - Not taken:
-  - `skills/interrogate/SKILL.md`, whose upstream rewrite has adversaries prove each finding by running it, and which deletes `references/rubric.md`, `code-quality-review.md`, `lead-judgment.md` and `reviewer-prompt.md`. JStack's Reviews section, the reviewer's rubric and the Act on, Consider, Noted and Dismissed buckets depend on those files, so JStack keeps its own `interrogate`.
+  - `skills/interrogate/SKILL.md`, whose upstream rewrite has adversaries prove each finding by running it, and which deletes `references/rubric.md`, `code-quality-review.md`, `lead-judgment.md` and `reviewer-prompt.md`. JStack's `interrogate` still reads those files, so JStack keeps its own.
   - `skills/arena/SKILL.md`. Upstream's family-aware judge and seat-dropping fallback assume the pool can hold non-Anthropic entries, and JStack's judge is always Anthropic.
   - `skills/j-mode/SKILL.md` except the "Explain the Number" line. The upstream "restate the goal on your first message" trigger, the Task-call fallback wording and the `name: j-mode` rename (JStack keeps `J Mode`) stay out.
   - `setup-pstack` (removed), the playbooks, `scripts/` and `docs/guide/` (all removed). That covers the agentic Orchestrate rewrite and its deleted `orch` scripts.
   - Upstream's version number.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.3.0.
+
+**The finisher (v4.4.0).** Cheaper builders work from an agreed plan, so one Opus agent per PR now reviews and fixes the build instead of reporting findings for another round.
+
+- `skills/j-mode/SKILL.md`: a Finishing section replaces Reviews. The finisher reviews against the plan, fixes what it finds, waits on CI and drafts the PR body. Review rounds, reviewer level-matching, the `/interrogate` pass on one-way doors and the plan review for ordinary plans are gone. The builder is picked by whether the PR is mainly code or mainly process, and the lead picks each model's level at spawn.
+- `rules/jstack-models.mdc`: one line per role with its step down and up, and new `finisher`, `builder for process work` and `holistic reviewer` lines.
+- `skills/architect/SKILL.md` and `skills/interrogate/SKILL.md`: `/interrogate` runs only when James asks.
+- Host files, READMEs, `docs/guide.md` and `skills/j-help/`: synced.
+- `plugin.json` and `.cursor-plugin/plugin.json`: version 4.4.0.
 
 ## How to merge a new release
 
