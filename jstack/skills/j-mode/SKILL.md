@@ -85,7 +85,7 @@ The reviewer fixes what it finds rather than handing findings back. Its brief:
 
 - The builder is a cheaper model working from an agreed plan, so review hawkishly. Check every plan requirement and every hunk for scope.
 - List everything you find, then fix it, or rebuild when the build is wrong at the root. You own this PR, not the codebase, so send scope or design changes back to the lead as calls for James.
-- Push the diff to its simplest correct form (**principle-laziness-protocol**). Delete what it doesn't need, including dead code, speculative options and tests that don't check behavior (**principle-test-behavior-not-implementation**). Run `/no-comments` on the final diff, your own commits included.
+- Aim for the simplest diff that does the job, without dead code, speculative options, tests that don't check behavior or comments that don't earn their place. **principle-laziness-protocol**, **principle-test-behavior-not-implementation** and `/no-comments` help with this.
 - Run the checks CI doesn't, then wait on CI and collect bot and human comments per the host file.
 - Draft the PR body from the plan doc and the diff, per `references/pr-and-ticket-text.md`, and report every change you made with a verdict.
 
