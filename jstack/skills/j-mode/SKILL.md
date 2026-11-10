@@ -1,6 +1,6 @@
 ---
 name: J Mode
-description: James's agent workflow, adapted from pstack by Lauren Tan (poteto). Picks one job (lead, architect, builder, finisher, investigator, or parallel builders), keeps PRs draft, and proves the work. Use for /j-mode, or requests to work in this style.
+description: James's agent workflow, adapted from pstack by Lauren Tan (poteto). Picks one job (lead, architect, builder, reviewer, investigator, or parallel builders), keeps PRs draft, and proves the work. Use for /j-mode, or requests to work in this style.
 disable-model-invocation: true
 icon: crown
 color: yellow
@@ -28,25 +28,25 @@ A **thread** is one piece of work James agreed, from one PR to a stack of them. 
 
 | Job | When | Model map line |
 |---|---|---|
-| Lead | Once James agrees a plan and says go. It runs every PR's builder and finisher as subagents, keeps state in its plan or handoff doc and puts calls to James in its own chat. It doesn't write the code itself, so its context holds the plan, summaries and reports. It hands non-trivial design or plan questions to the architect. | `lead` |
+| Lead | Once James agrees a plan and says go. It runs every PR's builder and reviewer as subagents, keeps state in its plan or handoff doc and puts calls to James in its own chat. It doesn't write the code itself, so its context holds the plan, summaries and reports. It hands non-trivial design or plan questions to the architect. | `lead` |
 | Architect | Before a one-way door or a large change, or when the design is unclear. Run `/how` and `/why`, then `/architect` with checkpoint, so it stops before implementing. Settle a question you can answer by building a quick throwaway by building one. End with a short decision list and stop for James. | `architect` |
 | Plan reviewer | A fresh agent for a load-bearing plan, before a builder starts. | `plan reviewer` |
-| Builder | One per PR, on its own branch. Builds, pushes, opens a draft PR with a placeholder body, then reports "ready for review" with the head commit and a short verification note. It leaves PR text and CI to the finisher. A one-off builder, with no lead above it, starts its own finisher. | `builder`, or `builder for process work` (see Subagents) |
-| Finisher | One fresh agent per PR, started by the lead as soon as the builder reports. See Finishing. | `finisher` |
-| Parallel builders | Independent PRs in one thread. One builder per PR, each on its own branch. Before fanning out, check that no two touch the same branch, files or migration number (**principle-separate-before-serializing-shared-state**), and run the ones that do one after another. | Same as builder and finisher |
+| Builder | One per PR, on its own branch. Builds, pushes, opens a draft PR with a placeholder body, then reports "ready for review" with the head commit and a short verification note. It leaves PR text and CI to the reviewer. A one-off builder, with no lead above it, starts its own reviewer. | `builder`, or `builder for process work` (see Subagents) |
+| Reviewer | One fresh agent per PR that reviews it and fixes what it finds, started by the lead as soon as the builder reports. See Reviews. | `reviewer` |
+| Parallel builders | Independent PRs in one thread. One builder per PR, each on its own branch. Before fanning out, check that no two touch the same branch, files or migration number (**principle-separate-before-serializing-shared-state**), and run the ones that do one after another. | Same as builder and reviewer |
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. Lead the reply with the answer, in a few sentences, before any detail. | `investigator` |
-| Watcher | Only when waiting on something long, such as a deploy. Usually the lead or finisher runs one blocking command instead (see the host file's waits). | `watcher` |
+| Watcher | Only when waiting on something long, such as a deploy. Usually the lead or reviewer runs one blocking command instead (see the host file's waits). | `watcher` |
 
 **Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. Work that isn't this thread's, such as a new idea or James asking for a new session, goes where the host file says. Write it a short brief: the job, the scope and what's out of scope, the finish check, and the branch name.
 
 **Running a thread.** Once James says go:
 
 1. Write the agreed plan to the project's docs, so it survives a context reset. Keep the state in that doc, or in a handoff doc beside it. Update it at the start, when a PR passes and at the handoff. Every edit is a turn on the lead's full context.
-2. Work through the PRs in order, each with a fresh builder, and run work in parallel where it's independent or a later PR only needs a settled contract. Name the split and its cost in the plan, which James's go covers, and propose unplanned parallel work with its cost. A finished PR can take a late fix while later PRs build on it. Start each PR's finisher as soon as its builder reports, without waiting for the rest of the stack.
-3. When the finisher reports, read its list of changes, add any context from the chat to the PR body it drafted, and send James the PR link.
+2. Work through the PRs in order, each with a fresh builder, and run work in parallel where it's independent or a later PR only needs a settled contract. Name the split and its cost in the plan, which James's go covers, and propose unplanned parallel work with its cost. A finished PR can take a late fix while later PRs build on it. Start each PR's reviewer as soon as its builder reports, without waiting for the rest of the stack.
+3. When the reviewer reports, read its list of changes, add any context from the chat to the PR body it drafted, and send James the PR link.
 4. When James changes scope while a builder runs, let him settle, then send the builder one consolidated update. A string of small resumes costs more than one clear one.
-5. Move on once the finisher reports done, CI is green, and its verdict's head commit equals the PR's current head.
-6. Finish with the milestone review where Finishing asks for one. Then say "Ready for James" in your own chat, with each PR and the head its verdict names.
+5. Move on once the reviewer reports done, CI is green, and its verdict's head commit equals the PR's current head.
+6. Finish with the milestone review where Reviews asks for one. Then say "Ready for James" in your own chat, with each PR and the head its verdict names.
 
 **Ask James** in the lead's own chat, and wait on that PR, when:
 
@@ -79,9 +79,9 @@ Builder reminders:
 
 When James steps away, state the finish check, keep going, and keep a decision trail in the project's docs, or with `/show-me-your-work` outside a project. Stop and write up a genuine dead end rather than relaxing the check.
 
-## Finishing
+## Reviews
 
-The finisher's brief:
+The reviewer fixes what it finds rather than handing findings back. Its brief:
 
 - The builder is a cheaper model working from an agreed plan, so review hawkishly. Check every plan requirement and every hunk for scope.
 - List everything you find, then fix it, or rebuild when the build is wrong at the root. You own this PR, not the codebase, so send scope or design changes back to the lead as calls for James.
@@ -183,7 +183,7 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 
 ## Subagents
 
-**Start every builder, finisher, architect, investigator and helper as a `j-agent`**, the way the host file says. The exceptions are skills that pick their own agent type, such as `how`, `why`, `interrogate`, `reflect`, `swarm` and `no-comments`. Every kickoff carries:
+**Start every builder, reviewer, architect, investigator and helper as a `j-agent`**, the way the host file says. The exceptions are skills that pick their own agent type, such as `how`, `why`, `interrogate`, `reflect`, `swarm` and `no-comments`. Every kickoff carries:
 
 - the objective and the finish check;
 - the scope, what is out of scope, and the branch or paths it may write;
@@ -203,7 +203,7 @@ Start subagents in the background, with an explicit model from the role's line i
 
 You own every subagent's work. Review the diff and write your own summary, don't pass through what it said.
 
-**Fresh agents for new work.** A new PR or task gets a fresh builder and a fresh finisher. A builder or finisher is resumed only for follow-ups on its own PR (fixes, CI and rebases), within about an hour of its last turn and below about 400k context tokens. Otherwise start a fresh agent with a one-page handoff note.
+**Fresh agents for new work.** A new PR or task gets a fresh builder and a fresh reviewer. A builder or reviewer is resumed only for follow-ups on its own PR (fixes, CI and rebases), within about an hour of its last turn and below about 400k context tokens. Otherwise start a fresh agent with a one-page handoff note.
 
 ## Writing the reply
 

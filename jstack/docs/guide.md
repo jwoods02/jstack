@@ -25,9 +25,9 @@ To keep `/j-mode` on for the whole chat, pick it from the `/` menu and press Opt
 - **Investigator.** Answers "how does X work?" or "why is Y like this?". No PR.
 - **Architect.** Designs a big or unclear change and ends with a short decision list for you to answer.
 - **Builder.** One per PR. Opens a draft PR and says "ready for review".
-- **Finisher.** A fresh agent per PR, started when the builder reports. It reviews hawkishly against the plan, fixes what it finds, waits on CI and drafts the PR description. A stack with a one-way door (hard to reverse, such as a data migration or a public API) also gets a milestone review before you merge.
-- **Parallel builders.** As many builder and finisher pairs as there are independent tasks. One builder per PR or task.
-- **Lead.** Once you agree a plan and say go, the chat leads the thread. It runs each PR's builder and finisher as subagents.
+- **Reviewer.** A fresh agent per PR, started when the builder reports. It reviews hawkishly against the plan, fixes what it finds, waits on CI and drafts the PR description. A stack with a one-way door (hard to reverse, such as a data migration or a public API) also gets a milestone review before you merge.
+- **Parallel builders.** As many builder and reviewer pairs as there are independent tasks. One builder per PR or task.
+- **Lead.** Once you agree a plan and say go, the chat leads the thread. It runs each PR's builder and reviewer as subagents.
 
 In a Project, the Project chat is the lead. In a single chat, the chat does the job itself.
 
@@ -43,7 +43,7 @@ In a Project, the Project chat is the lead. In a single chat, the chat does the 
 ```text
 /j-mode how does run cancellation work? don't change any code.
 /j-mode design rate limiting for external webhooks. give me the decisions to make.
-/j-mode build these three changes in parallel, one builder and finisher each.
+/j-mode build these three changes in parallel, one builder and reviewer each.
 /j-mode i'm going to bed. finish the migration. done means zero old callers and all fixtures pass.
 ```
 

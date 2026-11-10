@@ -1,6 +1,6 @@
 # Bugbot triage
 
-Use this reference when a builder or finisher handles Bugbot or review-automation comments on a PR. The goal is not to ignore Bugbot by default. The goal is to stop treating every comment as a required code change.
+Use this reference when a builder or reviewer handles Bugbot or review-automation comments on a PR. The goal is not to ignore Bugbot by default. The goal is to stop treating every comment as a required code change.
 
 ## Decision rubric
 

@@ -6,12 +6,12 @@ The skills and principles in [`../jstack/skills/`](../jstack/skills/) run unchan
 
 You open most sessions yourself, usually from a ticket, a plan doc or an idea. A session does the job you give it. Sessions that only investigate, design, review or build one thing do that job and stop.
 
-A **thread** is a piece of work you agreed. It can run across several sessions, and its **lead** is the session you planned it with. Once you say go, the lead writes the plan to your docs, compacts itself, makes one git worktree, and runs the PRs. Each PR gets a builder subagent, then a finisher that reviews and fixes it and drafts the PR text, before the lead moves to the next PR. Layered work ships as a [GitHub stack](https://github.com/github/gh-stack). A new idea gets a new session, which the lead starts itself with a short brief and which reports to you in its own chat. The plan doc holds its state, and `jteam status` shows your draft PRs and finished worktrees.
+A **thread** is a piece of work you agreed. It can run across several sessions, and its **lead** is the session you planned it with. Once you say go, the lead writes the plan to your docs, compacts itself, makes one git worktree, and runs the PRs. Each PR gets a builder subagent, then a reviewer that reviews and fixes it and drafts the PR text, before the lead moves to the next PR. Layered work ships as a [GitHub stack](https://github.com/github/gh-stack). A new idea gets a new session, which the lead starts itself with a short brief and which reports to you in its own chat. The plan doc holds its state, and `jteam status` shows your draft PRs and finished worktrees.
 
 | Agent | Mode | Job |
 |---|---|---|
 | [`JMode`](agents/JMode.md) | primary | j-mode for one top-level session. It does the job you give it, and becomes a thread's lead once you agree a plan. |
-| [`j-agent`](agents/j-agent.md) | subagent | Builders, finishers and helpers that a lead or other session starts |
+| [`j-agent`](agents/j-agent.md) | subagent | Builders, reviewers and helpers that a lead or other session starts |
 
 Both load `j-mode` and then `j-team` before their first reply, and `JMode` loads them again after a compaction.
 
@@ -47,7 +47,7 @@ You need OpenCode V2 with its `opencode` CLI on your PATH, plus `git`, `jq` and 
    }
    ```
 
-   The deny rules keep agents from merging, marking a PR ready or unstacking, which are yours. The gh-stack skill documents `gh stack merge` and `--open`, and `j-team` overrides it. With depth 2, a subagent the lead starts can start its own helpers, such as a finisher's `/how` explorers. `worktree.directory` puts worktrees beside each repo instead of in OpenCode's data folder.
+   The deny rules keep agents from merging, marking a PR ready or unstacking, which are yours. The gh-stack skill documents `gh stack merge` and `--open`, and `j-team` overrides it. With depth 2, a subagent the lead starts can start its own helpers, such as a reviewer's `/how` explorers. `worktree.directory` puts worktrees beside each repo instead of in OpenCode's data folder.
 5. Optional: for each repo that needs setup in a fresh worktree (env files, dependency install), add an executable `~/.config/opencode/worktree-setup/<repo-name>.sh`. `jteam worktree` makes it the project's start command, so OpenCode runs it inside every new worktree, including ones you create in the app. Have it write its output to `$(git rev-parse --git-dir)/worktree-setup.log` and end with the line `worktree setup ok`, which is how `jteam` knows it worked. `git worktree list --porcelain | awk 'NR == 1 { print $2 }'` gives it the main checkout.
 
 Skills load from the clone, so `git pull` updates them. Copy the agents again when they change.

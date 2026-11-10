@@ -7,7 +7,7 @@ JStack is James Woods's personal adaptation of [pstack](https://github.com/curso
 ## v4 scope
 
 - The plugin lives in [`jstack/`](jstack/). It is based on upstream release 0.15.25.
-- [`/j-mode`](jstack/skills/j-mode/SKILL.md) is a one-page, host-neutral router over James's jobs: lead, architect, builder, finisher, investigator and as many builder and finisher pairs as there are independent tasks. pstack's 23 playbooks and the tools only they used are gone.
+- [`/j-mode`](jstack/skills/j-mode/SKILL.md) is a one-page, host-neutral router over James's jobs: lead, architect, builder, reviewer, investigator and as many builder and reviewer pairs as there are independent tasks. pstack's 23 playbooks and the tools only they used are gone.
 - PRs stay draft. No agent marks a PR ready, merges it or tags a release. James's standing orders win over anything else in JStack. JStack is the default workflow for every Project, and a Project's preferences hold only what is specific to that project.
 - Every role has an explicit model in [`jstack/rules/jstack-models.mdc`](jstack/rules/jstack-models.mdc), an always-applied plugin rule.
 - The guide is [one page](jstack/docs/guide.md). [UPSTREAM.md](UPSTREAM.md) lists every removal and change.
@@ -16,20 +16,20 @@ To install it, open Cursor's Customize, choose From GitHub Repository, and add t
 
 ## OpenCode
 
-[`opencode/`](opencode/) runs the same skills on OpenCode V2, with nothing copied out of `jstack/`. `j-mode` is host-neutral. Each host has a short host file for its tools: [`references/cursor.md`](jstack/skills/j-mode/references/cursor.md) on Cursor, and the `j-team` skill on OpenCode. `opencode/` adds two agents, a model map template and `j-team`, with its `jteam` script. You open sessions, and a session can start another for separate work. Once you agree a plan, the session leads the thread in one git worktree, runs every PR's builder and finisher as subagents, and ships layered work as a GitHub stack. Install also covers the `gh stack` extension, its agent skill, and deny rules that keep agents from merging, marking ready or unstacking. See [its README](opencode/README.md).
+[`opencode/`](opencode/) runs the same skills on OpenCode V2, with nothing copied out of `jstack/`. `j-mode` is host-neutral. Each host has a short host file for its tools: [`references/cursor.md`](jstack/skills/j-mode/references/cursor.md) on Cursor, and the `j-team` skill on OpenCode. `opencode/` adds two agents, a model map template and `j-team`, with its `jteam` script. You open sessions, and a session can start another for separate work. Once you agree a plan, the session leads the thread in one git worktree, runs every PR's builder and reviewer as subagents, and ships layered work as a GitHub stack. Install also covers the `gh stack` extension, its agent skill, and deny rules that keep agents from merging, marking ready or unstacking. See [its README](opencode/README.md).
 
 ## Jobs and models
 
-The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) and the [Artificial Analysis](https://artificialanalysis.ai) Intelligence Index as guides. Anthropic leads every role, and on Cursor no OpenAI models are used. The OpenCode map, which you set yourself, can put another family on the builder seat. The example map has Sol build PRs that are mainly code and Opus build ones that are mainly process, prompts, docs or skills. An Opus finisher reviews and fixes every PR, and Fable architects. Gemini only takes a second seat on panels that an Anthropic agent leads. Opus runs at High unless deeper reasoning clearly changes the outcome. Agents never start on Max but may escalate to it.
+The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) and the [Artificial Analysis](https://artificialanalysis.ai) Intelligence Index as guides. Anthropic leads every role, and on Cursor no OpenAI models are used. The OpenCode map, which you set yourself, can put another family on the builder seat. The example map has Sol build PRs that are mainly code and Opus build ones that are mainly process, prompts, docs or skills. An Opus reviewer reviews and fixes every PR, and Fable architects. Gemini only takes a second seat on panels that an Anthropic agent leads. Opus runs at High unless deeper reasoning clearly changes the outcome. Agents never start on Max but may escalate to it.
 
 | Job or role | Model | Why |
 |---|---|---|
-| Lead (the Project chat on Cursor) | Opus 5.5 Medium | Plans, runs builders and finishers; on Cursor, set in the Project's settings |
+| Lead (the Project chat on Cursor) | Opus 5.5 Medium | Plans, runs builders and reviewers; on Cursor, set in the Project's settings |
 | Architect | Opus 5.5 High; up to Extra High for a load-bearing design | A load-bearing design is hard to undo |
 | Plan reviewer (load-bearing plans only) | Opus 5.5 Extra High | Its verdict gates every builder |
 | Builder | Opus 5.5 Medium; down to Sonnet 5.5 High for very well-planned work; up to Opus 5.5 High, or Extra High for the hardest pieces | James's builder rule (27 Oct) |
 | Builder for process work | Opus 5.5 Medium; up to High | Process, prompts, docs and skills |
-| Finisher (every PR) | Opus 5.5 High; down to Medium for small PRs | Reviews hawkishly and fixes what it finds. High ties Extra High on CursorBench at about half the cost |
+| Reviewer (every PR) | Opus 5.5 High; down to Medium for small PRs | Reviews hawkishly and fixes what it finds. High ties Extra High on CursorBench at about half the cost |
 | Holistic reviewer (when James asks) | Opus 5.5 High; down to Medium | A whole-stack review with no one-way door |
 | `/interrogate` (when James asks) | Opus 5.5 High + Gemini 4 Argon High | Two model families try to break a change |
 | Milestone reviewer | Opus 5.5 Extra High | Runs only on a stack with a one-way door, and its verdict gates the merge |

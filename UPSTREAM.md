@@ -200,10 +200,10 @@ All paths are inside `jstack/`.
   - Upstream's version number.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.3.0.
 
-**The finisher (v4.4.0).** Cheaper builders work from an agreed plan, so one Opus agent per PR now reviews and fixes the build instead of reporting findings for another round.
+**A reviewer that fixes (v4.4.0).** Cheaper builders work from an agreed plan, so one Opus agent per PR now reviews and fixes the build instead of reporting findings for another round.
 
-- `skills/j-mode/SKILL.md`: a Finishing section replaces Reviews. The finisher reviews against the plan, fixes what it finds, waits on CI and drafts the PR body. Review rounds, reviewer level-matching, the `/interrogate` pass on one-way doors and the plan review for ordinary plans are gone. The builder is picked by whether the PR is mainly code or mainly process, and the lead picks each model's level at spawn.
-- `rules/jstack-models.mdc`: one line per role with its step down and up, and new `finisher`, `builder for process work` and `holistic reviewer` lines.
+- `skills/j-mode/SKILL.md`: the Reviews section now has one reviewer that fixes as well as reviews. It reviews against the plan, fixes what it finds, waits on CI and drafts the PR body. Review rounds, reviewer level-matching, the `/interrogate` pass on one-way doors and the plan review for ordinary plans are gone. The builder is picked by whether the PR is mainly code or mainly process, and the lead picks each model's level at spawn.
+- `rules/jstack-models.mdc`: one line per role with its step down and up. The `reviewer` line is now the reviewer that fixes, and `builder for process work` and `holistic reviewer` are new.
 - `skills/architect/SKILL.md` and `skills/interrogate/SKILL.md`: `/interrogate` runs only when James asks.
 - Host files, READMEs, `docs/guide.md` and `skills/j-help/`: synced.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.4.0.

@@ -9,7 +9,7 @@ architect: openrouter/anthropic/claude-fable-5.2#medium; down openrouter/anthrop
 plan reviewer: openrouter/anthropic/claude-fable-5.2#medium; down openrouter/anthropic/claude-opus-5.5#high
 builder: openrouter/openai/gpt-6.1-sol#high; down #medium for basic work; up #xhigh for hard work, or openrouter/anthropic/claude-opus-5.5#high rarely, when the lead judges Sol isn't coping
 builder for process work: openrouter/anthropic/claude-opus-5.5#medium; up #high for harder pieces
-finisher: openrouter/anthropic/claude-opus-5.5#high; down #medium for small PRs; up #xhigh for hard PRs
+reviewer: openrouter/anthropic/claude-opus-5.5#high; down #medium for small PRs; up #xhigh for hard PRs
 milestone reviewer: openrouter/anthropic/claude-fable-5.2#medium
 holistic reviewer: openrouter/anthropic/claude-opus-5.5#high; down #medium for a small stack
 explore: openrouter/anthropic/claude-haiku-5.5#high; up openrouter/anthropic/claude-sonnet-5.5#high for complex code

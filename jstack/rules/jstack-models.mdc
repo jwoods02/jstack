@@ -9,17 +9,17 @@ alwaysApply: true
 # Load-bearing means hard to undo: data models and storage, public APIs, cross-service boundaries, and security.
 
 # Jobs (see j-mode).
-# Opus Medium: James's default lead (3 Nov). The lead (a Cursor Project chat, or an OpenCode lead session) plans and starts builders and finishers, and the architect and finishers carry the deeper reasoning. Cursor's Project settings set it; this line records it.
+# Opus Medium: James's default lead (3 Nov). The lead (a Cursor Project chat, or an OpenCode lead session) plans and starts builders and reviewers, and the architect and reviewers carry the deeper reasoning. Cursor's Project settings set it; this line records it.
 lead: claude-opus-5-5-medium
 # Opus High: an ordinary design is cheap to change later. A load-bearing design is hard to undo, so deeper reasoning changes the outcome.
 architect: claude-opus-5-5-high; up claude-opus-5-5-xhigh for a load-bearing design
 # Opus Extra High: it runs only on a load-bearing plan, and its verdict gates every builder that follows.
 plan reviewer: claude-opus-5-5-xhigh
-# Opus Medium: James's default builder (27 Oct). The plan and the finisher carry the judgment.
+# Opus Medium: James's default builder (27 Oct). The plan and the reviewer carry the judgment.
 builder: claude-opus-5-5-medium; down claude-sonnet-5-5-high for very well-planned work; up claude-opus-5-5-high for a very complex change, or claude-opus-5-5-xhigh for the hardest pieces
 builder for process work: claude-opus-5-5-medium; up claude-opus-5-5-high for harder pieces
 # Opus High: one fresh agent per PR reviews hawkishly and fixes what it finds. High ties Extra High on CursorBench at about half the cost.
-finisher: claude-opus-5-5-high; down claude-opus-5-5-medium for small PRs; up claude-opus-5-5-xhigh for hard PRs
+reviewer: claude-opus-5-5-high; down claude-opus-5-5-medium for small PRs; up claude-opus-5-5-xhigh for hard PRs
 # Opus Extra High: it runs only on a stack with a one-way door, and its verdict gates the merge.
 milestone reviewer: claude-opus-5-5-xhigh
 holistic reviewer: claude-opus-5-5-high; down claude-opus-5-5-medium for a small stack

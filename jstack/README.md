@@ -14,12 +14,12 @@ type [`/j-mode`](./skills/j-mode/SKILL.md) with a goal and a way to check it's d
 
 | job | when | model |
 |---|---|---|
-| lead | once James agrees a plan and says go. runs each PR's builder and finisher as subagents. in Cursor, the Project chat | opus 5.5 medium |
+| lead | once James agrees a plan and says go. runs each PR's builder and reviewer as subagents. in Cursor, the Project chat | opus 5.5 medium |
 | architect | before a one-way door or a large change, or when the design is unclear. ends with a short decision list | opus 5.5 high; up to extra high for a load-bearing design |
 | plan reviewer | load-bearing plans only, before any builder starts | opus 5.5 extra high |
 | builder | one per PR. draft PR, then "ready for review". a PR that is mainly process, prompts, docs or skills uses the process builder line | opus 5.5 medium; down to sonnet 5.5 high for very well-planned work; up to opus 5.5 high, or extra high for the hardest pieces |
-| finisher | one fresh agent per PR once the builder reports. reviews hawkishly against the plan, fixes what it finds, waits on CI and drafts the PR text. a stack with a one-way door also gets a milestone review | opus 5.5 high; down to medium for small PRs. milestone reviewer on opus 5.5 extra high |
-| parallel builders | as many builder and finisher pairs as there are independent tasks, one builder per PR or task | same as builder and finisher |
+| reviewer | one fresh agent per PR once the builder reports. reviews hawkishly against the plan, fixes what it finds, waits on CI and drafts the PR text. a stack with a one-way door also gets a milestone review | opus 5.5 high; down to medium for small PRs. milestone reviewer on opus 5.5 extra high |
+| parallel builders | as many builder and reviewer pairs as there are independent tasks, one builder per PR or task | same as builder and reviewer |
 | investigator | read-only questions. no PR | sonnet 5.5 high |
 | watcher | only when waiting on something long, such as a deploy | sonnet 5.5 medium |
 
@@ -36,7 +36,7 @@ to keep `/j-mode` on across turns, pick it from the `/` menu and press option+en
 
 | skill | use it when |
 |---|---|
-| [`/j-mode`](./skills/j-mode/SKILL.md) | default entry point. picks one job (lead, architect, builder, finisher, investigator, or parallel builders) and keeps PRs draft. |
+| [`/j-mode`](./skills/j-mode/SKILL.md) | default entry point. picks one job (lead, architect, builder, reviewer, investigator, or parallel builders) and keeps PRs draft. |
 | [`/j-help`](./skills/j-help/SKILL.md) | you're new to JStack, or unsure which job, skill, or principle fits. finds out what you're trying to do, answers that part, and hands you a prompt to type. runs only when you type `/j-help`. |
 | [`/in-your-own-words`](./skills/in-your-own-words/SKILL.md) | you want the agent to play back your goal and the problem before it starts. runs only when you type `/in-your-own-words`. |
 | [`/sharpen`](./skills/sharpen/SKILL.md) | you want a prompt made deeper, not bigger, before you send it: what a top professional would do that you didn't ask for, the raw material they'd start from, their methods and tools, and an outside check that the result is right. hands back the rewritten prompt and leaves your choices open. doesn't do the task. runs only when you type `/sharpen`. |
@@ -73,7 +73,7 @@ to keep `/j-mode` on across turns, pick it from the `/` menu and press option+en
 
 ## the `j-agent` and Comment Sicko subagents
 
-every builder, finisher, architect, and helper is spawned as [`subagent_type: "j-agent"`](./agents/j-agent.md), which reads `j-mode` in full before doing any work. [Comment Sicko](./agents/comment-sicko.md) is a read-only comment reviewer. usually invoke it through [`/no-comments`](./skills/no-comments/SKILL.md).
+every builder, reviewer, architect, and helper is spawned as [`subagent_type: "j-agent"`](./agents/j-agent.md), which reads `j-mode` in full before doing any work. [Comment Sicko](./agents/comment-sicko.md) is a read-only comment reviewer. usually invoke it through [`/no-comments`](./skills/no-comments/SKILL.md).
 
 ## principles
 
