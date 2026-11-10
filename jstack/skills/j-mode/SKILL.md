@@ -28,14 +28,14 @@ A **thread** is one piece of work James agreed, from one PR to a stack of them. 
 
 | Job | When | Model map line |
 |---|---|---|
-| Lead | Once James agrees a plan and says go. It runs every PR's builder and finisher as subagents, keeps state in its plan or handoff doc and puts calls to James in its own chat. It doesn't write the code itself, so its context holds the plan, summaries and reports. It hands non-trivial design or plan questions to the architect rather than reasoning them out itself. | `lead` |
+| Lead | Once James agrees a plan and says go. It runs every PR's builder and finisher as subagents, keeps state in its plan or handoff doc and puts calls to James in its own chat. It doesn't write the code itself, so its context holds the plan, summaries and reports. It hands non-trivial design or plan questions to the architect. | `lead` |
 | Architect | Before a one-way door or a large change, or when the design is unclear. Run `/how` and `/why`, then `/architect` with checkpoint, so it stops before implementing. Settle a question you can answer by building a quick throwaway by building one. End with a short decision list and stop for James. | `architect` |
 | Plan reviewer | A fresh agent for a load-bearing plan, before a builder starts. | `plan reviewer` |
-| Builder | One per PR, on its own branch. Builds, pushes, opens a draft PR with a placeholder body, then reports "ready for review" with the head commit and a short verification note. It leaves PR text and CI to the finisher. A one-off builder, with no lead above it, starts its own finisher. | `builder` for code. `builder for process work` for process, prompt, docs and skill work. |
+| Builder | One per PR, on its own branch. Builds, pushes, opens a draft PR with a placeholder body, then reports "ready for review" with the head commit and a short verification note. It leaves PR text and CI to the finisher. A one-off builder, with no lead above it, starts its own finisher. | `builder`, or `builder for process work` (see Subagents) |
 | Finisher | One fresh agent per PR, started by the lead as soon as the builder reports. See Finishing. | `finisher` |
 | Parallel builders | Independent PRs in one thread. One builder per PR, each on its own branch. Before fanning out, check that no two touch the same branch, files or migration number (**principle-separate-before-serializing-shared-state**), and run the ones that do one after another. | Same as builder and finisher |
 | Investigator | A read-only question: how something works, or why it's built that way. Use `/how`, `/why` or `/teach`. No PR. Lead the reply with the answer, in a few sentences, before any detail. | `investigator` |
-| Watcher | Only when waiting on something long, such as a deploy. Usually the lead or builder runs one blocking command instead (see the host file's waits). | `watcher` |
+| Watcher | Only when waiting on something long, such as a deploy. Usually the lead or finisher runs one blocking command instead (see the host file's waits). | `watcher` |
 
 **Picking up work.** A chat starts from what James brings: a ticket, a plan or handoff doc, or an idea to plan together. Work that isn't this thread's, such as a new idea or James asking for a new session, goes where the host file says. Write it a short brief: the job, the scope and what's out of scope, the finish check, and the branch name.
 
@@ -45,7 +45,7 @@ A **thread** is one piece of work James agreed, from one PR to a stack of them. 
 2. Work through the PRs in order, each with a fresh builder, and run work in parallel where it's independent or a later PR only needs a settled contract. Name the split and its cost in the plan, which James's go covers, and propose unplanned parallel work with its cost. A finished PR can take a late fix while later PRs build on it. Start each PR's finisher as soon as its builder reports, without waiting for the rest of the stack.
 3. When the finisher reports, read its list of changes, add any context from the chat to the PR body it drafted, and send James the PR link.
 4. When James changes scope while a builder runs, let him settle, then send the builder one consolidated update. A string of small resumes costs more than one clear one.
-5. Move on once the finisher reports done, CI is green, and its verdict's head commit equals the PR's current head. A verdict for an older head is stale.
+5. Move on once the finisher reports done, CI is green, and its verdict's head commit equals the PR's current head.
 6. Finish with the milestone review where Finishing asks for one. Then say "Ready for James" in your own chat, with each PR and the head its verdict names.
 
 **Ask James** in the lead's own chat, and wait on that PR, when:
@@ -191,11 +191,11 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 - pointers to files, PRs and handoff notes rather than pasted context;
 - the shape of the report you want back.
 
-Start subagents in the background, with an explicit model from the role's line in the model map. Pick the level at spawn from the line's default, step down and step up, because an agent can't change its own. A spawn with no role of its own uses `other helpers`.
+Start subagents in the background, with an explicit model from the role's line in the model map. Choose the line's default, or its step down or up, at spawn, because an agent can't change its own level. A spawn with no role of its own uses `other helpers`.
 
 **Match the model to the job.**
 
-- Pick the builder by what the PR mainly is. Mainly code goes on `builder`, even when the coding is ambiguous or needs decisions along the way. Mainly process, prompts, docs or skills goes on `builder for process work`, because James doesn't trust Sol with that.
+- A PR that is mainly code goes on `builder`, even when the coding is ambiguous or needs decisions along the way. One that is mainly process, prompts, docs or skills goes on `builder for process work`, because the code builder may be a model that is weaker at process and prose.
 - Never start an Anthropic model on its max level, though escalating to it is fine.
 - If the host rejects a model, use the closest valid one of the same family and say so.
 
