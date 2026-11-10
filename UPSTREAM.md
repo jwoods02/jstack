@@ -215,4 +215,4 @@ All paths are inside `jstack/`.
 | Date | Upstream commit | Version | JStack PR |
 |---|---|---|---|
 | 2026-10-15 | `99743e9c` | 0.15.25 | [#1](https://github.com/jwoods02/jstack/pull/1) (import) |
-| 2026-11-10 | `de8ee15d` | 0.15.36 | this PR |
+| 2026-11-10 | `de8ee15d` | 0.15.36 | [#25](https://github.com/jwoods02/jstack/pull/25) |
