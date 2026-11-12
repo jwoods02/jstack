@@ -26,7 +26,7 @@ You need OpenCode V2 with its `opencode` CLI on your PATH, plus `git`, `jq` and 
    gh skill install github/gh-stack gh-stack --agent opencode --scope user
    ```
 2. Copy [`agents/`](agents/) into `~/.config/opencode/agents/`.
-3. Copy [`jstack-models.example.md`](jstack-models.example.md) to `~/.config/opencode/jstack-models.md` and set model IDs your providers offer. A `#variant` works only for a model whose entry in `opencode.json` lists its reasoning levels. For the example map's `blue sky` line, add `google/gemini-4-carbon` under `provider.openrouter.models` with `"capabilities": { "reasoning": { "supported": true, "effort": ["low", "medium", "high"] } }`, as for Sol and Opus.
+3. Copy [`jstack-models.example.md`](jstack-models.example.md) to `~/.config/opencode/jstack-models.md` and set model IDs your providers offer.
 4. Add this to `~/.config/opencode/opencode.json`:
 
    ```jsonc
