@@ -29,6 +29,7 @@ arena cross-judge pool: openrouter/anthropic/claude-opus-5.5#xhigh
 swarm workers: openrouter/anthropic/claude-sonnet-5.5#high; down openrouter/anthropic/claude-haiku-5.5#high
 architect runners: openrouter/anthropic/claude-opus-5.5#high, openrouter/openai/gpt-6.1-sol#high
 interrogate reviewers: openrouter/anthropic/claude-opus-5.5#high, openrouter/openai/gpt-6.1-sol#high
+blue sky: openrouter/google/gemini-4-carbon#medium; up #high for a one-way door or when two fixes have failed
 trail reviewer: openrouter/anthropic/claude-opus-5.5#high
 comment sicko: openrouter/anthropic/claude-sonnet-5.5#high
 other helpers: openrouter/anthropic/claude-sonnet-5.5#high; down openrouter/anthropic/claude-haiku-5.5#high

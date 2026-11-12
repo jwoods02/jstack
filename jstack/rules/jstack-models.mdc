@@ -4,7 +4,7 @@ alwaysApply: true
 ---
 # JStack model configuration, read by j-mode and the skills. One line per role. A comma in a role name means those roles share the line.
 # Every role has a line. Any spawn without its own role uses `other helpers`. Never fall back to a model this file doesn't name.
-# James Woods's choices: Anthropic leads every role and no OpenAI models are used. Gemini only takes a second seat on a panel an Anthropic agent leads.
+# James Woods's choices: Anthropic leads every role and no OpenAI models are used. Gemini only takes a second seat beside an Anthropic agent that leads, on a panel or for a blue-sky take.
 # A line gives the default, then when to step down or up, as `role: default; down <model> for <when>; up <model> for <when>`. Never start an Anthropic model on max, though escalating to max is fine.
 # Load-bearing means hard to undo: data models and storage, public APIs, cross-service boundaries, and security.
 
@@ -47,6 +47,8 @@ swarm workers: claude-sonnet-5-5-high
 architect runners: claude-opus-5-5-high, gemini-4-carbon-medium
 # Opus High: /interrogate runs only when James asks for it. Two model families catch more than more depth on one.
 interrogate reviewers: claude-opus-5-5-high, gemini-4-carbon-medium
+# Carbon Medium: an extra seat beside the leading agent, never the first agent. It runs when James asks, or a lead or architect judges a design stuck.
+blue sky: gemini-4-carbon-medium; up gemini-4-carbon-high for a one-way door or when two fixes have failed
 # Opus High: scans a decision trail for weak evidence and flags it. The flags are advice.
 trail reviewer: claude-opus-5-5-high
 comment sicko: claude-sonnet-5-5-high

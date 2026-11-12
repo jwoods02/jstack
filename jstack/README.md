@@ -22,6 +22,7 @@ type [`/j-mode`](./skills/j-mode/SKILL.md) with a goal and a way to check it's d
 | parallel builders | as many builder and reviewer pairs as there are independent tasks, one builder per PR or task | same as builder and reviewer |
 | investigator | read-only questions. no PR | sonnet 5.5 high |
 | watcher | only when waiting on something long, such as a deploy | sonnet 5.5 medium |
+| blue sky | when James asks, or a lead or architect judges a design stuck. a fresh take beside the leading agent. never leads, builds or reviews | gemini 4 carbon medium; up to high for a one-way door or after two failed fixes |
 
 PRs stay draft. no agent marks a PR ready, merges it, or tags a release; James does all three. James's standing orders win over anything else in JStack. JStack is the default for every Project, and a Project's preferences hold only what is specific to that project.
 

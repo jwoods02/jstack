@@ -197,6 +197,7 @@ Start subagents in the background, with an explicit model from the role's line i
 **Match the model to the job.**
 
 - A PR that is mainly code goes on `builder`, even when the coding is ambiguous or needs decisions along the way. One that is mainly process, prompts, docs or skills goes on `builder for process work`, because the code builder may be a model that is weaker at process and prose.
+- Blue-sky or second-opinion work goes on `blue sky`, when James asks or a lead or architect judges a design stuck and says why. It never leads, builds or reviews.
 - Never start an Anthropic model on its max level, though escalating to it is fine.
 - If the host rejects a model, use the closest valid one of the same family and say so.
 
