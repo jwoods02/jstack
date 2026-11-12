@@ -20,7 +20,7 @@ To install it, open Cursor's Customize, choose From GitHub Repository, and add t
 
 ## Jobs and models
 
-The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) and the [Artificial Analysis](https://artificialanalysis.ai) Intelligence Index as guides. Anthropic leads every role, and on Cursor no OpenAI models are used. The OpenCode map, which you set yourself, can put another family on the builder seat. The example map has Sol build PRs that are mainly code and Opus build ones that are mainly process, prompts, docs or skills. An Opus reviewer reviews and fixes every PR, and Fable architects. Gemini only takes a second seat on panels that an Anthropic agent leads. Opus runs at High unless deeper reasoning clearly changes the outcome. Agents never start on Max but may escalate to it.
+The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) and the [Artificial Analysis](https://artificialanalysis.ai) Intelligence Index as guides. Anthropic leads every role, and on Cursor no OpenAI models are used. The OpenCode map, which you set yourself, can put another family on the builder seat. The example map has Sol build PRs that are mainly code and Opus build ones that are mainly process, prompts, docs or skills. An Opus reviewer reviews and fixes every PR, and Fable architects. Gemini only takes a second seat beside an Anthropic agent that leads, on a panel or for a blue-sky take. Opus runs at High unless deeper reasoning clearly changes the outcome. Agents never start on Max but may escalate to it.
 
 | Job or role | Model | Why |
 |---|---|---|
@@ -31,13 +31,14 @@ The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) an
 | Builder for process work | Opus 5.5 Medium; up to High | Process, prompts, docs and skills |
 | Reviewer (every PR) | Opus 5.5 High; down to Medium for small PRs | Reviews hawkishly and fixes what it finds. High ties Extra High on CursorBench at about half the cost |
 | Holistic reviewer (when James asks) | Opus 5.5 High; down to Medium | A whole-stack review with no one-way door |
-| `/interrogate` (when James asks) | Opus 5.5 High + Gemini 4 Argon High | Two model families try to break a change |
+| `/interrogate` (when James asks) | Opus 5.5 High + Gemini 4 Carbon Medium | Two model families try to break a change |
 | Milestone reviewer | Opus 5.5 Extra High | Runs only on a stack with a one-way door, and its verdict gates the merge |
 | Investigator | Sonnet 5.5 High | Read-only questions |
 | Watcher | Sonnet 5.5 Medium | Only when waiting on something long |
 | Judgment and prose | Opus 5.5 High | Everyday calls inside a job |
 | `how` explainer, `why` synthesizer, `reflect` seats | Opus 5.5 High | They explain or propose; nothing they say is final |
-| Arena runners, architect runners | Opus 5.5 High + Gemini 4 Argon High | They produce candidates for someone else to pick |
+| Arena runners, architect runners | Opus 5.5 High + Gemini 4 Carbon Medium | They produce candidates for someone else to pick |
+| Blue sky (when James asks, or a design is stuck) | Gemini 4 Carbon Medium; up to High for a one-way door or after two failed fixes | A fresh take beside the leading agent. It never leads, builds or reviews |
 | Arena judge | Opus 5.5 Extra High | Its verdict picks the base that later work builds on |
 | Trail reviewer (`/show-me-your-work`) | Opus 5.5 High | Its flags are advice |
 | `how` explorers, `why` investigators, `reflect` tooling | Sonnet 5.5 Extra High | Read-only helpers |

@@ -32,7 +32,7 @@ Launch all reviewers in a single message with the Task tool, one per entry on th
 | Subagent | Default model |
 |----------|---------------|
 | Reviewer A | `claude-opus-5-5-high` |
-| Reviewer B | `gemini-4-argon-high` |
+| Reviewer B | `gemini-4-carbon-medium` |
 
 Each reviewer gets `subagent_type: generalPurpose` and `model` set to its configured entry, or its table default when there is no configured line. It also gets `readonly: true` when the Task tool offers it. Otherwise, tell the subagent in its prompt not to write files, push or comment. Omit `model` for an `auto` or `inherit-parent` entry, so that reviewer runs on the parent model.
 
