@@ -208,6 +208,8 @@ All paths are inside `jstack/`.
 - Host files, READMEs, `docs/guide.md` and `skills/j-help/`: synced.
 - `plugin.json` and `.cursor-plugin/plugin.json`: version 4.4.0.
 
+**Gemini 4 Carbon (12 Nov 2026).** `gemini-4-carbon-medium` replaces `gemini-4-argon-high` as the second seat on `arena runners`, `architect runners` and `interrogate reviewers`, and as the `gemini-*` fallback in `skills/arena/`, `skills/architect/` and `skills/interrogate/`. A new `blue sky` line runs Carbon only when James asks or a design is stuck. `skills/j-mode/SKILL.md`, the READMEs and the OpenCode example map are synced.
+
 ## How to merge a new release
 
 1. Add `https://github.com/cursor/plugins` as a remote named `upstream`, then fetch it.
