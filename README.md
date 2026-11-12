@@ -31,13 +31,13 @@ The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) an
 | Builder for process work | Opus 5.5 Medium; up to High | Process, prompts, docs and skills |
 | Reviewer (every PR) | Opus 5.5 High; down to Medium for small PRs | Reviews hawkishly and fixes what it finds. High ties Extra High on CursorBench at about half the cost |
 | Holistic reviewer (when James asks) | Opus 5.5 High; down to Medium | A whole-stack review with no one-way door |
-| `/interrogate` (when James asks) | Opus 5.5 High + Gemini 4 Argon High | Two model families try to break a change |
+| `/interrogate` (when James asks) | Opus 5.5 High + Gemini 4 Carbon Medium | Two model families try to break a change |
 | Milestone reviewer | Opus 5.5 Extra High | Runs only on a stack with a one-way door, and its verdict gates the merge |
 | Investigator | Sonnet 5.5 High | Read-only questions |
 | Watcher | Sonnet 5.5 Medium | Only when waiting on something long |
 | Judgment and prose | Opus 5.5 High | Everyday calls inside a job |
 | `how` explainer, `why` synthesizer, `reflect` seats | Opus 5.5 High | They explain or propose; nothing they say is final |
-| Arena runners, architect runners | Opus 5.5 High + Gemini 4 Argon High | They produce candidates for someone else to pick |
+| Arena runners, architect runners | Opus 5.5 High + Gemini 4 Carbon Medium | They produce candidates for someone else to pick |
 | Arena judge | Opus 5.5 Extra High | Its verdict picks the base that later work builds on |
 | Trail reviewer (`/show-me-your-work`) | Opus 5.5 High | Its flags are advice |
 | `how` explorers, `why` investigators, `reflect` tooling | Sonnet 5.5 Extra High | Read-only helpers |
