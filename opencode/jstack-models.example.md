@@ -8,7 +8,7 @@
 lead: openrouter/anthropic/claude-sonnet-5.5#high
 architect: anthropic/claude-fable-5-2#medium; down openrouter/anthropic/claude-opus-5.5#high or #medium for smaller, process or writing-heavy work; up anthropic/claude-fable-5-2#high only for a very large change that's hard to undo, or when James asks
 plan reviewer: anthropic/claude-fable-5-2#medium; down openrouter/anthropic/claude-opus-5.5#high
-builder: openrouter/openai/gpt-6.1-sol#high; down #medium for basic work; up #xhigh for hard work, or openrouter/anthropic/claude-opus-5.5#high rarely, when the lead judges Sol isn't coping
+builder: openrouter/openai/gpt-6.2-sol#high; down #medium for basic work; up #xhigh for hard work, or openrouter/anthropic/claude-opus-5.5#high rarely, when the lead judges Sol isn't coping
 builder for process work: openrouter/anthropic/claude-opus-5.5#medium; up #high for harder pieces
 reviewer: openrouter/anthropic/claude-opus-5.5#high; down #medium for small PRs; up #xhigh for hard PRs
 milestone reviewer: anthropic/claude-fable-5-2#medium
@@ -24,11 +24,11 @@ why investigators: openrouter/anthropic/claude-sonnet-5.5#high; down openrouter/
 why synthesizer: openrouter/anthropic/claude-opus-5.5#high
 reflect tooling: openrouter/anthropic/claude-sonnet-5.5#xhigh
 reflect judgment, divergent, synthesizer: openrouter/anthropic/claude-opus-5.5#high
-arena runners: openrouter/anthropic/claude-opus-5.5#high, openrouter/openai/gpt-6.1-sol#high
+arena runners: openrouter/anthropic/claude-opus-5.5#high, openrouter/openai/gpt-6.2-sol#high
 arena cross-judge pool: openrouter/anthropic/claude-opus-5.5#xhigh
 swarm workers: openrouter/anthropic/claude-sonnet-5.5#high; down openrouter/anthropic/claude-haiku-5.5#high
-architect runners: openrouter/anthropic/claude-opus-5.5#high, openrouter/openai/gpt-6.1-sol#high
-interrogate reviewers: openrouter/anthropic/claude-opus-5.5#high, openrouter/openai/gpt-6.1-sol#high
+architect runners: openrouter/anthropic/claude-opus-5.5#high, openrouter/openai/gpt-6.2-sol#high
+interrogate reviewers: openrouter/anthropic/claude-opus-5.5#high, openrouter/openai/gpt-6.2-sol#high
 blue sky: openrouter/google/gemini-4-carbon#medium; up #high for a one-way door or when two fixes have failed
 trail reviewer: openrouter/anthropic/claude-opus-5.5#high
 comment sicko: openrouter/anthropic/claude-sonnet-5.5#high
