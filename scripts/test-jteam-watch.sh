@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-JTEAM="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/opencode/skills/j-team/scripts/jteam"
+JTEAM="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/jteam"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
@@ -15,15 +15,19 @@ case "$1 $2" in
     calls="$(cat "$CALLS_FILE" 2>/dev/null || echo 0)"; echo $((calls + 1)) >"$CALLS_FILE"
     echo "$CHECKS" | sed -n "$((calls + 1))p" | grep . || echo "$CHECKS" | tail -n 1
     exit "${CHECKS_RC:-0}";;
-  "pr view") echo '{"number": 7, "title": "Fixture PR", "headRefOid": "abcdef1234567890",
-    "commits": [{"committedDate": "2026-11-01T09:00:00Z"}]}';;
+  "pr view")
+    views="$(cat "$VIEWS_FILE" 2>/dev/null || echo 0)"; echo $((views + 1)) >"$VIEWS_FILE"
+    head="$(echo "${HEADS:-abcdef1234567890}" | sed -n "$((views + 1))p" | grep . || echo "${HEADS:-abcdef1234567890}" | tail -n 1)"
+    echo "{\"number\": 7, \"title\": \"Fixture PR\", \"headRefOid\": \"$head\",
+    \"commits\": [{\"committedDate\": \"2026-11-01T09:00:00Z\"}]}";;
   "api repos/{owner}/{repo}/commits/abcdef1234567890") echo 2026-11-02T12:00:00Z;;
   "api --paginate")
     [ "$3" != "${FAILING_ENDPOINT:-}" ] || { echo "HTTP 502: Bad Gateway ($3)" >&2; exit 1; }
     case "$3" in
       */pulls/7/reviews) echo '[
         {"user": {"login": "cursor[bot]"}, "state": "COMMENTED", "body": "Old finding\nmore", "html_url": "https://x/old", "submitted_at": "2026-11-02T11:00:00Z"},
-        {"user": {"login": "cursor[bot]"}, "state": "COMMENTED", "body": "New finding\nmore", "html_url": "https://x/new", "submitted_at": "2026-11-02T13:00:00Z"}]';;
+        {"user": {"login": "cursor[bot]"}, "state": "COMMENTED", "body": "New finding\nmore", "html_url": "https://x/new", "submitted_at": "2026-11-02T13:00:00Z", "commit_id": "abcdef1234567890"},
+        {"user": {"login": "cursor[bot]"}, "state": "COMMENTED", "body": "Late finding on the old head", "html_url": "https://x/late", "submitted_at": "2026-11-02T14:00:00Z", "commit_id": "0123456old"}]';;
       *) echo '[]';;
     esac;;
 esac
@@ -31,7 +35,7 @@ EOF
 chmod +x "$tmp/bin/gh"
 
 fail=0
-run() { rm -f "$tmp/calls"; (cd "$tmp/repo" && export PATH="$tmp/bin:$PATH" CALLS_FILE="$tmp/calls" CHECKS="$1" JTEAM_CHECK_INTERVAL=0 JTEAM_CHECK_GRACE=0 "${@:2}" && "$JTEAM" watch 7 2>&1); }
+run() { rm -f "$tmp/calls" "$tmp/views"; (cd "$tmp/repo" && export PATH="$tmp/bin:$PATH" CALLS_FILE="$tmp/calls" VIEWS_FILE="$tmp/views" CHECKS="$1" JTEAM_CHECK_INTERVAL=0 JTEAM_CHECK_GRACE=0 "${@:2}" && "$JTEAM" watch 7 2>&1); }
 calls() { cat "$tmp/calls"; }
 exits() { if [ "$2" = "$3" ]; then echo "ok   $1 exits $3"; else echo "FAIL $1 exits $2, want $3"; fail=1; fi; }
 expect() {
@@ -47,6 +51,14 @@ expect "report names the PR and head" "#7 Fixture PR (head abcdef1)" "$out"
 exits "pass case" "$rc" 0
 expect "review after the head commit is shown" "review by cursor[bot] COMMENTED: New finding https://x/new" "$out"
 expect_not "review before the head commit is hidden" "Old finding" "$out"
+expect_not "late review of an older commit is hidden" "Late finding" "$out"
+
+rc=0; out="$(run '[{"name": "test", "bucket": "pass"}]' HEADS="abcdef1234567890
+9999999fedcba")" || rc=$?
+expect "a head that moves while waiting is reported stale" "Stale: the head moved to 9999999" "$out"
+expect_not "a stale watch doesn't report CI passed" "CI passed" "$out"
+expect_not "a stale watch doesn't list findings" "New finding" "$out"
+exits "head moved" "$rc" 2
 
 rc=0; out="$(run '[{"name": "lint", "bucket": "fail"}, {"name": "test", "bucket": "pass"}]')" || rc=$?
 expect "fail case names the failing check" "CI failed: lint" "$out"
