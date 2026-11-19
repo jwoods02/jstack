@@ -1,57 +1,41 @@
 # JStack
 
-<img src="jstack/assets/logo.svg" alt="JStack logo" width="96" />
+JStack is how James Woods works with coding agents in [OpenCode](https://opencode.ai), written down as three agent files, three skills and one script. It's small on purpose. Recent models follow plain instructions well, so JStack holds only what a model can't work out for itself, and rules that must always hold live in OpenCode's permissions.
 
-JStack is James Woods's personal adaptation of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent-workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). It keeps pstack's skills and principles and runs James's own Cursor Project workflow through `/j-mode`. The plugin is for Cursor, and the same skills run on OpenCode through [`opencode/`](opencode/).
+## How it works
 
-## v4 scope
+You talk to one session, `JMode`. It answers questions and makes small changes itself. For a real PR it agrees the scope with you, makes a git worktree, and starts a `builder` subagent to build and push a draft PR. Then a fresh `reviewer` subagent reviews it, fixes what it finds, writes the PR description and pushes. `JMode` sends you the link and watches CI. You mark PRs ready, merge and release.
 
-- The plugin lives in [`jstack/`](jstack/). It is based on upstream release 0.15.25.
-- [`/j-mode`](jstack/skills/j-mode/SKILL.md) is a one-page, host-neutral router over James's jobs: lead, architect, builder, reviewer, investigator and as many builder and reviewer pairs as there are independent tasks. pstack's 23 playbooks and the tools only they used are gone.
-- PRs stay draft. No agent marks a PR ready, merges it or tags a release. James's standing orders win over anything else in JStack. JStack is the default workflow for every Project, and a Project's preferences hold only what is specific to that project.
-- Every role has an explicit model in [`jstack/rules/jstack-models.mdc`](jstack/rules/jstack-models.mdc), an always-applied plugin rule.
-- The guide is [one page](jstack/docs/guide.md). [UPSTREAM.md](UPSTREAM.md) lists every removal and change.
+## What's in it
 
-To install it, open Cursor's Customize, choose From GitHub Repository, and add this repo. Don't install the upstream plugin alongside it, because both ship the same skill names. To change a model, edit the rule file.
+| Path | What it is |
+|---|---|
+| `agents/JMode.md` | The main session |
+| `agents/builder.md` | Builds one PR from a brief |
+| `agents/reviewer.md` | Reviews and fixes one PR, and writes its description |
+| `skills/writing` | Docs, PR descriptions, tickets and comments |
+| `skills/eval-check` | Checks a measured number before you trust it |
+| `skills/glossary` | Keeps a project's words consistent (optional) |
+| `scripts/jteam` | Worktrees, session lists, PR status and a CI watch that OpenCode doesn't do |
+| `opencode.example.json` | Models per agent, skills path and deny rules |
 
-## OpenCode
+## Install
 
-[`opencode/`](opencode/) runs the same skills on OpenCode V2, with nothing copied out of `jstack/`. `j-mode` is host-neutral. Each host has a short host file for its tools: [`references/cursor.md`](jstack/skills/j-mode/references/cursor.md) on Cursor, and the `j-team` skill on OpenCode. `opencode/` adds two agents, a model map template and `j-team`, with its `jteam` script. You open sessions, and a session can start another for separate work. Once you agree a plan, the session leads the thread in one git worktree, runs every PR's builder and reviewer as subagents, and ships layered work as a GitHub stack. Install also covers the `gh stack` extension, its agent skill, and deny rules that keep agents from merging, marking ready or unstacking. See [its README](opencode/README.md).
+You need OpenCode V2, `git`, `jq` and `gh`, plus the [`gh stack`](https://github.com/github/gh-stack) extension for stacked PRs.
 
-## Jobs and models
+```sh
+git clone https://github.com/jwoods02/jstack ~/src/jstack
+mkdir -p ~/.config/opencode/agents ~/.local/bin
+ln -s ~/src/jstack/agents/*.md ~/.config/opencode/agents/
+ln -s ~/src/jstack/scripts/jteam ~/.local/bin/jteam
+```
 
-The models were chosen with [CursorBench 4.0](https://cursor.com/cursorbench) and the [Artificial Analysis](https://artificialanalysis.ai) Intelligence Index as guides. Anthropic leads every role, and on Cursor no OpenAI models are used. The OpenCode map, which you set yourself, can put another family on the builder seat. The example map has Sol build PRs that are mainly code and Opus build ones that are mainly process, prompts, docs or skills. An Opus reviewer reviews and fixes every PR, and Fable architects. Gemini only takes a second seat beside an Anthropic agent that leads, on a panel or for a blue-sky take. Opus runs at High unless deeper reasoning clearly changes the outcome. Agents never start on Max but may escalate to it.
+Merge `opencode.example.json` into `~/.config/opencode/opencode.json`, and change the models and the skills path to match your setup. Because the agents and script are symlinks, `git pull` updates them.
 
-| Job or role | Model | Why |
-|---|---|---|
-| Lead (the Project chat on Cursor) | Opus 5.5 Medium | Plans, runs builders and reviewers; on Cursor, set in the Project's settings |
-| Architect | Opus 5.5 High; up to Extra High for a load-bearing design | A load-bearing design is hard to undo |
-| Plan reviewer (load-bearing plans only) | Opus 5.5 Extra High | Its verdict gates every builder |
-| Builder | Opus 5.5 Medium; down to Sonnet 5.5 High for very well-planned work; up to Opus 5.5 High, or Extra High for the hardest pieces | James's builder rule (27 Oct) |
-| Builder for process work | Opus 5.5 Medium; up to High | Process, prompts, docs and skills |
-| Reviewer (every PR) | Opus 5.5 High; down to Medium for small PRs | Reviews hawkishly and fixes what it finds. High ties Extra High on CursorBench at about half the cost |
-| Holistic reviewer (when James asks) | Opus 5.5 High; down to Medium | A whole-stack review with no one-way door |
-| `/interrogate` (when James asks) | Opus 5.5 High + Gemini 4 Carbon Medium | Two model families try to break a change |
-| Milestone reviewer | Opus 5.5 Extra High | Runs only on a stack with a one-way door, and its verdict gates the merge |
-| Investigator | Sonnet 5.5 High | Read-only questions |
-| Watcher | Sonnet 5.5 Medium | Only when waiting on something long |
-| Judgment and prose | Opus 5.5 High | Everyday calls inside a job |
-| `how` explainer, `why` synthesizer, `reflect` seats | Opus 5.5 High | They explain or propose; nothing they say is final |
-| Arena runners, architect runners | Opus 5.5 High + Gemini 4 Carbon Medium | They produce candidates for someone else to pick |
-| Blue sky (when James asks, or a design is stuck) | Gemini 4 Carbon Medium; up to High for a one-way door or after two failed fixes | A fresh take beside the leading agent. It never leads, builds or reviews |
-| Arena judge | Opus 5.5 Extra High | Its verdict picks the base that later work builds on |
-| Trail reviewer (`/show-me-your-work`) | Opus 5.5 High | Its flags are advice |
-| `how` explorers, `why` investigators, `reflect` tooling | Sonnet 5.5 Extra High | Read-only helpers |
-| Swarm workers, Comment Sicko, other helpers | Sonnet 5.5 High | Bulk checks and narrow passes |
+`jteam worktree` runs `~/.config/opencode/worktree-setup/<repo>.sh` in each new worktree when that file exists. Have it end with the line `worktree setup ok`.
 
-## Upstream merges
+The tests are `scripts/test-jteam-*.sh`.
 
-[UPSTREAM.md](UPSTREAM.md) records the last merged upstream version, the path mapping, every removal and change, and the merge steps. [`scripts/rename-upstream.py`](scripts/rename-upstream.py) applies the renames to an upstream diff and drops changes to removed paths.
+## Credit
 
-## Direction
-
-Later versions will keep changing JStack one PR at a time, from a backlog agreed with James. Each step adds to UPSTREAM.md, so upstream merges stay mechanical.
-
-## License
-
-MIT. The upstream code (pstack) is copyright (c) 2026 Lauren Tan, and James Woods's changes are copyright (c) 2026 James Woods. See [`jstack/LICENSE`](jstack/LICENSE).
+JStack started as a fork of Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack), and the writing skill grew out of its writing skills. The glossary skill is adapted from Matt Pocock's [skills](https://github.com/mattpocock/skills). MIT licensed, see `LICENSE`.
