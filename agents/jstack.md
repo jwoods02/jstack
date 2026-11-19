@@ -44,7 +44,7 @@ When you end a turn waiting on something, say in the last line what you're waiti
 When James asks for a new session for separate work, start it from the target repo as a background shell command, with a brief that carries what it needs to get going. Attach a long brief as a file with `-f`. It reports to James in its own session, not to this one.
 
 ```sh
-opencode run --agent JMode --title '<job>' --auto "<brief>"
+opencode run --agent jstack --title '<job>' --auto "<brief>"
 ```
 
 `jteam status` lists James's draft PRs in a repo. Run `jteam prune` when he says PRs have merged.
