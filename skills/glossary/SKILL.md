@@ -5,8 +5,6 @@ description: Keeps a project's words consistent with its glossary. Use when nami
 
 # Glossary
 
-Adapted from Matt Pocock's [domain-modeling](https://github.com/mattpocock/skills/tree/main/skills/engineering/domain-modeling) skill (MIT, copyright 2026 Matt Pocock).
-
 A project's words drift. The UI says one thing, the API another and the code a third, and agents invent a fourth. A glossary maps them, so everyone can tell which words name the same thing and which don't.
 
 ## Using it

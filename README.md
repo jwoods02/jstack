@@ -38,4 +38,4 @@ The tests are `scripts/test-jteam-*.sh`.
 
 ## Credit
 
-JStack started as a fork of Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack), and the writing skill grew out of its writing skills. The glossary skill is adapted from Matt Pocock's [skills](https://github.com/mattpocock/skills). MIT licensed, see `LICENSE`.
+JStack started as a fork of Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack), and the writing skill grew out of its writing skills. The glossary skill is adapted from Matt Pocock's [domain-modeling](https://github.com/mattpocock/skills/tree/main/skills/engineering/domain-modeling) skill (MIT, copyright 2026 Matt Pocock). MIT licensed, see `LICENSE`.

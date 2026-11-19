@@ -35,27 +35,3 @@ Use the repo's PR template when it has one, and keep any bot's marker block at t
 ## Code comments
 
 A comment earns its place by saying something the code can't, such as a non-obvious why or an outside constraint, in a line or two. Delete comments that narrate the code or the change. Where a comment says "don't change this", prefer a test or a type that enforces it.
-
-## Examples
-
-A reply James understood straight away, after he said the jargon lost him:
-
-> Imagine a practice exam for a new grader. The answer key says what a careful human would score each paper. We split the papers into three piles: one the tuner can study, one for checking each tweak, and a sealed pile that is the final exam.
->
-> The tool that writes the answer key respected the seal too, so it could never write answers onto the sealed pile. To work around that, it copied the sealed files from version to version without opening them. If a copy had the same name as the version you were editing, it used the copy and quietly dropped your latest edits.
->
-> Now only the commands that grade are kept out of the sealed pile. The answer-key command can see everything but only prints counts. Short version: the lock was on the wrong door.
-
-A PR body James would sign:
-
-> `watch` spent about 30 minutes of every bot finding waiting on a check that does nothing. This stops it.
->
-> **Where the time went.** The autofix check sits in progress for exactly 30 minutes after any finding, and `watch` waited for every check. Four watches after a finding took 33 to 44 minutes. Watches without one took 5 to 7.
->
-> **What changed.** `watch` polls every 10 seconds and ignores the autofix check. It also waits up to a minute for checks to appear after a push, so callers drop their `sleep`.
->
-> **Looked at and not done.** Five other watch tools poll the same API. Polling was never the cost, so the script stays.
->
-> **Verified.** The test script passes 28 checks, including the autofix case. A live run returned in under 3 minutes.
->
-> Low risk. One script change with tests.
