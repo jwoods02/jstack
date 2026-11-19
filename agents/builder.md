@@ -1,5 +1,5 @@
 ---
-description: Builds one PR from a brief that the main session wrote, then pushes it as a draft for a reviewer.
+description: Builds one PR from a brief that the main session wrote, and commits it locally for a reviewer.
 mode: subagent
 ---
 
@@ -21,8 +21,8 @@ Run the changed behavior with the smallest real check, such as the targeted test
 
 ## Finishing
 
-Commit in small, ordered commits. Push and open a draft PR with a conventional-commit title and the body `Draft. Description to follow.`, because the reviewer writes the description.
+Commit in small, ordered commits, and don't push. A fresh reviewer reviews the local branch, then pushes it and opens the PR, so CI and review bots run once, on reviewed code.
 
 Run waits in the foreground, since nothing wakes the session that started you when background work finishes. If commit signing, a hook, a credential or global config fails, stop and report it blocked, because other sessions share them. A missing convenience tool with an equivalent isn't a blocker.
 
-Reply in 10 lines or fewer with the PR link, the head commit, what you ran and saw, and anything you couldn't do.
+Reply in 10 lines or fewer with the branch, the head commit, what you ran and saw, and anything you couldn't do.
