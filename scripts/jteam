@@ -1,0 +1,253 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OC="${OPENCODE_BIN:-$(command -v opencode || echo /Applications/OpenCode.app/Contents/Resources/opencode-cli)}"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+
+usage() {
+  cat <<EOF
+jteam self                          this session's ID
+jteam ls [limit]                    top-level sessions: id, state, idle time, agent, title, directory
+jteam worktree <repo> <branch>      prune, then a new OpenCode worktree and branch off origin's default branch,
+                                    set up by the project's start command; prints the path and the setup result
+jteam status                        your open draft PRs in this repo with CI, and the worktrees prune would remove
+jteam watch <pr> [repo-dir]         wait on the PR's checks, then print CI passed or the failing checks,
+                                    and each review and comment on the head; exits 1 on a red run,
+                                    2 when the head moved while waiting
+jteam prune [--dry-run] [repo]      remove clean worktrees whose PR is merged, with their branches,
+                                    and archive their sessions; --dry-run only lists them
+jteam rm <worktree> [--force]       remove one worktree and archive its sessions; the branch is kept
+EOF
+}
+
+# `opencode api` cuts off large responses written to a pipe, so go through a file.
+api() {
+  local out
+  out="$(mktemp)"
+  "$OC" api "$@" >"$out" || { cat "$out" >&2; rm -f "$out"; return 1; }
+  cat "$out"
+  rm -f "$out"
+}
+data() { jq 'if type == "object" and has("data") then .data else . end'; }
+
+main_checkout() { # any path in a repo or one of its worktrees -> the main checkout
+  local common
+  common="$(git -C "$1" rev-parse --path-format=absolute --git-common-dir)" || return 1
+  dirname "$common"
+}
+
+project_id() { # main checkout -> OpenCode project ID, registering the project if needed
+  local repo="$1" pid sid
+  pid="$(api get /api/project | data | jq -r --arg r "$repo" 'map(select(.canonical == $r)) | .[0].id // empty')"
+  if [ -z "$pid" ]; then
+    sid="$(api post /api/session -d "$(jq -cn --arg d "$repo" '{title: "jteam: register project", location: {directory: $d}}')" | data | jq -r .id)"
+    pid="$(api get "/api/session/$sid" | data | jq -r .projectID)"
+    api delete "/api/session/$sid" >/dev/null
+  fi
+  api post /api/worktree/refresh -d "$(jq -cn --arg p "$pid" '{projectID: $p}')" >/dev/null
+  echo "$pid"
+}
+
+ensure_start_command() { # use ~/.config/opencode/worktree-setup/<repo>.sh as the project's start command
+  local pid="$1" setup="$CONFIG_DIR/worktree-setup/$(basename "$2").sh" current
+  [ -x "$setup" ] || return 0
+  current="$(api get /api/project | data | jq -r --arg p "$pid" 'map(select(.id == $p)) | .[0].commands.start // empty')"
+  [ "$current" = "$setup" ] && return 0
+  api patch "/api/project/$pid" -d "$(jq -cn --arg s "$setup" '{commands: {start: $s}}')" >/dev/null
+}
+
+archive_sessions_in() { # worktree directory
+  api get "/api/session?parentID=null&archived=false&limit=100" | data \
+    | jq -r --arg d "$1" '.[] | select(.location.directory == $d) | .id' \
+    | while read -r sid; do api patch "/api/session/$sid" -d '{"archived": true}' >/dev/null; done
+}
+
+remove_worktree() { # project ID, main checkout, worktree directory, force
+  api delete /api/worktree -d "$(jq -cn --arg p "$1" --arg d "$3" --argjson f "$4" '{projectID: $p, directory: $d, force: $f}')" >/dev/null \
+    || if [ "$4" = true ]; then git -C "$2" worktree remove --force "$3"; else git -C "$2" worktree remove "$3"; fi
+}
+
+prune() { # main checkout, project ID, dry run (true or false)
+  local repo="$1" pid="$2" dry="${3:-false}" merged dir head branch pr pr_head
+  merged="$(cd "$repo" && gh pr list --state merged --limit 200 --json number,headRefName,headRefOid 2>/dev/null || echo '[]')"
+  while IFS=$'\t' read -r -u 3 dir head branch; do
+      [ "$dir" = "$repo" ] && continue
+      read -r pr pr_head < <(jq -r --arg b "$branch" 'map(select(.headRefName == $b)) | .[0] // empty | "\(.number) \(.headRefOid)"' <<<"$merged") || true
+      [ -n "${pr:-}" ] || continue
+      [ "$dry" = true ] || git -C "$repo" fetch -q origin "pull/$pr/head" 2>/dev/null || true
+      git -C "$repo" merge-base --is-ancestor "$head" "$pr_head" 2>/dev/null \
+        || { echo "kept $dir: PR #$pr is merged but the worktree has commits it doesn't"; continue; }
+      [ -z "$(git -C "$dir" status --porcelain)" ] || { echo "kept $dir: PR #$pr is merged but the worktree has changes"; continue; }
+      [ "$dry" = true ] && { echo "would remove $dir and branch $branch (PR #$pr merged)"; continue; }
+      archive_sessions_in "$dir"
+      remove_worktree "$pid" "$repo" "$dir" false
+      git -C "$repo" branch -D -q "$branch"
+      echo "removed $dir and branch $branch (PR #$pr merged)"
+    done 3< <(git -C "$repo" worktree list --porcelain | awk '
+      /^worktree / { dir = substr($0, 10) }
+      /^HEAD / { head = $2 }
+      /^branch / { print dir "\t" head "\t" substr($2, 12) }')
+}
+
+status() {
+  local repo
+  repo="$(main_checkout . 2>/dev/null)" || { echo "jteam status: run it inside a repo or one of its worktrees" >&2; return 1; }
+
+  echo "Your open draft PRs in $(basename "$repo")"
+  (cd "$repo" && gh pr list --author @me --draft --state open --json number,title,statusCheckRollup) | jq -r '
+    def ci: [.statusCheckRollup[]? | (.conclusion // .state // .status)] as $c
+      | if ($c | length) == 0 then "no checks"
+        elif any($c[]; . == "FAILURE" or . == "ERROR" or . == "TIMED_OUT" or . == "CANCELLED" or . == "ACTION_REQUIRED" or . == "STARTUP_FAILURE") then "CI failing"
+        elif any($c[]; . == "" or . == "IN_PROGRESS" or . == "QUEUED" or . == "PENDING" or . == "WAITING") then "CI pending"
+        elif all($c[]; . == "SUCCESS" or . == "SKIPPED" or . == "NEUTRAL") then "CI passing"
+        else "CI unknown" end;
+    .[] | "  #\(.number) \(.title) (\(ci))"'
+
+  echo "Worktrees prune would remove"
+  prune "$repo" "" true | grep '^would remove' | sed 's/^would remove /  /' || true
+}
+
+oneline() { tr '\n' ' ' <"$1" | sed 's/ *$//'; }
+
+# Cursor Bugbot Autofix sits in progress for 30 minutes whenever Bugbot finds something, so waiting on it stalls every watch.
+UNWATCHED_CHECKS='^Cursor Bugbot Autofix$'
+
+await_checks() { # PR -> sets checks, checks_err and checks_rc once every watched check finishes or gh keeps erroring
+  local pr="$1" interval="${JTEAM_CHECK_INTERVAL:-10}" grace="${JTEAM_CHECK_GRACE:-60}" started errors=0
+  started="$(date +%s)"
+  while :; do
+    checks_rc=0
+    checks="$(gh pr checks "$pr" --json name,bucket 2>"$checks_err")" || checks_rc=$?
+    if grep -q '^no checks reported' "$checks_err"; then
+      [ $(( $(date +%s) - started )) -lt "$grace" ] || return 0
+    elif jq -e 'type == "array"' <<<"$checks" >/dev/null 2>&1; then
+      errors=0
+      checks="$(jq -c --arg skip "$UNWATCHED_CHECKS" 'map(select(.name | test($skip) | not))' <<<"$checks")"
+      [ "$(jq 'any(.[]; .bucket == "pending")' <<<"$checks")" = true ] || return 0
+    else
+      errors=$((errors + 1))
+      [ "$errors" -lt 3 ] || return 0
+    fi
+    sleep "$interval"
+  done
+}
+
+watch_pr() { # PR number, URL or branch -> CI result for the head read at the start, then reviews and comments on that head
+  local pr="$1" view n head now since checks checks_rc checks_err verdict status=0 spec page findings=""
+  view="$(gh pr view "$pr" --json number,title,headRefOid)" || return 2
+  n="$(jq -r .number <<<"$view")" head="$(jq -r .headRefOid <<<"$view")"
+  since="$(gh api "repos/{owner}/{repo}/commits/$head" --jq .commit.committer.date)" || return 2
+  checks_err="$(mktemp)"
+  await_checks "$pr"
+  jq -r '"#\(.number) \(.title) (head \(.headRefOid[0:7]))"' <<<"$view"
+  now="$(gh pr view "$pr" --json headRefOid | jq -r .headRefOid)" || { rm -f "$checks_err"; return 2; }
+  if [ "$now" != "$head" ]; then
+    rm -f "$checks_err"
+    echo "Stale: the head moved to ${now:0:7} while waiting, so this result isn't for ${head:0:7}. Watch again."
+    return 2
+  fi
+  if grep -q '^no checks reported' "$checks_err"; then
+    verdict="CI passed (no checks)"
+  elif ! jq -e 'type == "array"' <<<"$checks" >/dev/null 2>&1; then
+    verdict="CI unreadable (gh pr checks exited $checks_rc): $(oneline "$checks_err")" status=2
+  else
+    verdict="$(jq -r '
+      def names(b): [.[] | select(.bucket as $x | b | index($x)) | .name] | join(", ");
+      if names(["fail", "cancel"]) != "" then "CI failed: \(names(["fail", "cancel"]))"
+      elif names(["pending"]) != "" then "CI pending: \(names(["pending"]))"
+      else "CI passed" end' <<<"$checks")"
+    case "$verdict" in
+      "CI failed"*) status=1;;
+      "CI pending"*) status=2;;
+    esac
+  fi
+  rm -f "$checks_err"
+  echo "$verdict"
+  for spec in "review:pulls/$n/reviews" "review comment:pulls/$n/comments" "comment:issues/$n/comments"; do
+    if page="$(gh api --paginate "repos/{owner}/{repo}/${spec#*:}")" && page="$(jq -c --arg k "${spec%%:*}" '.[]
+      | {kind: $k, at: (.submitted_at // .created_at), commit: .commit_id, state, who: .user.login, body, url: .html_url}' <<<"$page")"; then
+      findings+="$page"$'\n'
+    else
+      echo "Findings unreadable: ${spec#*:}"; status=2
+    fi
+  done
+  jq -rs --arg since "$since" --arg head "$head" 'sort_by(.at)[] | select(.at > $since and (.commit == null or .commit == $head))
+    | "\(.kind) by \(.who)\(if .state then " \(.state)" else "" end): \((.body // "") | split("\n") | map(select(test("\\S") and (test("^\\s*<!--") | not))) | (.[0] // "") | .[0:160]) \(.url)"' <<<"$findings" || status=2
+  return "$status"
+}
+
+cmd="${1:-}"
+[ $# -gt 0 ] && shift
+case "$cmd" in
+  self)
+    echo "${OPENCODE_SESSION_ID:?not running inside an OpenCode session}"
+    ;;
+  ls)
+    active="$(api get /api/session/active | data)"
+    api get "/api/session?parentID=null&archived=false&limit=${1:-25}" | data | jq -r --argjson active "$active" '
+      def ago: (now * 1000 - .) / 60000 | floor
+        | if . >= 1440 then "\(. / 1440 | floor)d" elif . >= 60 then "\(. / 60 | floor)h" else "\(.)m" end;
+      .[] | [
+        .id,
+        ($active[.id].type // "idle"),
+        (.time.updated | ago),
+        (.agent // "-"),
+        (.title // "-"),
+        .location.directory
+      ] | @tsv'
+    ;;
+  worktree)
+    [ $# -eq 2 ] || { usage >&2; exit 1; }
+    repo="$(main_checkout "$1")" branch="$2"
+    pid="$(project_id "$repo")"
+    ensure_start_command "$pid" "$repo"
+    prune "$repo" "$pid" >&2
+
+    git -C "$repo" fetch -q origin
+    base="$(git -C "$repo" symbolic-ref -q --short refs/remotes/origin/HEAD || echo origin/main)"
+    dir="$(api post /api/worktree -d "$(jq -cn --arg p "$pid" --arg n "$(basename "$repo")-${branch//\//-}" --arg b "$base" \
+      '{projectID: $p, name: $n, branch: $b}')" | data | jq -r .directory)"
+    git -C "$dir" switch -q -c "$branch"
+
+    log="$(git -C "$dir" rev-parse --path-format=absolute --git-dir)/worktree-setup.log"
+    if [ ! -x "$CONFIG_DIR/worktree-setup/$(basename "$repo").sh" ]; then
+      setup_note="no setup script for this repo"
+    elif [ ! -f "$log" ] || [ "$(tail -n 1 "$log")" = "worktree setup ok" ]; then
+      setup_note="setup ran"
+    else
+      setup_note="setup did not finish: read $log, report blocked and wait"
+    fi
+    printf '%s\t%s off %s\t%s\n' "$dir" "$branch" "$base" "$setup_note"
+    ;;
+  status)
+    [ $# -eq 0 ] || { usage >&2; exit 1; }
+    status
+    ;;
+  watch)
+    cd "${2:-.}"
+    watch_pr "${1:?PR number}"
+    ;;
+  prune)
+    dry=false
+    if [ "${1:-}" = --dry-run ]; then dry=true; shift; fi
+    repo="$(main_checkout "${1:-.}")"
+    prune "$repo" "$([ "$dry" = true ] || project_id "$repo")" "$dry"
+    ;;
+  rm)
+    dir="$(cd "${1:?worktree directory}" && pwd -P)"
+    force=false
+    [ "${2:-}" = --force ] && force=true
+    repo="$(main_checkout "$dir")"
+    [ "$dir" != "$repo" ] || { echo "refusing to remove the main checkout" >&2; exit 1; }
+    branch="$(git -C "$dir" branch --show-current)"
+    archive_sessions_in "$dir"
+    remove_worktree "$(project_id "$repo")" "$repo" "$dir" "$force"
+    echo "removed $dir; branch ${branch:-(detached)} kept"
+    ;;
+  ""|-h|--help|help)
+    usage
+    ;;
+  *)
+    usage >&2; exit 1
+    ;;
+esac

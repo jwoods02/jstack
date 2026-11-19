@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-JTEAM="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/opencode/skills/j-team/scripts/jteam"
+JTEAM="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/jteam"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 

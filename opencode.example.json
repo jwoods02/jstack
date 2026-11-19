@@ -1,0 +1,33 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "JMode",
+  "skills": ["~/src/jstack/skills"],
+  "worktree": {
+    "directory": "../worktrees"
+  },
+  "agents": {
+    "JMode": {
+      "model": "openrouter/anthropic/claude-sonnet-5.5#high"
+    },
+    "builder": {
+      "model": "openrouter/openai/gpt-6.2-sol#high"
+    },
+    "reviewer": {
+      "model": "openrouter/anthropic/claude-opus-5.5#high"
+    },
+    "explore": {
+      "model": "openrouter/anthropic/claude-haiku-5.5#high"
+    }
+  },
+  "permissions": [
+    { "action": "shell", "resource": "gh pr merge *", "effect": "deny" },
+    { "action": "shell", "resource": "gh pr ready *", "effect": "deny" },
+    { "action": "shell", "resource": "gh release create *", "effect": "deny" },
+    { "action": "shell", "resource": "gh stack merge*", "effect": "deny" },
+    { "action": "shell", "resource": "gh stack submit *--open*", "effect": "deny" },
+    { "action": "shell", "resource": "gh stack link *--open*", "effect": "deny" },
+    { "action": "shell", "resource": "gh stack unstack*", "effect": "deny" },
+    { "action": "shell", "resource": "git push --force *", "effect": "deny" },
+    { "action": "shell", "resource": "git push -f *", "effect": "deny" }
+  ]
+}
