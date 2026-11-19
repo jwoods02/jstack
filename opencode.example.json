@@ -1,12 +1,12 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "default_agent": "JMode",
+  "default_agent": "jstack",
   "skills": ["~/src/jstack/skills"],
   "worktree": {
     "directory": "../worktrees"
   },
   "agents": {
-    "JMode": {
+    "jstack": {
       "model": "openrouter/anthropic/claude-sonnet-5.5#high"
     },
     "builder": {
