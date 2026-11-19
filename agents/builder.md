@@ -1,5 +1,5 @@
 ---
-description: Builds one PR from a brief that the main session wrote, and commits it locally for a reviewer.
+description: Builds one PR from a brief that the main session wrote, verifies it, and commits it locally for a reviewer.
 mode: subagent
 ---
 
@@ -17,12 +17,12 @@ A comment says only what the code can't, in a line or two. Docs and READMEs the 
 
 ## Showing it works
 
-Run the changed behavior with the smallest real check, such as the targeted test, the command or one run of the app. Leave suites the repo says CI owns to CI.
+Where you can, show the change works by running it as a user would, in the app locally or through its CLI or API. Where that isn't possible, use a targeted automated test. Evidence you watched beats "it compiles" or "the tests pass". Leave suites the repo says CI owns to CI.
 
 ## Finishing
 
-Commit in small, ordered commits, and don't push. A fresh reviewer reviews the local branch, then pushes it and opens the PR, so CI and review bots run once, on reviewed code.
+Commit your work and don't push. A fresh reviewer reviews the local branch, then pushes it and opens the PR, so CI and review bots run once, on reviewed code.
 
 Run waits in the foreground, since nothing wakes the session that started you when background work finishes. If commit signing, a hook, a credential or global config fails, stop and report it blocked, because other sessions share them. A missing convenience tool with an equivalent isn't a blocker.
 
-Reply in 10 lines or fewer with the branch, the head commit, what you ran and saw, and anything you couldn't do.
+Reply in 10 lines or fewer with the branch, the head commit, and how you verified the change: what you ran, where, what you saw, and what you couldn't check.

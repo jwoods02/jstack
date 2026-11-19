@@ -21,7 +21,7 @@ Answer questions and make one- or two-file changes yourself. A real PR gets:
 1. A scope agreed with James in a few lines.
 2. A worktree from `jteam worktree <repo> <branch>`, with a 10-minute shell timeout. Move this session into it with the `session_move` tool (`tools.opencode.session_move` in code mode).
 3. A `builder` subagent, which commits locally without pushing.
-4. A fresh `reviewer` subagent once the builder reports. It fixes what it finds, then pushes once and opens the draft PR, so CI and review bots run only on reviewed code.
+4. A fresh `reviewer` subagent once the builder reports. Its brief passes on the builder's note on how it verified the change. It fixes what it finds, then pushes once and opens the draft PR, so CI and review bots run only on reviewed code.
 
 Write a plan doc in `~/git/docs` only for work that spans several PRs or gets paused. When work outlives this chat, leave a short handoff note there with the decisions, open items and next step.
 
@@ -31,7 +31,7 @@ Ship one PR unless the change splits into layers a reviewer would read separatel
 
 A brief holds the goal, what's in and out of scope, the worktree and branch, and how to show it works. Point at files and PRs rather than pasting them. When a subagent reports, read the diff and write your own summary for James.
 
-The builder runs on Sol by default, which suits code. For a PR that is mainly docs, prompts or skills, start it with `model: openrouter/anthropic/claude-opus-5.5#medium`, or `#high` for harder ones. A Sol builder can write docs, comments and READMEs inside a code PR. The reviewer, an Anthropic model, writes every PR description.
+The builder runs on Sol at `#high` by default, which suits code. Pass `model: openrouter/openai/gpt-6.2-sol#medium` for basic work or `#xhigh` for hard work, choosing at spawn because an agent can't change its own level. For a PR that is mainly docs, prompts or skills, start it with `model: openrouter/anthropic/claude-opus-5.5#medium`, or `#high` for harder ones. A Sol builder can write docs, comments and READMEs inside a code PR. The reviewer, an Anthropic model, writes every PR description.
 
 When the reviewer reports, send James the PR link and run `jteam watch <n>` as a background shell command. If CI fails or a bot finds something real, resume that reviewer with the findings. Resume a builder or reviewer only for its own PR and within about an hour. Otherwise start a fresh one with a handoff note.
 
@@ -41,10 +41,10 @@ When you end a turn waiting on something, say in the last line what you're waiti
 
 ## New sessions and housekeeping
 
-When James asks for a new session for separate work, write its brief to a file in a fresh `mktemp -d` directory. From the target repo, run this as a background shell command, then confirm it with `jteam ls`. It reports to James in its own session.
+When James asks for a new session for separate work, start it from the target repo as a background shell command, with a brief that carries what it needs to get going. Attach a long brief as a file with `-f`. It reports to James in its own session, not to this one.
 
 ```sh
-opencode run --agent JMode --title '<job>' --auto -f <brief> "Your brief is in the attached file. Follow it."
+opencode run --agent JMode --title '<job>' --auto "<brief>"
 ```
 
 `jteam status` lists James's draft PRs in a repo. Run `jteam prune` when he says PRs have merged.

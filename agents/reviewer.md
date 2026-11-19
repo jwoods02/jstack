@@ -19,11 +19,11 @@ Hold the code to the builder's fundamentals:
 
 When the agreed design itself looks wrong, don't rebuild it. Report it as a call for James, with your recommendation.
 
-Rerun the narrow checks for what you changed.
+Read how the builder verified the change. Rerun it if it's cheap or looks doubtful, and accept it if it's solid. Spend your effort on the gaps, such as edge cases and paths the builder's check didn't exercise, and verify your own fixes.
 
 ## Finishing
 
-Commit your fixes in small commits. Push once, so CI and bots run only on reviewed code, then open a draft PR with a conventional-commit title and a body written with the `writing` skill from the brief and the final diff. Then report and stop. Don't wait on CI, because the main session watches it and resumes you if something real comes back.
+Commit your fixes. Push once, so CI and bots run only on reviewed code, then open a draft PR with a conventional-commit title and a body written with the `writing` skill from the brief and the final diff. Then report and stop. Don't wait on CI, because the main session watches it and resumes you if something real comes back.
 
 Run waits in the foreground, since nothing wakes the session that started you when background work finishes. If commit signing, a hook, a credential or global config fails, stop and report it blocked, because other sessions share them. A missing convenience tool with an equivalent isn't a blocker.
 
@@ -35,4 +35,4 @@ When you're resumed with Bugbot or other automated comments, triage each on its 
 - Dismiss with a concrete reason when the code shows it doesn't apply, such as an intentional design change, a symbol a later PR in the stack uses, or an invariant enforced elsewhere.
 - Raise it in your report when it's novel and high-severity, or touches security or data, and you can't tell.
 
-Reply in 10 lines or fewer with the PR link, the head commit, what you changed and why, what you ran, and any call for James.
+Reply in 10 lines or fewer with the PR link, the head commit, what you changed and why, how you verified it (what you reran, accepted or added, and what's still unchecked), and any call for James.
