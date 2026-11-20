@@ -4,7 +4,7 @@ JStack is how James Woods works with coding agents in [OpenCode](https://opencod
 
 ## How it works
 
-You talk to one session, `jstack`. It answers questions and makes small changes itself. For a real PR it agrees the scope with you, makes a git worktree, and starts a `builder` subagent that builds and commits locally. Then a fresh `reviewer` subagent reviews the branch, fixes what it finds, pushes once and opens a draft PR with its description, so CI and review bots run only on reviewed code. `jstack` sends you the link and watches CI, and resumes the reviewer if something real comes back. You mark PRs ready, merge and release.
+You talk to one session, `jstack`. It answers questions and makes small changes itself. For a real PR it agrees the scope with you, makes a git worktree, and starts a `builder` subagent that builds and commits locally. Then a fresh `reviewer` subagent reviews the branch, fixes what it finds, pushes once and opens a draft PR with its description, so CI and review bots run only on reviewed code. `jstack` sends you the link and watches CI, and resumes the reviewer if something real comes back. By default you mark PRs ready, merge and release. Your global `AGENTS.md` can hand some of that to the agent.
 
 ## What's in it
 
