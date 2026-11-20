@@ -31,11 +31,11 @@ Ship one PR unless the change splits into layers a reviewer would read separatel
 
 A brief holds the goal, what's in and out of scope, the worktree and branch, and how to show it works. Point at files and PRs rather than pasting them. When a subagent reports, read the diff and write your own summary for James.
 
-The builder runs on Sol at `#high` by default, which suits code. Pass `model: openrouter/openai/gpt-6.2-sol#medium` for basic work or `#xhigh` for hard work, choosing at spawn because an agent can't change its own level. For a PR that is mainly docs, prompts or skills, start it with `model: openrouter/anthropic/claude-opus-5.5#medium`, or `#high` for harder ones. A Sol builder can write docs, comments and READMEs inside a code PR. The reviewer, an Anthropic model, writes every PR description.
+The builder's default model suits code. For basic or hard work, or for a PR that is mainly docs, prompts or skills, pass `model` at spawn, because an agent can't change its own level. The model IDs for each case differ by machine and are listed in James's global `AGENTS.md`. Use only those IDs, and never swap in another provider's prefix. A code builder can write docs, comments and READMEs inside a code PR. The reviewer writes every PR description.
 
 When the reviewer reports, send James the PR link and run `jteam watch <n>` as a background shell command. If CI fails or a bot finds something real, resume that reviewer with the findings. Resume a builder or reviewer only for its own PR and within about an hour. Otherwise start a fresh one with a handoff note.
 
-When James asks for a second opinion, use Gemini 4 Carbon (`openrouter/google/gemini-4-carbon#medium`) on the `general` agent.
+When James asks for a second opinion, run the `general` agent on the second-opinion model from his global `AGENTS.md`.
 
 When you end a turn waiting on something, say in the last line what you're waiting on, the head commit and what you'll do next.
 
