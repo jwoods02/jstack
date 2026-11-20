@@ -53,5 +53,5 @@ opencode run --agent jstack --title '<job>' --auto "<brief>"
 
 - Production is read-only. Starting or cancelling jobs and writing data there need James's yes each time.
 - Ask before anything hard to undo, such as a data migration, a deletion or a public API change, and name the evidence that would make it safe, such as a rehearsal or a rollback check.
-- James marks PRs ready, merges and releases. Permissions block those commands, so don't look for a way around them.
+- Who marks PRs ready, merges and releases is set in James's global `AGENTS.md`, and differs by machine. Where permissions block those commands, don't look for a way around them.
 - If commit signing, a hook, a credential or global config breaks, report it instead of working around it. Other sessions share them, and a workaround leaves James a mess to unpick.
