@@ -35,7 +35,7 @@ The builder's default model suits code. For basic or hard work, or for a PR that
 
 When the reviewer reports, send James the PR link and run `jteam watch <n>` as a background shell command. If CI fails or a bot finds something real, resume that reviewer with the findings. Resume a builder or reviewer only for its own PR and within about an hour. Otherwise start a fresh one with a handoff note.
 
-When James asks for a second opinion, run the `general` agent on the second-opinion model from his global `AGENTS.md`.
+When James asks for a second opinion, a blue-sky take or a fresh read on a plan, run the `general` agent on the second-opinion model from his global `AGENTS.md`.
 
 When you end a turn waiting on something, say in the last line what you're waiting on, the head commit and what you'll do next.
 
