@@ -1,13 +1,14 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "jstack",
+  "model": "openrouter/google/gemini-4-neon",
   "skills": ["~/src/jstack/skills"],
   "worktree": {
     "directory": "../worktrees"
   },
   "agents": {
     "jstack": {
-      "model": "openrouter/anthropic/claude-sonnet-5.5#high"
+      "model": "openrouter/google/gemini-4-neon#medium"
     },
     "builder": {
       "model": "openrouter/openai/gpt-6.2-sol#high"
